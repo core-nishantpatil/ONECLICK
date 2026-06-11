@@ -39,16 +39,54 @@ window.setActive = function(element) {
   }
 
   // Handle section switching if needed
-  const labelText = element.querySelector('.nav-label-text').innerText;
+  const labelText = element.querySelector('.nav-label-text').innerText.trim();
   const breadcrumbItem = document.querySelector('.breadcrumb-item:not(.muted)');
   if (breadcrumbItem) {
     breadcrumbItem.innerText = labelText;
   }
 
-  // If user clicks Dashboard nav link, return to dashboard view
+  // Hide all main views
+  document.getElementById('workspace-view-container').style.display = 'none';
+  document.getElementById('dashboard-view-container').style.display = 'none';
+  
+  const projectsView = document.getElementById('projects-view-container');
+  if (projectsView) projectsView.style.display = 'none';
+  
+  const datasetsView = document.getElementById('datasets-view-container');
+  if (datasetsView) datasetsView.style.display = 'none';
+  
+  const reportsView = document.getElementById('reports-view-container');
+  if (reportsView) reportsView.style.display = 'none';
+  
+  const settingsView = document.getElementById('settings-view-container');
+  if (settingsView) settingsView.style.display = 'none';
+
+  // Toggle active view
   if (labelText === 'Dashboard') {
-    document.getElementById('workspace-view-container').style.display = 'none';
     document.getElementById('dashboard-view-container').style.display = 'block';
+    if (typeof loadAndRenderDashboard === 'function') {
+      loadAndRenderDashboard();
+    }
+  } else if (labelText === 'Projects') {
+    if (projectsView) projectsView.style.display = 'block';
+    if (typeof loadAndRenderProjects === 'function') {
+      loadAndRenderProjects();
+    }
+  } else if (labelText === 'Datasets') {
+    if (datasetsView) datasetsView.style.display = 'block';
+    if (typeof loadAndRenderDatasets === 'function') {
+      loadAndRenderDatasets();
+    }
+  } else if (labelText === 'Reports') {
+    if (reportsView) reportsView.style.display = 'block';
+    if (typeof loadAndRenderReportsList === 'function') {
+      loadAndRenderReportsList();
+    }
+  } else if (labelText === 'Settings') {
+    if (settingsView) settingsView.style.display = 'block';
+    if (typeof loadAndRenderSettings === 'function') {
+      loadAndRenderSettings();
+    }
   }
 };
 
@@ -256,9 +294,11 @@ const loadingProgressBar = document.getElementById('loading-progress-bar');
 const loadingProgressPct = document.getElementById('loading-progress-pct');
 
 // Open Upload Modal
-getStartedBtn.addEventListener('click', () => {
-  uploadModal.classList.add('open');
-});
+if (getStartedBtn) {
+  getStartedBtn.addEventListener('click', () => {
+    uploadModal.classList.add('open');
+  });
+}
 if (viewDemoBtn) {
   viewDemoBtn.addEventListener('click', () => {
     uploadModal.classList.add('open');
@@ -512,10 +552,56 @@ function loadParsedData(parsedRows, filename, type, sizeBytes) {
   
   // Transition views
   document.getElementById('dashboard-view-container').style.display = 'none';
+  const workspacesView = document.getElementById('workspaces-view-container');
+  if (workspacesView) workspacesView.style.display = 'none';
   const workspaceView = document.getElementById('workspace-view-container');
   workspaceView.style.display = 'flex';
   
   initSpreadsheet();
+
+  // Generate a new workspace ID and save to DB
+  currentWorkspaceId = 'ws_' + Date.now();
+  const newWorkspace = {
+    workspaceId: currentWorkspaceId,
+    workspaceName: filename,
+    fileName: filename,
+    uploadTimestamp: Date.now(),
+    lastOpenedTimestamp: Date.now(),
+    rowCount: gridData.length,
+    columnCount: headers.length,
+    isFavorite: false,
+    status: "Uploaded",
+    datasetData: {
+      gridData: gridData,
+      originalGridData: originalGridData,
+      headers: headers,
+      headerNames: headerNames,
+      columnWidths: columnWidths,
+      hiddenColumns: []
+    },
+    cleaningHistory: {
+      preprocessingHistory: [],
+      preprocessingRedoHistory: []
+    },
+    dashboardWidgets: [],
+    globalFilters: {
+      activeFilters: {},
+      activeSort: null,
+      globalVizFilters: {},
+      activeDrillState: {}
+    },
+    calculatedFields: {},
+    drillHierarchies: []
+  };
+
+  // Save to IndexedDB and prune if over 25 limit
+  if (typeof saveWorkspaceToDB === 'function') {
+    saveWorkspaceToDB(newWorkspace).then(() => {
+      return enforceWorkspaceLimit();
+    }).catch(err => {
+      console.error("Failed to save new workspace to DB:", err);
+    });
+  }
 }
 
 // Generate letter mappings like Excel (A, B... Z, AA, AB...)
@@ -634,10 +720,33 @@ function getDefaultHeaderName(c) {
 
 // ═══════════════════════════ SPREADSHEET LAYOUT INTERACTION ═══════════════════════════
 
-// Exit Workspace and return to dashboard
+// Exit Workspace and return to dashboard/workspaces page
+// Exit Workspace and return to dashboard/projects page
 document.getElementById('ws-btn-exit').addEventListener('click', () => {
-  document.getElementById('workspace-view-container').style.display = 'none';
-  document.getElementById('dashboard-view-container').style.display = 'block';
+  if (typeof performSaveWorkspace === 'function') {
+    performSaveWorkspace().then(() => {
+      document.getElementById('workspace-view-container').style.display = 'none';
+      const navProjects = document.getElementById('nav-projects');
+      if (navProjects && navProjects.classList.contains('active')) {
+        document.getElementById('projects-view-container').style.display = 'block';
+        if (typeof loadAndRenderProjects === 'function') {
+          loadAndRenderProjects();
+        }
+      } else {
+        document.getElementById('dashboard-view-container').style.display = 'block';
+        if (typeof loadAndRenderDashboard === 'function') {
+          loadAndRenderDashboard();
+        }
+      }
+      currentWorkspaceId = null;
+    });
+  } else {
+    document.getElementById('workspace-view-container').style.display = 'none';
+    document.getElementById('dashboard-view-container').style.display = 'block';
+    if (typeof loadAndRenderDashboard === 'function') {
+      loadAndRenderDashboard();
+    }
+  }
 });
 
 // Collapsible Right Sidebar logic
@@ -1226,8 +1335,10 @@ function makeCellEditable(td, r, c) {
     const newVal = input.value;
     if (newVal !== originalVal) {
       pushToUndo();
+      window.isCellEditing = true;
       gridData[origRowIndex][c] = newVal;
       updateMetadata();
+      window.isCellEditing = false;
       // recalculate stats if selected
       if (selectedColumnKey === headers[c]) {
         updateColumnStats(selectedColumnKey);
@@ -1368,6 +1479,9 @@ function applySearchSortAndFilters() {
   if (typeof currentView !== 'undefined' && currentView === 'dashboard' && typeof renderDashboardCanvas === 'function') {
     renderDashboardCanvas();
   }
+  if (typeof autoSaveActiveWorkspace === 'function') {
+    autoSaveActiveWorkspace(false);
+  }
 }
 
 // Evaluate single cell value against dynamic filter rules
@@ -1474,6 +1588,9 @@ function updateMetadata() {
     }
   });
   document.getElementById('ws-info-dups').innerText = duplicates.toLocaleString();
+  if (typeof autoSaveActiveWorkspace === 'function') {
+    autoSaveActiveWorkspace(!!window.isCellEditing);
+  }
 }
 
 // ═══════════════════════════ COLUMN STATISTICS CALCULATOR ═══════════════════════════
@@ -2216,9 +2333,26 @@ document.addEventListener('keydown', (e) => {
   }
 });
 
-// Save simulated notice trigger
+// Save current workspace immediately and show toast
 document.getElementById('ws-btn-save').addEventListener('click', () => {
-  alert("Spreadsheet updates saved successfully!");
+  const saveBtn = document.getElementById('ws-btn-save');
+  saveBtn.innerText = "Saving...";
+  saveBtn.disabled = true;
+  if (typeof performSaveWorkspace === 'function') {
+    performSaveWorkspace().then(() => {
+      saveBtn.innerText = "Save Workspace";
+      saveBtn.disabled = false;
+      showToast("Workspace saved successfully!", "success");
+    }).catch(err => {
+      saveBtn.innerText = "Save Workspace";
+      saveBtn.disabled = false;
+      showToast("Error saving workspace: " + err.message, "error");
+    });
+  } else {
+    alert("Spreadsheet updates saved successfully!");
+    saveBtn.innerText = "Save Workspace";
+    saveBtn.disabled = false;
+  }
 });
 
 // Export CSV structure download prompt
@@ -3833,6 +3967,9 @@ function finalizePreprocessingAction() {
       columnWidths: { ...columnWidths }
     });
   }
+  if (typeof autoSaveActiveWorkspace === 'function') {
+    autoSaveActiveWorkspace(false);
+  }
 }
 
 // 6. Action Handlers and Flashing Helpers
@@ -4405,7 +4542,7 @@ if (bannerCloseBtn) {
 
 // Global visualization state
 let dashboardWidgets = [];
-let activeVizTab = 'structure';
+let activeVizTab = 'dashboard';
 let selectedWidgetId = null;
 let globalVizFilters = {};
 let currentView = 'sheet'; // 'sheet' | 'dashboard'
@@ -5197,6 +5334,9 @@ function renderDashboardCanvas() {
       });
     }
   });
+  if (typeof autoSaveActiveWorkspace === 'function') {
+    autoSaveActiveWorkspace(false);
+  }
 }
 
 // Widget selection and panel synchronization
@@ -5214,7 +5354,11 @@ function selectWidget(widgetId) {
     else item.classList.remove('active');
   });
 
-  switchVizTab('settings');
+  switchVizTab('dashboard');
+  document.querySelectorAll('#viztab-dashboard .viz-accordion-item').forEach(el => {
+    if (el.id === 'acc-widget-settings') el.classList.add('active');
+    else el.classList.remove('active');
+  });
 
   if (widget) {
     document.getElementById('viz-no-widget-selected').style.display = 'none';
@@ -5277,7 +5421,7 @@ if (btnSaveWidgetSettings) {
       widget.w = parseInt(document.getElementById('viz-widget-width-select').value);
 
       renderDashboardCanvas();
-      renderStructureTab();
+      renderDashboardTab();
       selectWidget(selectedWidgetId);
     }
   };
@@ -5365,7 +5509,7 @@ function swapWidgets(idx1, idx2) {
   dashboardWidgets[idx2] = temp;
   
   renderDashboardCanvas();
-  renderStructureTab();
+  renderDashboardTab();
 }
 
 function deleteWidget(widgetId) {
@@ -5382,7 +5526,7 @@ function deleteWidget(widgetId) {
       delete activeChartInstances[widgetId];
     }
     renderDashboardCanvas();
-    renderStructureTab();
+    renderDashboardTab();
   }
 }
 
@@ -5405,7 +5549,7 @@ function addNewWidget() {
 
   dashboardWidgets.push(newWidget);
   renderDashboardCanvas();
-  renderStructureTab();
+  renderDashboardTab();
   selectWidget(newId);
 }
 
@@ -5583,8 +5727,7 @@ function renderRecommendationsTab() {
       };
       dashboardWidgets.push(newWidget);
       renderDashboardCanvas();
-      renderStructureTab();
-      renderRecommendationsTab();
+      renderDashboardTab();
       selectWidget(newWidget.id);
     };
 
@@ -5592,6 +5735,7 @@ function renderRecommendationsTab() {
   });
 }
 
+// Switcher between visualization tabs
 // Switcher between visualization tabs
 function switchVizTab(tabName) {
   activeVizTab = tabName;
@@ -5602,13 +5746,405 @@ function switchVizTab(tabName) {
   });
 
   document.querySelectorAll('.viz-tab-content').forEach(content => {
-    if (content.id === `viztab-${tabName}`) content.style.display = 'block';
-    else content.style.display = 'none';
+    if (content.id === `viztab-${tabName}`) {
+      content.style.display = 'block';
+      const activeAcc = content.querySelector('.viz-accordion-item.active');
+      if (!activeAcc) {
+        const firstAcc = content.querySelector('.viz-accordion-item');
+        if (firstAcc) firstAcc.classList.add('active');
+      }
+    } else {
+      content.style.display = 'none';
+    }
   });
 
-  if (tabName === 'structure') renderStructureTab();
-  else if (tabName === 'filters') renderFiltersTab();
-  else if (tabName === 'recs') renderRecommendationsTab();
+  initVizAccordions();
+
+  if (tabName === 'dashboard') renderDashboardTab();
+  else if (tabName === 'explore') renderExploreTab();
+  else if (tabName === 'insights') renderInsightsTab();
+  else if (tabName === 'manage') renderManageTab();
+}
+
+function initVizAccordions() {
+  document.querySelectorAll('.viz-tab-content .viz-accordion-header').forEach(header => {
+    if (header.dataset.accordionBound) return;
+    header.dataset.accordionBound = "true";
+    
+    header.addEventListener('click', () => {
+      const item = header.closest('.viz-accordion-item');
+      const wasActive = item.classList.contains('active');
+      
+      const parentTab = item.closest('.viz-tab-content');
+      parentTab.querySelectorAll('.viz-accordion-item').forEach(el => {
+        el.classList.remove('active');
+      });
+      
+      if (!wasActive) {
+        item.classList.add('active');
+      }
+    });
+  });
+}
+
+function renderDashboardTab() {
+  renderStructureTab();
+  renderRecommendationsTab();
+
+  if (selectedWidgetId) {
+    const widget = dashboardWidgets.find(w => w.id === selectedWidgetId);
+    if (widget) {
+      document.getElementById('viz-no-widget-selected').style.display = 'none';
+      document.getElementById('viz-settings-fields').style.display = 'flex';
+      
+      document.getElementById('viz-widget-title-input').value = widget.title;
+      document.getElementById('viz-widget-type-select').value = widget.type;
+      document.getElementById('viz-widget-width-select').value = widget.w;
+
+      const xSelect = document.getElementById('viz-widget-x-select');
+      const ySelect = document.getElementById('viz-widget-y-select');
+      const aggSelect = document.getElementById('viz-widget-agg-select');
+
+      const displayCols = [...headers, ...Object.keys(calculatedFields)];
+      const getColDisplayName = (h) => headerNames[h] || (calculatedFields[h] && calculatedFields[h].title) || h;
+
+      xSelect.innerHTML = displayCols.map(h => `<option value="${h}">${getColDisplayName(h)}</option>`).join('');
+      ySelect.innerHTML = `<option value="">None (Count Rows)</option>` + displayCols.map(h => `<option value="${h}">${getColDisplayName(h)}</option>`).join('');
+
+      xSelect.value = widget.xCol;
+      ySelect.value = widget.yCol;
+      aggSelect.value = widget.agg || "sum";
+
+      toggleSettingsFieldsByType(widget.type);
+    }
+  } else {
+    document.getElementById('viz-no-widget-selected').style.display = 'block';
+    document.getElementById('viz-settings-fields').style.display = 'none';
+  }
+
+  const btnRegen = document.getElementById('btn-actions-regenerate-draft');
+  if (btnRegen) {
+    btnRegen.onclick = () => {
+      dashboardWidgets = [];
+      generateDefaultDashboardDraft();
+      renderDashboardCanvas();
+      renderDashboardTab();
+    };
+  }
+
+  const btnClear = document.getElementById('btn-actions-clear-layout');
+  if (btnClear) {
+    btnClear.onclick = () => {
+      if (confirm("Clear all widgets from the dashboard canvas?")) {
+        dashboardWidgets = [];
+        selectedWidgetId = null;
+        Object.keys(activeChartInstances).forEach(k => {
+          activeChartInstances[k].destroy();
+          delete activeChartInstances[k];
+        });
+        renderDashboardCanvas();
+        renderDashboardTab();
+      }
+    };
+  }
+
+  const btnClearF = document.getElementById('btn-actions-clear-filters');
+  if (btnClearF) {
+    btnClearF.onclick = () => {
+      globalVizFilters = {};
+      activeDrillState = {};
+      renderDashboardCanvas();
+      if (typeof renderFiltersTab === 'function') renderFiltersTab();
+      showToast("Cleared active dashboard filters & drills", "info");
+    };
+  }
+}
+
+function renderExploreTab() {
+  renderFiltersTab();
+  renderDrillHierarchiesList();
+  initDrillColChecklist();
+  updateDrillStatus();
+  renderCalcFieldsList();
+  initCalcFieldHelpers();
+}
+
+function renderInsightsTab() {
+  var summaryEl = document.getElementById('viz-executive-summary');
+  if (!gridData || gridData.length === 0) {
+    if (summaryEl) summaryEl.innerText = 'Load a dataset to see insights.';
+    return;
+  }
+
+  var insights = generateInsights();
+
+  if (summaryEl) {
+    var summaryParts = insights.slice(0, 3).map(function(i) { return i.text; });
+    summaryEl.innerText = summaryParts.join(' ');
+  }
+
+  initRanksDims();
+  renderRanksAnalysis();
+  renderTrendAnalysis();
+  renderAnomalyAnalysis();
+
+  const warningContainer = document.getElementById('viz-quality-warnings-container');
+  if (warningContainer) {
+    let html = "";
+    const pMiss = document.getElementById('q-stat-missing') ? parseInt(document.getElementById('q-stat-missing').innerText) || 0 : 0;
+    const pDups = document.getElementById('q-stat-dups') ? parseInt(document.getElementById('q-stat-dups').innerText) || 0 : 0;
+    const pTypes = document.getElementById('q-stat-types') ? parseInt(document.getElementById('q-stat-types').innerText) || 0 : 0;
+    
+    if (pMiss > 0) {
+      html += `<div style="font-size: 10px; padding: 4px 6px; background: rgba(245, 158, 11, 0.08); border: 1px solid rgba(245, 158, 11, 0.2); border-radius: var(--radius-sm); color: var(--warning); margin-bottom: 4px;">⚠️ ${pMiss} missing data cells need cleaning.</div>`;
+    }
+    if (pDups > 0) {
+      html += `<div style="font-size: 10px; padding: 4px 6px; background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.2); border-radius: var(--radius-sm); color: var(--error); margin-bottom: 4px;">⚠️ ${pDups} duplicate records detected.</div>`;
+    }
+    if (pTypes > 0) {
+      html += `<div style="font-size: 10px; padding: 4px 6px; background: rgba(245, 158, 11, 0.08); border: 1px solid rgba(245, 158, 11, 0.2); border-radius: var(--radius-sm); color: var(--warning); margin-bottom: 4px;">⚠️ ${pTypes} format mismatch column values.</div>`;
+    }
+    if (html === "") {
+      html = `<div style="font-size: 10.5px; color: var(--success); padding: 4px 0;">✅ Preprocessing checks show 100% clean dataset.</div>`;
+    }
+    warningContainer.innerHTML = html;
+  }
+
+  renderCorrelationAnalysis();
+}
+
+function renderManageTab() {
+  if (!gridData || gridData.length === 0) return;
+
+  renderManageSavedDashboards();
+
+  const saveBtn = document.getElementById('btn-manage-save-dash');
+  if (saveBtn) {
+    saveBtn.onclick = () => {
+      const nameInput = document.getElementById('manage-save-name-input');
+      const name = nameInput ? nameInput.value.trim() : "";
+      if (!name) {
+        alert("Please enter a name for the dashboard save.");
+        return;
+      }
+      const key = saveDashboardToStorage(name);
+      if (key) {
+        showToast("Dashboard saved successfully", "success");
+        if (nameInput) nameInput.value = "";
+        renderManageSavedDashboards();
+      }
+    };
+  }
+
+  const exportBtn = document.getElementById('btn-manage-export-json');
+  if (exportBtn) {
+    exportBtn.onclick = exportDashboardJSON;
+  }
+
+  const importTriggerBtn = document.getElementById('btn-manage-import-json-trigger');
+  const fileInput = document.getElementById('btn-manage-import-file-input');
+  if (importTriggerBtn && fileInput) {
+    importTriggerBtn.onclick = () => fileInput.click();
+    
+    fileInput.onchange = (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        try {
+          applyDashboardState(JSON.parse(ev.target.result));
+          showToast("Dashboard imported!", "success");
+          renderManageTab();
+        } catch (err) {
+          showToast("Import failed: " + err.message, "error");
+        }
+      };
+      reader.readAsText(file);
+      e.target.value = '';
+    };
+  }
+
+  document.querySelectorAll('#viztab-manage [data-template]').forEach(card => {
+    card.onclick = () => {
+      const templateName = card.dataset.template;
+      if (confirm(`Applying template "${templateName.toUpperCase()}" will replace all current widgets. Continue?`)) {
+        applyDashboardTemplate(templateName);
+      }
+    };
+  });
+
+  renderDashboardHealth();
+  renderManageDatasetInfo();
+}
+
+function renderManageSavedDashboards() {
+  const container = document.getElementById('manage-saved-list');
+  if (!container) return;
+  
+  const keys = Object.keys(localStorage).filter(k => k.startsWith('oneclick_dash_'));
+  if (keys.length === 0) {
+    container.innerHTML = `<div style="font-size: 10px; color: var(--text-muted); text-align: center; padding: 8px;">No saved dashboards.</div>`;
+    return;
+  }
+
+  container.innerHTML = keys.map(key => {
+    let cleanName = key.replace('oneclick_dash_', '');
+    cleanName = cleanName.replace(/_\d+$/, '').replace(/_/g, ' ');
+    return `
+      <div class="manage-list-item">
+        <span style="font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:120px;" title="${cleanName}">${cleanName}</span>
+        <div class="manage-btn-group">
+          <button class="btn-outline btn-sm" style="font-size:9px; height:20px; padding: 2px 4px; justify-content:center;" onclick="loadSavedDashboardByKey('${key}')">Load</button>
+          <button class="btn-outline btn-sm delete" style="font-size:9px; height:20px; padding: 2px 4px; justify-content:center; border-color: rgba(239, 68, 68, 0.2); color: var(--error);" onclick="deleteSavedDashboardByKey('${key}')">Del</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+window.loadSavedDashboardByKey = function(key) {
+  try {
+    applyDashboardState(JSON.parse(localStorage.getItem(key)));
+    showToast("Dashboard loaded successfully", "success");
+    renderDashboardTab();
+    renderManageTab();
+  } catch (e) {
+    showToast("Load failed: " + e.message, "error");
+  }
+};
+
+window.deleteSavedDashboardByKey = function(key) {
+  if (confirm("Are you sure you want to delete this saved dashboard permanently?")) {
+    localStorage.removeItem(key);
+    showToast("Saved dashboard deleted", "info");
+    renderManageSavedDashboards();
+  }
+};
+
+function applyDashboardTemplate(templateName) {
+  dashboardWidgets = [];
+  const profile = profileColumns();
+  const revCol = findColInList(/revenue|sales|spend|price|amount|cost/i, headers) || profile.currencyCols[0] || profile.numCols[0];
+  const secondMetricCol = findColInList(/profit|margin|income|units|quantity/i, headers) || profile.numCols[1] || profile.numCols[0];
+  const idCol = findColInList(/id|order|transaction|cust/i, headers) || headers[0];
+  const dateCol = profile.dateCols[0];
+  const catCol = profile.catCols[0] || findColInList(/category|product|type|region/i, headers) || headers[0];
+  const catCol2 = profile.catCols[1] || findColInList(/segment|channel|brand/i, headers);
+  
+  if (templateName === 'kpi') {
+    if (revCol) {
+      dashboardWidgets.push({ id: 'tmpl-kpi-1', title: 'Total Sales/Revenue', type: 'kpi', xCol: null, yCol: revCol, agg: 'sum', w: 3 });
+    }
+    if (secondMetricCol) {
+      dashboardWidgets.push({ id: 'tmpl-kpi-2', title: secondMetricCol === revCol ? 'Average Order' : 'Total Units', type: 'kpi', xCol: null, yCol: secondMetricCol, agg: secondMetricCol === revCol ? 'avg' : 'sum', w: 3 });
+    }
+    dashboardWidgets.push({ id: 'tmpl-kpi-3', title: 'Row Count (Orders)', type: 'kpi', xCol: null, yCol: idCol, agg: 'count', w: 3 });
+    dashboardWidgets.push({ id: 'tmpl-kpi-4', title: 'Categories Count', type: 'kpi', xCol: null, yCol: catCol, agg: 'count_dist', w: 3 });
+  } 
+  else if (templateName === 'trend') {
+    if (revCol) {
+      dashboardWidgets.push({ id: 'tmpl-trend-kpi-1', title: 'Total Sales', type: 'kpi', xCol: null, yCol: revCol, agg: 'sum', w: 6 });
+    }
+    dashboardWidgets.push({ id: 'tmpl-trend-kpi-2', title: 'Total Count', type: 'kpi', xCol: null, yCol: idCol, agg: 'count', w: 6 });
+    if (dateCol && revCol) {
+      dashboardWidgets.push({ id: 'tmpl-trend-hero', title: 'Sales Performance Trend over Time', type: 'line', xCol: dateCol, yCol: revCol, agg: 'sum', w: 12 });
+    }
+  } 
+  else if (templateName === 'full') {
+    if (revCol) {
+      dashboardWidgets.push({ id: 'tmpl-full-kpi-1', title: 'Total Sales', type: 'kpi', xCol: null, yCol: revCol, agg: 'sum', w: 4 });
+    }
+    if (secondMetricCol) {
+      dashboardWidgets.push({ id: 'tmpl-full-kpi-2', title: 'Secondary Metrics', type: 'kpi', xCol: null, yCol: secondMetricCol, agg: 'sum', w: 4 });
+    }
+    dashboardWidgets.push({ id: 'tmpl-full-kpi-3', title: 'Total Record Count', type: 'kpi', xCol: null, yCol: idCol, agg: 'count', w: 4 });
+    
+    if (dateCol && revCol) {
+      dashboardWidgets.push({ id: 'tmpl-full-trend', title: 'Metric Trend over Time', type: 'line', xCol: dateCol, yCol: revCol, agg: 'sum', w: 6 });
+    }
+    if (catCol && revCol) {
+      dashboardWidgets.push({ id: 'tmpl-full-share', title: 'Distribution by Category', type: 'donut', xCol: catCol, yCol: revCol, agg: 'sum', w: 6 });
+    }
+    if (catCol2 && revCol) {
+      dashboardWidgets.push({ id: 'tmpl-full-breakdown', title: 'Performance by Segment', type: 'bar', xCol: catCol2, yCol: revCol, agg: 'sum', w: 6 });
+    }
+    dashboardWidgets.push({ id: 'tmpl-full-table', title: 'Dataset Summary Report Grid', type: 'table', xCol: null, yCol: null, agg: null, w: 12 });
+  }
+
+  renderDashboardCanvas();
+  renderDashboardTab();
+  showToast(`Applied ${templateName} template successfully!`, "success");
+}
+
+function renderDashboardHealth() {
+  const container = document.getElementById('manage-health-list');
+  if (!container) return;
+
+  const checks = [];
+
+  if (dashboardWidgets.length === 0) {
+    checks.push({ status: 'warning', title: 'No Widgets Active', desc: 'Add widgets under "Visuals" or apply a template.' });
+  } else {
+    checks.push({ status: 'success', title: 'Widgets Configured', desc: `${dashboardWidgets.length} widgets active on the layout.` });
+  }
+
+  let hasEmpty = false;
+  dashboardWidgets.forEach(w => {
+    if (w.type !== 'table' && !w.yCol) hasEmpty = true;
+  });
+  if (hasEmpty) {
+    checks.push({ status: 'error', title: 'Unconfigured Metrics', desc: 'Some widgets have missing Y-axis metrics.' });
+  } else if (dashboardWidgets.length > 0) {
+    checks.push({ status: 'success', title: 'Widgets Mapped', desc: 'All active widgets are properly configured.' });
+  }
+
+  let totalW = 0;
+  dashboardWidgets.forEach(w => totalW += w.w);
+  if (totalW > 0) {
+    const rows = Math.ceil(totalW / 12);
+    checks.push({ status: 'info', title: 'Layout Coverage', desc: `Covering ${totalW} cols (~${rows} grid rows utilized).` });
+  }
+
+  const cCount = Object.keys(calculatedFields).length;
+  if (cCount > 0) {
+    checks.push({ status: 'info', title: 'Calculated Metrics', desc: `${cCount} virtual computed fields injected.` });
+  }
+
+  const dCount = Object.keys(activeDrillState).length;
+  if (dCount > 0) {
+    checks.push({ status: 'warning', title: 'Drill Path Active', desc: `${dCount} widgets are currently in a drilled-down state.` });
+  }
+
+  const icons = { success: '✅', warning: '⚠️', error: '❌', info: 'ℹ️' };
+
+  container.innerHTML = checks.map(c => `
+    <div class="health-item">
+      <span class="health-icon">${icons[c.status] || 'ℹ️'}</span>
+      <div class="health-text">
+        <span class="health-title">${c.title}</span>
+        <span class="health-desc">${c.desc}</span>
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderManageDatasetInfo() {
+  const rowsEl = document.getElementById('manage-info-rows');
+  const colsEl = document.getElementById('manage-info-cols');
+  const missingEl = document.getElementById('manage-info-missing');
+  const dupsEl = document.getElementById('manage-info-dups');
+  const qualityEl = document.getElementById('manage-info-quality');
+
+  if (rowsEl) rowsEl.innerText = gridData ? gridData.length.toLocaleString() : '0';
+  if (colsEl) colsEl.innerText = headers ? headers.length.toString() : '0';
+
+  const missingText = document.getElementById('ws-info-missing') ? document.getElementById('ws-info-missing').innerText : '0';
+  const dupsText = document.getElementById('ws-info-dups') ? document.getElementById('ws-info-dups').innerText : '0';
+  const scoreText = document.getElementById('quality-score-val') ? document.getElementById('quality-score-val').innerText : '94%';
+
+  if (missingEl) missingEl.innerText = missingText;
+  if (dupsEl) dupsEl.innerText = dupsText;
+  if (qualityEl) qualityEl.innerText = scoreText;
 }
 
 document.querySelectorAll('.viz-tab-btn').forEach(btn => {
@@ -5687,7 +6223,7 @@ function switchToDashboardView() {
         dashboardWidgets = [];
         generateDefaultDashboardDraft();
         renderDashboardCanvas();
-        renderStructureTab();
+        renderDashboardTab();
       };
     }
   }
@@ -5889,7 +6425,7 @@ function previewCalcField() {
   if (sampleOutput) sampleOutput.innerText = outputs.join('\n');
 
   if (hasError) {
-    if (validMsg) { validMsg.innerText = 'âš ï¸ Formula has errors or unknown columns.'; validMsg.style.color = 'var(--warning)'; }
+    if (validMsg) { validMsg.innerText = 'âš ï¸  Formula has errors or unknown columns.'; validMsg.style.color = 'var(--warning)'; }
     if (saveBtn) saveBtn.disabled = true;
   } else {
     if (validMsg) { validMsg.innerText = 'âœ… Formula is valid.'; validMsg.style.color = 'var(--success)'; }
@@ -6554,10 +7090,11 @@ function applyDashboardState(state) {
   calculatedFields = state.calculatedFields || {};
   drillHierarchies = state.drillHierarchies || [];
   renderDashboardCanvas();
-  renderStructureTab();
-  renderFiltersTab();
-  renderCalcFieldsList();
-  renderDrillHierarchiesList();
+  
+  if (activeVizTab === 'dashboard') renderDashboardTab();
+  else if (activeVizTab === 'explore') renderExploreTab();
+  else if (activeVizTab === 'insights') renderInsightsTab();
+  else if (activeVizTab === 'manage') renderManageTab();
 }
 
 function saveDashboardToStorage(name) {
@@ -6577,75 +7114,15 @@ function exportDashboardJSON() {
 }
 
 function injectSaveLoadButtons() {
-  var vizPanel = document.getElementById('ws-sidebar-visualization');
-  if (!vizPanel || document.getElementById('dash-save-load-bar')) return;
-
-  var bar = document.createElement('div');
-  bar.id = 'dash-save-load-bar';
-  bar.style.cssText = 'display:flex; gap:5px; flex-wrap:wrap; padding:6px 0 10px 0; border-bottom:1px solid var(--border-color); margin-bottom:4px;';
-  bar.innerHTML =
-    '<button class="btn-outline btn-sm" id="btn-dash-save" style="flex:1; justify-content:center; font-size:10px; height:26px; padding:0 6px;" title="Save dashboard">ðŸ’¾ Save</button>' +
-    '<button class="btn-outline btn-sm" id="btn-dash-load" style="flex:1; justify-content:center; font-size:10px; height:26px; padding:0 6px;" title="Load saved">ðŸ“‚ Load</button>' +
-    '<button class="btn-outline btn-sm" id="btn-dash-export" style="flex:1; justify-content:center; font-size:10px; height:26px; padding:0 6px;" title="Export JSON">â¬‡ JSON</button>' +
-    '<input type="file" id="btn-dash-import-file" accept=".json" style="display:none;" />' +
-    '<button class="btn-outline btn-sm" id="btn-dash-import" style="flex:1; justify-content:center; font-size:10px; height:26px; padding:0 6px;" title="Import JSON">â¬† Import</button>';
-
-  var title = vizPanel.querySelector('h3.ws-sidebar-title');
-  if (title && title.nextSibling) { vizPanel.insertBefore(bar, title.nextSibling); }
-  else { vizPanel.appendChild(bar); }
-
-  document.getElementById('btn-dash-save').addEventListener('click', function() {
-    var name = prompt('Name this dashboard save:', 'Dashboard ' + new Date().toLocaleDateString());
-    if (name !== null && name.trim()) {
-      var key = saveDashboardToStorage(name.trim());
-      if (key) alert('Saved successfully.');
-    }
-  });
-
-  document.getElementById('btn-dash-load').addEventListener('click', function() {
-    var keys = Object.keys(localStorage).filter(function(k) { return k.startsWith('oneclick_dash_'); });
-    if (keys.length === 0) { alert('No saved dashboards found.'); return; }
-    var list = keys.map(function(k, i) { return (i + 1) + '. ' + k.replace('oneclick_dash_', '').replace(/_\d+$/, '').replace(/_/g, ' '); }).join('\n');
-    var choice = prompt('Saved dashboards:\n' + list + '\n\nEnter number to load:', '1');
-    var idx = parseInt(choice) - 1;
-    if (idx >= 0 && idx < keys.length) {
-      try { applyDashboardState(JSON.parse(localStorage.getItem(keys[idx]))); }
-      catch(e) { alert('Load failed: ' + e.message); }
-    }
-  });
-
-  document.getElementById('btn-dash-export').addEventListener('click', exportDashboardJSON);
-
-  document.getElementById('btn-dash-import').addEventListener('click', function() {
-    document.getElementById('btn-dash-import-file').click();
-  });
-
-  document.getElementById('btn-dash-import-file').addEventListener('change', function(e) {
-    var file = e.target.files[0];
-    if (!file) return;
-    var reader = new FileReader();
-    reader.onload = function(ev) {
-      try { applyDashboardState(JSON.parse(ev.target.result)); alert('Dashboard imported!'); }
-      catch(err) { alert('Import failed: ' + err.message); }
-    };
-    reader.readAsText(file);
-    e.target.value = '';
-  });
+  // Integrated into Manage tab accordions
 }
 
 
 // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• PHASE 2: PATCH switchVizTab â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
-var _origSwitchVizTab = switchVizTab;
-window.switchVizTab = function(tabName) {
-  _origSwitchVizTab(tabName);
-  if (tabName === 'insights') renderInsightsTab();
-  else if (tabName === 'calcfields') { renderCalcFieldsList(); initCalcFieldHelpers(); }
-  else if (tabName === 'drilldown') { renderDrillHierarchiesList(); initDrillColChecklist(); updateDrillStatus(); }
-  else if (tabName === 'analysis') { switchAnalysisSubtab('correlation'); initRanksDims(); initBenchmarkDims(); }
-};
+window.switchVizTab = switchVizTab;
 
-// Re-bind all viz tab buttons to use patched version
+// Re-bind all viz tab buttons to use unified version
 document.querySelectorAll('.viz-tab-btn').forEach(function(btn) {
   btn.onclick = function() { window.switchVizTab(btn.dataset.tab); };
 });
@@ -6656,9 +7133,6 @@ document.querySelectorAll('.viz-tab-btn').forEach(function(btn) {
 var _origSwitchToDashboardView = switchToDashboardView;
 window.switchToDashboardView = function() {
   _origSwitchToDashboardView();
-  injectSaveLoadButtons();
-  initCalcFieldHelpers();
-  initDrillColChecklist();
 };
 
 // Re-bind switch-to-dashboard triggers
@@ -6954,3 +7428,1147 @@ initCollapsiblePanel('dashbuilder-panel-header',   'dashbuilder-panel-body',   '
   // (They ran on DOMContentLoaded â€” no-op since elements exist but do nothing now)
 
 })();
+
+// ═══════════════════════════ WORKSPACES ENGINE ═══════════════════════════
+
+let currentWorkspaceId = null;
+window.isRestoringWorkspace = false;
+let autoSaveTimer = null;
+let workspacesListLimit = 10;
+
+const DB_NAME = 'oneclick_db';
+const DB_VERSION = 1;
+const STORE_NAME = 'workspaces';
+
+function openDB() {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open(DB_NAME, DB_VERSION);
+    request.onupgradeneeded = (e) => {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains(STORE_NAME)) {
+        db.createObjectStore(STORE_NAME, { keyPath: 'workspaceId' });
+      }
+    };
+    request.onsuccess = (e) => resolve(e.target.result);
+    request.onerror = (e) => reject(e.target.error);
+  });
+}
+
+function saveWorkspaceToDB(workspace) {
+  return openDB().then(db => {
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(STORE_NAME, 'readwrite');
+      const store = tx.objectStore(STORE_NAME);
+      const request = store.put(workspace);
+      request.onsuccess = () => resolve();
+      request.onerror = (e) => reject(e.target.error);
+    });
+  });
+}
+
+function getWorkspaceFromDB(workspaceId) {
+  return openDB().then(db => {
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(STORE_NAME, 'readonly');
+      const store = tx.objectStore(STORE_NAME);
+      const request = store.get(workspaceId);
+      request.onsuccess = (e) => resolve(e.target.result);
+      request.onerror = (e) => reject(e.target.error);
+    });
+  });
+}
+
+function getAllWorkspacesFromDB() {
+  return openDB().then(db => {
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(STORE_NAME, 'readonly');
+      const store = tx.objectStore(STORE_NAME);
+      const request = store.getAll();
+      request.onsuccess = (e) => resolve(e.target.result || []);
+      request.onerror = (e) => reject(e.target.error);
+    });
+  });
+}
+
+function deleteWorkspaceFromDB(workspaceId) {
+  return openDB().then(db => {
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(STORE_NAME, 'readwrite');
+      const store = tx.objectStore(STORE_NAME);
+      const request = store.delete(workspaceId);
+      request.onsuccess = () => resolve();
+      request.onerror = (e) => reject(e.target.error);
+    });
+  });
+}
+
+function enforceWorkspaceLimit() {
+  return getAllWorkspacesFromDB().then(workspaces => {
+    if (workspaces.length <= 25) return;
+    
+    // Sort all workspaces by lastOpenedTimestamp ascending
+    const nonFavorites = workspaces.filter(w => !w.isFavorite);
+    nonFavorites.sort((a, b) => (a.lastOpenedTimestamp || 0) - (b.lastOpenedTimestamp || 0));
+    
+    const excessCount = workspaces.length - 25;
+    const deletePromises = [];
+    
+    for (let i = 0; i < Math.min(excessCount, nonFavorites.length); i++) {
+      deletePromises.push(deleteWorkspaceFromDB(nonFavorites[i].workspaceId));
+    }
+    
+    return Promise.all(deletePromises);
+  });
+}
+
+function computeWorkspaceStatus() {
+  if (dashboardWidgets && dashboardWidgets.length > 0) {
+    return "Dashboard Created";
+  }
+  if (preprocessingHistory && preprocessingHistory.length > 0) {
+    return "Cleaned";
+  }
+  return "Uploaded";
+}
+
+function getActiveWorkspaceState(existingWorkspace) {
+  const now = Date.now();
+  const titleEl = document.getElementById('ws-dataset-name');
+  const wsName = titleEl ? titleEl.innerText.trim() : (existingWorkspace ? existingWorkspace.workspaceName : "Untitled Workspace");
+  
+  return {
+    workspaceId: currentWorkspaceId,
+    workspaceName: wsName,
+    fileName: existingWorkspace ? existingWorkspace.fileName : wsName,
+    uploadTimestamp: existingWorkspace ? existingWorkspace.uploadTimestamp : now,
+    lastOpenedTimestamp: now,
+    rowCount: gridData ? gridData.length : 0,
+    columnCount: headers ? headers.length : 0,
+    isFavorite: existingWorkspace ? !!existingWorkspace.isFavorite : false,
+    status: computeWorkspaceStatus(),
+    datasetData: {
+      gridData: gridData,
+      originalGridData: originalGridData,
+      headers: headers,
+      headerNames: headerNames,
+      columnWidths: columnWidths,
+      hiddenColumns: Array.from(hiddenColumns)
+    },
+    cleaningHistory: {
+      preprocessingHistory: preprocessingHistory,
+      preprocessingRedoHistory: preprocessingRedoHistory
+    },
+    dashboardWidgets: dashboardWidgets,
+    globalFilters: {
+      activeFilters: typeof activeFilters !== 'undefined' ? activeFilters : null,
+      activeSort: typeof activeSort !== 'undefined' ? activeSort : null,
+      globalVizFilters: typeof globalVizFilters !== 'undefined' ? globalVizFilters : null,
+      activeDrillState: typeof activeDrillState !== 'undefined' ? activeDrillState : null
+    },
+    calculatedFields: calculatedFields,
+    drillHierarchies: drillHierarchies
+  };
+}
+
+function autoSaveActiveWorkspace(isDebounced = false) {
+  if (window.isRestoringWorkspace) return;
+  if (!currentWorkspaceId) return;
+  
+  if (autoSaveTimer) {
+    clearTimeout(autoSaveTimer);
+    autoSaveTimer = null;
+  }
+  
+  if (isDebounced) {
+    autoSaveTimer = setTimeout(() => {
+      performSaveWorkspace().then(() => {
+        showToast("Auto-saved progress", "info");
+      }).catch(err => {
+        console.error("Auto-save failed:", err);
+      });
+    }, 5000);
+  } else {
+    performSaveWorkspace().catch(err => {
+      console.error("Immediate auto-save failed:", err);
+    });
+  }
+}
+
+function performSaveWorkspace() {
+  if (!currentWorkspaceId) {
+    return Promise.reject(new Error("No active workspace to save."));
+  }
+  
+  return getWorkspaceFromDB(currentWorkspaceId).then(existingWorkspace => {
+    const updatedWorkspace = getActiveWorkspaceState(existingWorkspace);
+    return saveWorkspaceToDB(updatedWorkspace).then(() => {
+      return enforceWorkspaceLimit();
+    });
+  });
+}
+
+function showToast(message, type = "success") {
+  let toast = document.getElementById('oneclick-toast-notification');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'oneclick-toast-notification';
+    toast.className = 'oneclick-toast';
+    document.body.appendChild(toast);
+  }
+  
+  toast.className = `oneclick-toast show ${type}`;
+  toast.innerHTML = `
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;">
+      ${type === 'success' ? '<polyline points="20 6 9 17 4 12"></polyline>' : 
+        type === 'error' ? '<circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line>' :
+        '<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>'}
+    </svg>
+    <span class="toast-message">${message}</span>
+  `;
+  
+  setTimeout(() => {
+    toast.classList.remove('show');
+  }, 3000);
+}
+
+function formatRelativeTime(timestamp) {
+  if (!timestamp) return "Never";
+  const diff = Date.now() - timestamp;
+  const secs = Math.floor(diff / 1000);
+  if (secs < 60) return "Just now";
+  const mins = Math.floor(secs / 60);
+  if (mins < 60) return `${mins}m ago`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  if (days === 1) return "Yesterday";
+  if (days < 7) return `${days} days ago`;
+  return new Date(timestamp).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+function renderWorkspaceCardHTML(w) {
+  const fileExt = w.fileName ? w.fileName.split('.').pop().toLowerCase() : 'csv';
+  const iconClass = (fileExt === 'xlsx' || fileExt === 'xls') ? 'xlsx' : 'csv';
+  
+  let previewCols = "No preview available";
+  if (w.datasetData && w.datasetData.headers) {
+    const list = w.datasetData.headers.map(h => w.datasetData.headerNames[h] || h);
+    previewCols = list.slice(0, 4).join(', ');
+    if (list.length > 4) previewCols += '...';
+  }
+  
+  const statusClass = (w.status || 'uploaded').toLowerCase().replace(' ', '-');
+  const isPinned = !!w.isFavorite;
+  const pinTitle = isPinned ? "Unpin Workspace" : "Pin Workspace";
+  
+  const widgetsCount = w.dashboardWidgets ? w.dashboardWidgets.length : 0;
+  const cleaningCount = (w.cleaningHistory && w.cleaningHistory.preprocessingHistory) ? w.cleaningHistory.preprocessingHistory.length : 0;
+  
+  return `
+    <div class="recent-card" data-id="${w.workspaceId}" onclick="openWorkspace('${w.workspaceId}')">
+      <div class="recent-card-header" onclick="event.stopPropagation();">
+        <div class="recent-card-icon-wrap ${iconClass}">
+          ${fileExt.toUpperCase()}
+        </div>
+        <div class="recent-card-title-area">
+          <div class="recent-card-filename" contenteditable="false" data-id="${w.workspaceId}" onblur="saveWorkspaceNameInline(this, '${w.workspaceId}')" onkeydown="handleWorkspaceNameKeydown(event, this)">
+            ${w.workspaceName || w.fileName || 'Untitled Workspace'}
+          </div>
+          <div class="recent-card-meta">
+            <span>${w.fileName}</span>
+          </div>
+        </div>
+        <div class="recent-card-header-actions">
+          <button class="recent-btn-pin ${isPinned ? 'pinned' : ''}" title="${pinTitle}" onclick="toggleWorkspaceFavorite(event, '${w.workspaceId}')">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="${isPinned ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2">
+              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+            </svg>
+          </button>
+          <button class="recent-btn-actions" title="Actions" onclick="toggleWorkspaceActionsDropdown(event, '${w.workspaceId}')">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/>
+            </svg>
+          </button>
+          
+          <div class="recent-dropdown-menu" id="ws-dropdown-${w.workspaceId}">
+            <button class="recent-dropdown-item" onclick="openWorkspace('${w.workspaceId}')">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+              Open Workspace
+            </button>
+            <button class="recent-dropdown-item" onclick="triggerRenameWorkspace(event, '${w.workspaceId}')">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+              Rename
+            </button>
+            <button class="recent-dropdown-item" onclick="duplicateWorkspace(event, '${w.workspaceId}')">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+              Duplicate
+            </button>
+            <button class="recent-dropdown-item" onclick="toggleWorkspaceFavorite(event, '${w.workspaceId}')">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+              ${isPinned ? 'Unpin' : 'Pin/Favorite'}
+            </button>
+            <div class="recent-dropdown-divider"></div>
+            <button class="recent-dropdown-item danger" onclick="deleteWorkspace(event, '${w.workspaceId}')">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+              Delete Workspace
+            </button>
+          </div>
+        </div>
+      </div>
+      
+      <div class="recent-card-body">
+        <div class="recent-detail-item">
+          <span class="recent-detail-label">Dimensions</span>
+          <span class="recent-detail-value">${w.rowCount.toLocaleString()} x ${w.columnCount}</span>
+        </div>
+        <div class="recent-detail-item">
+          <span class="recent-detail-label">Dashboard</span>
+          <span class="recent-detail-value">${widgetsCount} widgets</span>
+        </div>
+        <div class="recent-detail-item">
+          <span class="recent-detail-label">Cleaning</span>
+          <span class="recent-detail-value">${cleaningCount} steps</span>
+        </div>
+        <div class="recent-detail-item">
+          <span class="recent-detail-label">Uploaded</span>
+          <span class="recent-detail-value">${new Date(w.uploadTimestamp).toLocaleDateString()}</span>
+        </div>
+      </div>
+      
+      <div style="font-size:12px; color:var(--text-secondary); margin-bottom: 2px;">
+        <span class="recent-detail-label" style="display:block; margin-bottom:2px;">Columns Preview</span>
+        <span style="font-family: var(--font-mono); font-size:11px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:block;">${previewCols}</span>
+      </div>
+      
+      <div class="recent-card-footer">
+        <span class="recent-status-badge ${statusClass}">${w.status || 'uploaded'}</span>
+        <span class="recent-date-label">Active ${formatRelativeTime(w.lastOpenedTimestamp)}</span>
+      </div>
+    </div>
+  `;
+}
+
+function wireWorkspaceCardEvents() {
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.recent-btn-actions') && !e.target.closest('.recent-dropdown-menu')) {
+      const dropdowns = document.querySelectorAll('.recent-dropdown-menu');
+      dropdowns.forEach(d => d.classList.remove('open'));
+    }
+  });
+}
+
+function loadAndRenderProjects() {
+  getAllWorkspacesFromDB().then(workspaces => {
+    workspaces.sort((a, b) => (b.lastOpenedTimestamp || 0) - (a.lastOpenedTimestamp || 0));
+    
+    const searchInput = document.getElementById('proj-search-input');
+    const query = searchInput ? searchInput.value.toLowerCase().trim() : "";
+    
+    let filteredWorkspaces = workspaces;
+    if (query) {
+      filteredWorkspaces = workspaces.filter(w => {
+        const name = (w.workspaceName || "").toLowerCase();
+        const file = (w.fileName || "").toLowerCase();
+        const status = (w.status || "").toLowerCase();
+        const dateStr = w.lastOpenedTimestamp ? new Date(w.lastOpenedTimestamp).toLocaleDateString().toLowerCase() : "";
+        return name.includes(query) || file.includes(query) || status.includes(query) || dateStr.includes(query);
+      });
+    }
+    
+    const favorites = filteredWorkspaces.filter(w => w.isFavorite);
+    const favoritesGrid = document.getElementById('proj-favorites-grid');
+    const favoritesSection = document.getElementById('proj-favorites-section');
+    
+    if (favoritesGrid && favoritesSection) {
+      if (favorites.length > 0 && !query) {
+        favoritesSection.style.display = 'block';
+        favoritesGrid.innerHTML = favorites.map(w => renderWorkspaceCardHTML(w)).join('');
+      } else {
+        favoritesSection.style.display = 'none';
+        favoritesGrid.innerHTML = '';
+      }
+    }
+    
+    const allGrid = document.getElementById('proj-all-grid');
+    const countLabel = document.getElementById('proj-count-label');
+    const loadMoreWrap = document.getElementById('proj-load-more-wrap');
+    const emptyState = document.getElementById('proj-empty-state');
+    const allSection = document.getElementById('proj-all-section');
+    
+    if (filteredWorkspaces.length === 0) {
+      if (emptyState) emptyState.style.display = 'flex';
+      if (allSection) allSection.style.display = 'none';
+    } else {
+      if (emptyState) emptyState.style.display = 'none';
+      if (allSection) allSection.style.display = 'block';
+      
+      const visibleWorkspaces = filteredWorkspaces.slice(0, workspacesListLimit);
+      if (allGrid) {
+        allGrid.innerHTML = visibleWorkspaces.map(w => renderWorkspaceCardHTML(w)).join('');
+      }
+      
+      if (countLabel) {
+        countLabel.innerText = `Showing ${visibleWorkspaces.length} of ${filteredWorkspaces.length} projects`;
+      }
+      
+      if (loadMoreWrap) {
+        if (filteredWorkspaces.length > workspacesListLimit) {
+          loadMoreWrap.style.display = 'flex';
+        } else {
+          loadMoreWrap.style.display = 'none';
+        }
+      }
+    }
+    
+    wireWorkspaceCardEvents();
+  }).catch(err => {
+    console.error("Failed to load projects:", err);
+  });
+}
+
+window.loadAndRenderProjects = loadAndRenderProjects;
+
+window.loadAndRenderWorkspaces = function() {
+  window.loadAndRenderProjects();
+};
+
+function restoreDatasetWorkspace(wsState) {
+  window.isRestoringWorkspace = true;
+  currentWorkspaceId = wsState.workspaceId;
+  
+  gridData = wsState.datasetData.gridData || [];
+  originalGridData = wsState.datasetData.originalGridData || [];
+  headers = wsState.datasetData.headers || [];
+  headerNames = wsState.datasetData.headerNames || {};
+  columnWidths = wsState.datasetData.columnWidths || {};
+  hiddenColumns = new Set(wsState.datasetData.hiddenColumns || []);
+  
+  preprocessingHistory = (wsState.cleaningHistory && wsState.cleaningHistory.preprocessingHistory) ? wsState.cleaningHistory.preprocessingHistory : [];
+  preprocessingRedoHistory = (wsState.cleaningHistory && wsState.cleaningHistory.preprocessingRedoHistory) ? wsState.cleaningHistory.preprocessingRedoHistory : [];
+  
+  dashboardWidgets = wsState.dashboardWidgets || [];
+  
+  if (wsState.globalFilters) {
+    activeFilters = wsState.globalFilters.activeFilters || {};
+    activeSort = wsState.globalFilters.activeSort || null;
+    globalVizFilters = wsState.globalFilters.globalVizFilters || {};
+    activeDrillState = wsState.globalFilters.activeDrillState || {};
+  } else {
+    activeFilters = {};
+    activeSort = null;
+    globalVizFilters = {};
+    activeDrillState = {};
+  }
+  
+  calculatedFields = wsState.calculatedFields || {};
+  drillHierarchies = wsState.drillHierarchies || [];
+  
+  const titleEl = document.getElementById('ws-dataset-name');
+  if (titleEl) {
+    titleEl.innerText = wsState.workspaceName || wsState.fileName || "Untitled Workspace";
+  }
+  
+  const fileBadge = document.querySelector('.ws-file-type-badge');
+  if (fileBadge) {
+    const ext = wsState.fileName ? wsState.fileName.split('.').pop().toUpperCase() : 'CSV';
+    fileBadge.className = `ws-file-type-badge ${ext.toLowerCase()}`;
+    fileBadge.innerText = ext;
+  }
+  
+  viewIndices = gridData.map((_, i) => i);
+  undoStack = [];
+  redoStack = [];
+  updateUndoRedoStates();
+  
+  if (typeof applySearchSortAndFilters === 'function') {
+    applySearchSortAndFilters();
+  }
+  
+  if (typeof renderGridTable === 'function') {
+    renderGridTable();
+  }
+  updateMetadata();
+  
+  if (typeof renderHistoryTab === 'function') {
+    renderHistoryTab();
+  }
+  
+  if (typeof renderCalcFieldsList === 'function') {
+    renderCalcFieldsList();
+  }
+  if (typeof renderDrillHierarchiesList === 'function') {
+    renderDrillHierarchiesList();
+  }
+  
+  document.getElementById('dashboard-view-container').style.display = 'none';
+  const containersToHide = [
+    'workspaces-view-container',
+    'projects-view-container',
+    'datasets-view-container',
+    'reports-view-container',
+    'settings-view-container'
+  ];
+  containersToHide.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = 'none';
+  });
+  
+  const workspaceView = document.getElementById('workspace-view-container');
+  if (workspaceView) {
+    workspaceView.style.display = 'flex';
+  }
+  
+  if (typeof switchToSheetView === 'function') {
+    switchToSheetView();
+  }
+  
+  wsState.lastOpenedTimestamp = Date.now();
+  saveWorkspaceToDB(wsState).catch(err => {
+    console.error("Failed to update last opened timestamp:", err);
+  });
+  
+  setTimeout(() => {
+    window.isRestoringWorkspace = false;
+  }, 100);
+}
+
+window.openWorkspace = function(workspaceId) {
+  getWorkspaceFromDB(workspaceId).then(workspace => {
+    if (!workspace) {
+      showToast("Workspace not found!", "error");
+      return;
+    }
+    restoreDatasetWorkspace(workspace);
+  }).catch(err => {
+    showToast("Failed to load workspace: " + err.message, "error");
+  });
+};
+
+window.toggleWorkspaceFavorite = function(event, workspaceId) {
+  if (event) event.stopPropagation();
+  getWorkspaceFromDB(workspaceId).then(workspace => {
+    if (!workspace) return;
+    workspace.isFavorite = !workspace.isFavorite;
+    return saveWorkspaceToDB(workspace).then(() => {
+      const activeNav = document.querySelector('.nav-item.active .nav-label-text');
+      const activeText = activeNav ? activeNav.innerText.trim() : 'Projects';
+      if (activeText === 'Dashboard') {
+        window.loadAndRenderDashboard();
+      } else {
+        window.loadAndRenderProjects();
+      }
+      showToast(workspace.isFavorite ? "Workspace pinned to top" : "Workspace unpinned", "success");
+    });
+  }).catch(err => {
+    showToast("Error update: " + err.message, "error");
+  });
+};
+
+window.toggleWorkspaceActionsDropdown = function(event, workspaceId) {
+  if (event) event.stopPropagation();
+  const dropdowns = document.querySelectorAll('.recent-dropdown-menu');
+  dropdowns.forEach(d => {
+    if (d.id !== `ws-dropdown-${workspaceId}`) {
+      d.classList.remove('open');
+    }
+  });
+  const dropdown = document.getElementById(`ws-dropdown-${workspaceId}`);
+  if (dropdown) {
+    dropdown.classList.toggle('open');
+  }
+};
+
+window.triggerRenameWorkspace = function(event, workspaceId) {
+  if (event) event.stopPropagation();
+  const dropdown = document.getElementById(`ws-dropdown-${workspaceId}`);
+  if (dropdown) dropdown.classList.remove('open');
+  const titleEl = document.querySelector(`.recent-card-filename[data-id="${workspaceId}"]`);
+  if (titleEl) {
+    titleEl.contentEditable = "true";
+    titleEl.focus();
+    const range = document.createRange();
+    range.selectNodeContents(titleEl);
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+  }
+};
+
+window.saveWorkspaceNameInline = function(element, workspaceId) {
+  element.contentEditable = "false";
+  const newName = element.innerText.trim();
+  if (!newName) {
+    getWorkspaceFromDB(workspaceId).then(w => {
+      element.innerText = w.workspaceName || w.fileName || 'Untitled Workspace';
+    });
+    return;
+  }
+  getWorkspaceFromDB(workspaceId).then(w => {
+    if (!w) return;
+    w.workspaceName = newName;
+    return saveWorkspaceToDB(w).then(() => {
+      const activeNav = document.querySelector('.nav-item.active .nav-label-text');
+      const activeText = activeNav ? activeNav.innerText.trim() : 'Projects';
+      if (activeText === 'Dashboard') {
+        window.loadAndRenderDashboard();
+      } else {
+        window.loadAndRenderProjects();
+      }
+      showToast("Workspace renamed", "success");
+    });
+  }).catch(err => {
+    showToast("Error renaming workspace: " + err.message, "error");
+  });
+};
+
+window.handleWorkspaceNameKeydown = function(event, element) {
+  if (event.key === 'Enter') {
+    event.preventDefault();
+    element.blur();
+  }
+  if (event.key === 'Escape') {
+    event.preventDefault();
+    element.blur();
+  }
+};
+
+window.duplicateWorkspace = function(event, workspaceId) {
+  if (event) event.stopPropagation();
+  const dropdown = document.getElementById(`ws-dropdown-${workspaceId}`);
+  if (dropdown) dropdown.classList.remove('open');
+  getWorkspaceFromDB(workspaceId).then(w => {
+    if (!w) return;
+    const duplicate = JSON.parse(JSON.stringify(w));
+    duplicate.workspaceId = 'ws_' + Date.now();
+    duplicate.workspaceName = `Copy of ${w.workspaceName || w.fileName}`;
+    duplicate.uploadTimestamp = Date.now();
+    duplicate.lastOpenedTimestamp = Date.now();
+    duplicate.isFavorite = false;
+    return saveWorkspaceToDB(duplicate).then(() => {
+      return enforceWorkspaceLimit();
+    }).then(() => {
+      const activeNav = document.querySelector('.nav-item.active .nav-label-text');
+      const activeText = activeNav ? activeNav.innerText.trim() : 'Projects';
+      if (activeText === 'Dashboard') {
+        window.loadAndRenderDashboard();
+      } else {
+        window.loadAndRenderProjects();
+      }
+      showToast("Workspace duplicated", "success");
+    });
+  }).catch(err => {
+    showToast("Failed to duplicate: " + err.message, "error");
+  });
+};
+
+window.deleteWorkspace = function(event, workspaceId) {
+  if (event) event.stopPropagation();
+  const dropdown = document.getElementById(`ws-dropdown-${workspaceId}`);
+  if (dropdown) dropdown.classList.remove('open');
+  if (confirm("Are you sure you want to delete this workspace permanently?")) {
+    deleteWorkspaceFromDB(workspaceId).then(() => {
+      const activeNav = document.querySelector('.nav-item.active .nav-label-text');
+      const activeText = activeNav ? activeNav.innerText.trim() : 'Projects';
+      if (activeText === 'Dashboard') {
+        window.loadAndRenderDashboard();
+      } else {
+        window.loadAndRenderProjects();
+      }
+      showToast("Workspace deleted successfully", "info");
+    }).catch(err => {
+      showToast("Failed to delete workspace: " + err.message, "error");
+    });
+  }
+};
+
+/* ═══════════════════════════ NEW VIEW RENDERING CONTROLLERS ═══════════════════════════ */
+
+window.loadAndRenderDashboard = function() {
+  getAllWorkspacesFromDB().then(workspaces => {
+    const emptyState = document.getElementById('db-empty-state');
+    const contentSections = document.getElementById('db-content-sections');
+    
+    if (workspaces.length === 0) {
+      if (emptyState) emptyState.style.display = 'flex';
+      if (contentSections) contentSections.style.display = 'none';
+      return;
+    } else {
+      if (emptyState) emptyState.style.display = 'none';
+      if (contentSections) contentSections.style.display = 'block';
+    }
+    
+    workspaces.sort((a, b) => (b.lastOpenedTimestamp || 0) - (a.lastOpenedTimestamp || 0));
+    const recentWorkspaces = workspaces.slice(0, 3);
+    
+    const dbRecentGrid = document.getElementById('db-recent-datasets-grid');
+    if (dbRecentGrid) {
+      dbRecentGrid.innerHTML = recentWorkspaces.map(w => renderWorkspaceCardHTML(w)).join('');
+    }
+    
+    const keys = Object.keys(localStorage).filter(k => k.startsWith('oneclick_dash_'));
+    const reports = keys.map(k => {
+      try { return { key: k, state: JSON.parse(localStorage.getItem(k)) }; }
+      catch(e) { return null; }
+    }).filter(r => r !== null);
+    
+    reports.sort((a, b) => new Date(b.state.savedAt) - new Date(a.state.savedAt));
+    const recentReports = reports.slice(0, 3);
+    
+    const dbReportsGrid = document.getElementById('db-recent-reports-grid');
+    if (dbReportsGrid) {
+      if (recentReports.length > 0) {
+        dbReportsGrid.innerHTML = recentReports.map(r => renderReportCardHTML(r.key, r.state)).join('');
+      } else {
+        dbReportsGrid.innerHTML = `
+          <div style="grid-column: 1 / -1; padding: 24px; text-align: center; color: var(--text-secondary); background: rgba(255,255,255,0.02); border-radius: 8px; border: 1px dashed var(--border-color); font-size: 13px;">
+            No reports saved yet. Create a report in your active workspace and click "Save Dashboard" to see it here.
+          </div>
+        `;
+      }
+    }
+    
+    wireWorkspaceCardEvents();
+  }).catch(err => {
+    console.error("Failed to load dashboard data:", err);
+  });
+};
+
+window.loadAndRenderDatasets = function() {
+  getAllWorkspacesFromDB().then(workspaces => {
+    const emptyState = document.getElementById('ds-empty-state');
+    const contentSection = document.getElementById('ds-content-section');
+    const tableBody = document.getElementById('ds-table-body');
+    
+    if (workspaces.length === 0) {
+      if (emptyState) emptyState.style.display = 'flex';
+      if (contentSection) contentSection.style.display = 'none';
+      return;
+    } else {
+      if (emptyState) emptyState.style.display = 'none';
+      if (contentSection) contentSection.style.display = 'block';
+    }
+    
+    workspaces.sort((a, b) => b.uploadTimestamp - a.uploadTimestamp);
+    
+    if (tableBody) {
+      tableBody.innerHTML = workspaces.map(w => renderDatasetRowHTML(w)).join('');
+    }
+  }).catch(err => {
+    console.error("Failed to load datasets:", err);
+  });
+};
+
+function renderDatasetRowHTML(w) {
+  const dateStr = new Date(w.uploadTimestamp).toLocaleDateString();
+  const statusClass = (w.status || 'uploaded').toLowerCase().replace(/\s+/g, '-');
+  return `
+    <tr>
+      <td style="font-weight: 500; color: var(--text-primary); padding: 16px 24px;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--primary); flex-shrink: 0;">
+            <ellipse cx="12" cy="5" rx="9" ry="3"/>
+            <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/>
+            <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>
+          </svg>
+          <span>${w.fileName}</span>
+        </div>
+      </td>
+      <td style="padding: 16px 24px; color: var(--text-primary);">${w.rowCount.toLocaleString()}</td>
+      <td style="padding: 16px 24px; color: var(--text-primary);">${w.columnCount}</td>
+      <td style="padding: 16px 24px; color: var(--text-secondary);">${dateStr}</td>
+      <td style="padding: 16px 24px;">
+        <span class="recent-status-badge ${statusClass}">${w.status || 'uploaded'}</span>
+      </td>
+      <td style="text-align: right; padding: 16px 24px; padding-right: 24px;">
+        <div style="display: flex; gap: 8px; justify-content: flex-end;">
+          <button class="btn-secondary btn-sm" onclick="openWorkspace('${w.workspaceId}')" style="margin:0; padding:4px 8px; font-size:11px; height: 28px;">
+            Open
+          </button>
+          <button class="btn-secondary btn-sm" onclick="deleteDataset(event, '${w.workspaceId}')" style="margin:0; padding:4px 8px; font-size:11px; height: 28px; color:var(--error); border-color:rgba(239,68,68,0.2);">
+            Delete
+          </button>
+        </div>
+      </td>
+    </tr>
+  `;
+}
+
+window.deleteDataset = function(event, workspaceId) {
+  if (event) event.stopPropagation();
+  if (confirm("Are you sure you want to delete this dataset workspace permanently? This will remove all associated pre-processing, formulas, and dashboards.")) {
+    deleteWorkspaceFromDB(workspaceId).then(() => {
+      loadAndRenderDatasets();
+      showToast("Dataset deleted", "info");
+    }).catch(err => {
+      showToast("Failed to delete dataset: " + err.message, "error");
+    });
+  }
+};
+
+window.loadAndRenderReportsList = function() {
+  const keys = Object.keys(localStorage).filter(k => k.startsWith('oneclick_dash_'));
+  const emptyState = document.getElementById('rep-empty-state');
+  const contentSection = document.getElementById('rep-content-section');
+  const grid = document.getElementById('rep-grid');
+  
+  if (keys.length === 0) {
+    if (emptyState) emptyState.style.display = 'flex';
+    if (contentSection) contentSection.style.display = 'none';
+    return;
+  } else {
+    if (emptyState) emptyState.style.display = 'none';
+    if (contentSection) contentSection.style.display = 'block';
+  }
+  
+  const reports = keys.map(k => {
+    try { return { key: k, state: JSON.parse(localStorage.getItem(k)) }; }
+    catch(e) { return null; }
+  }).filter(r => r !== null);
+  
+  reports.sort((a, b) => new Date(b.state.savedAt) - new Date(a.state.savedAt));
+  
+  if (grid) {
+    grid.innerHTML = reports.map(r => renderReportCardHTML(r.key, r.state)).join('');
+  }
+};
+
+function renderReportCardHTML(key, state) {
+  const displayName = key.replace('oneclick_dash_', '').replace(/_\d+$/, '').replace(/_/g, ' ');
+  const dateStr = state.savedAt ? new Date(state.savedAt).toLocaleString() : 'Unknown';
+  const widgetCount = state.dashboardWidgets ? state.dashboardWidgets.length : 0;
+  
+  return `
+    <div class="recent-card report-card" style="display: flex; flex-direction: column; justify-content: space-between; min-height: 180px;">
+      <div>
+        <div class="recent-card-header">
+          <div class="recent-card-icon-wrap report-icon" style="background: rgba(139, 92, 246, 0.1); color: #8B5CF6; border-radius: 6px; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:11px; width:36px; height:36px; flex-shrink:0;">
+            REP
+          </div>
+          <div class="recent-card-title-area" style="overflow: hidden;">
+            <div class="recent-card-filename" style="font-weight:600; color:var(--text-primary); text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">
+              ${displayName}
+            </div>
+            <div class="recent-card-meta" style="text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">
+              <span>Dataset: ${state.datasetName || 'Unknown'}</span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="recent-card-body" style="padding-top:8px; margin-bottom:12px;">
+          <div class="recent-detail-item" style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:4px;">
+            <span class="recent-detail-label" style="color:var(--text-secondary);">Visualizations</span>
+            <span class="recent-detail-value" style="color:var(--text-primary); font-weight:500;">${widgetCount} charts/widgets</span>
+          </div>
+          <div class="recent-detail-item" style="display:flex; justify-content:space-between; font-size:12px;">
+            <span class="recent-detail-label" style="color:var(--text-secondary);">Saved Date</span>
+            <span class="recent-detail-value" style="color:var(--text-primary); font-weight:500;">${new Date(state.savedAt).toLocaleDateString()}</span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="recent-card-footer" style="display:flex; gap:8px; margin-top:auto; justify-content: flex-end; width: 100%; border-top: 1px solid var(--border-color); padding-top: 12px;">
+        <button class="btn-secondary btn-sm" onclick="viewReport('${key}')" style="margin:0; padding:4px 8px; font-size:11px; height:26px;">
+          View Report
+        </button>
+        <button class="btn-secondary btn-sm" onclick="exportReport('${key}')" style="margin:0; padding:4px 8px; font-size:11px; height:26px;">
+          Export
+        </button>
+        <button class="btn-secondary btn-sm" onclick="deleteReport('${key}')" style="margin:0; padding:4px 8px; font-size:11px; height:26px; color:var(--error); border-color:rgba(239,68,68,0.2);">
+          Delete
+        </button>
+      </div>
+    </div>
+  `;
+}
+
+window.viewReport = function(key) {
+  const stateStr = localStorage.getItem(key);
+  if (!stateStr) return;
+  try {
+    const state = JSON.parse(stateStr);
+    const dsName = state.datasetName;
+    
+    getAllWorkspacesFromDB().then(workspaces => {
+      const matched = workspaces.find(w => (w.workspaceName || w.fileName) === dsName);
+      if (matched) {
+        getWorkspaceFromDB(matched.workspaceId).then(workspace => {
+          if (!workspace) {
+            showToast("Workspace not found!", "error");
+            return;
+          }
+          const tempWorkspace = Object.assign({}, workspace, {
+            dashboardWidgets: state.dashboardWidgets || [],
+            globalFilters: Object.assign({}, workspace.globalFilters, {
+              globalVizFilters: state.globalVizFilters || {}
+            }),
+            calculatedFields: state.calculatedFields || {},
+            drillHierarchies: state.drillHierarchies || []
+          });
+          
+          restoreDatasetWorkspace(tempWorkspace);
+          
+          setTimeout(() => {
+            if (typeof switchToDashboardView === 'function') {
+              switchToDashboardView();
+            }
+          }, 150);
+          
+          showToast("Loaded report dashboard in workspace", "success");
+        });
+      } else {
+        showToast(`No active workspace matches dataset '${dsName}'. Please import the dataset first.`, "error");
+      }
+    });
+  } catch(e) {
+    showToast("Failed to load report: " + e.message, "error");
+  }
+};
+
+window.exportReport = function(key) {
+  const stateStr = localStorage.getItem(key);
+  if (!stateStr) return;
+  try {
+    const blob = new Blob([stateStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const filenameClean = key.replace('oneclick_dash_', '').replace(/_\d+$/, '');
+    a.href = url;
+    a.download = `oneclick_report_${filenameClean}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    showToast("Report exported successfully", "success");
+  } catch(e) {
+    showToast("Failed to export report: " + e.message, "error");
+  }
+};
+
+window.deleteReport = function(key) {
+  if (confirm("Are you sure you want to delete this report permanently?")) {
+    localStorage.removeItem(key);
+    showToast("Report deleted", "info");
+    
+    const currentActive = document.querySelector('.nav-item.active .nav-label-text');
+    const activeText = currentActive ? currentActive.innerText.trim() : 'Dashboard';
+    if (activeText === 'Dashboard') {
+      loadAndRenderDashboard();
+    } else if (activeText === 'Reports') {
+      loadAndRenderReportsList();
+    }
+  }
+};
+
+window.loadAndRenderSettings = function() {
+  const usernameInput = document.getElementById('settings-username');
+  if (usernameInput) {
+    const savedUsername = localStorage.getItem('oneclick_username');
+    if (savedUsername) usernameInput.value = savedUsername;
+  }
+  
+  const autosaveDelaySelect = document.getElementById('settings-autosave-delay');
+  if (autosaveDelaySelect) {
+    const savedDelay = localStorage.getItem('oneclick_autosave_delay');
+    if (savedDelay) autosaveDelaySelect.value = savedDelay;
+  }
+  
+  const exportFormatSelect = document.getElementById('settings-export-format');
+  if (exportFormatSelect) {
+    const savedFormat = localStorage.getItem('oneclick_export_format');
+    if (savedFormat) exportFormatSelect.value = savedFormat;
+  }
+};
+
+function updateUsernameDOM(username) {
+  if (!username) username = "Nishant S.";
+  
+  const heroHighlight = document.querySelector('.db-hero-highlight');
+  if (heroHighlight) heroHighlight.innerText = username;
+  
+  const userNames = document.querySelectorAll('.user-name');
+  userNames.forEach(el => el.innerText = username);
+  
+  const parts = username.split(' ');
+  let initials = 'NS';
+  if (parts.length >= 2) {
+    initials = (parts[0][0] + parts[1][0]).toUpperCase();
+  } else if (parts.length === 1 && parts[0].length > 0) {
+    initials = parts[0].substring(0, 2).toUpperCase();
+  }
+  
+  const userAvatars = document.querySelectorAll('.user-avatar, .topbar-avatar');
+  userAvatars.forEach(el => el.innerText = initials);
+}
+
+function wireGlobalUploadButtons() {
+  const fileInput = document.getElementById('dataset-file-input');
+  if (!fileInput) return;
+  
+  const uploadButtonIds = [
+    'db-btn-upload',
+    'db-btn-empty-upload',
+    'proj-btn-upload-new',
+    'btn-proj-empty-upload',
+    'ds-btn-upload',
+    'btn-ds-empty-upload'
+  ];
+  
+  uploadButtonIds.forEach(id => {
+    const btn = document.getElementById(id);
+    if (btn) {
+      const newBtn = btn.cloneNode(true);
+      btn.parentNode.replaceChild(newBtn, btn);
+      newBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        fileInput.click();
+      });
+    }
+  });
+}
+
+/* ═══════════════════════════ INITIALIZATION & INTERACTIVE EVENTS ═══════════════════════════ */
+
+document.addEventListener('DOMContentLoaded', () => {
+  // Initialize user profile settings from localStorage
+  const savedUsername = localStorage.getItem('oneclick_username');
+  if (savedUsername) {
+    updateUsernameDOM(savedUsername);
+  }
+  
+  // Call loadAndRenderDashboard initially since it is the active tab
+  if (typeof loadAndRenderDashboard === 'function') {
+    loadAndRenderDashboard();
+  }
+  
+  // Wire global upload triggers
+  wireGlobalUploadButtons();
+  
+  // Wire dashboard view redirects
+  const linkAllDatasets = document.getElementById('db-link-all-datasets');
+  if (linkAllDatasets) {
+    linkAllDatasets.addEventListener('click', (e) => {
+      e.preventDefault();
+      const navDatasets = document.getElementById('nav-datasets');
+      if (navDatasets) {
+        const link = navDatasets.querySelector('a');
+        if (link) window.setActive(link);
+      }
+    });
+  }
+
+  const linkAllReports = document.getElementById('db-link-all-reports');
+  if (linkAllReports) {
+    linkAllReports.addEventListener('click', (e) => {
+      e.preventDefault();
+      const navReports = document.getElementById('nav-reports');
+      if (navReports) {
+        const link = navReports.querySelector('a');
+        if (link) window.setActive(link);
+      }
+    });
+  }
+  
+  // Wire Load Demo buttons
+  const dbBtnDemo = document.getElementById('db-btn-demo');
+  if (dbBtnDemo) {
+    dbBtnDemo.addEventListener('click', (e) => {
+      e.preventDefault();
+      if (typeof generateDemoDatasetChunked === 'function') {
+        generateDemoDatasetChunked(50000, 25, "sales_tracker_demo.csv");
+      }
+    });
+  }
+
+  const settingsBtnLoadDemo = document.getElementById('settings-btn-load-demo');
+  if (settingsBtnLoadDemo) {
+    settingsBtnLoadDemo.addEventListener('click', (e) => {
+      e.preventDefault();
+      if (typeof generateDemoDatasetChunked === 'function') {
+        generateDemoDatasetChunked(50000, 25, "sales_tracker_demo.csv");
+      }
+    });
+  }
+  
+  // Wire reset DB button
+  const settingsBtnReset = document.getElementById('settings-btn-reset');
+  if (settingsBtnReset) {
+    settingsBtnReset.addEventListener('click', (e) => {
+      e.preventDefault();
+      if (confirm("WARNING: This will permanently wipe all your datasets, projects, cleaning history, and reports. Are you sure you want to do a full database reset?")) {
+        openDB().then(db => {
+          const tx = db.transaction(STORE_NAME, 'readwrite');
+          const store = tx.objectStore(STORE_NAME);
+          const request = store.clear();
+          request.onsuccess = () => {
+            // Clear localStorage dashboards
+            const keys = Object.keys(localStorage).filter(k => k.startsWith('oneclick_dash_') || k === 'oneclick_username' || k === 'oneclick_autosave_delay');
+            keys.forEach(k => localStorage.removeItem(k));
+            
+            showToast("Database successfully wiped!", "info");
+            setTimeout(() => {
+              window.location.reload();
+            }, 1000);
+          };
+          request.onerror = (e) => {
+            showToast("Failed to wipe database: " + e.target.error, "error");
+          };
+        }).catch(err => {
+          const keys = Object.keys(localStorage).filter(k => k.startsWith('oneclick_dash_') || k === 'oneclick_username' || k === 'oneclick_autosave_delay');
+          keys.forEach(k => localStorage.removeItem(k));
+          window.location.reload();
+        });
+      }
+    });
+  }
+  
+  // Wire settings fields input events
+  const usernameInput = document.getElementById('settings-username');
+  if (usernameInput) {
+    usernameInput.addEventListener('input', (e) => {
+      const val = e.target.value.trim();
+      if (val) {
+        localStorage.setItem('oneclick_username', val);
+        updateUsernameDOM(val);
+      }
+    });
+  }
+
+  const autosaveDelaySelect = document.getElementById('settings-autosave-delay');
+  if (autosaveDelaySelect) {
+    autosaveDelaySelect.addEventListener('change', (e) => {
+      localStorage.setItem('oneclick_autosave_delay', e.target.value);
+      showToast("Autosave settings updated", "success");
+    });
+  }
+
+  const exportFormatSelect = document.getElementById('settings-export-format');
+  if (exportFormatSelect) {
+    exportFormatSelect.addEventListener('change', (e) => {
+      localStorage.setItem('oneclick_export_format', e.target.value);
+      showToast("Default export format updated", "success");
+    });
+  }
+  
+  // Wire Projects search and load more
+  const projSearchInput = document.getElementById('proj-search-input');
+  if (projSearchInput) {
+    projSearchInput.addEventListener('input', () => {
+      workspacesListLimit = 10;
+      if (typeof loadAndRenderProjects === 'function') {
+        loadAndRenderProjects();
+      }
+    });
+  }
+
+  const btnProjLoadMore = document.getElementById('btn-proj-load-more');
+  if (btnProjLoadMore) {
+    btnProjLoadMore.addEventListener('click', () => {
+      workspacesListLimit += 10;
+      if (typeof loadAndRenderProjects === 'function') {
+        loadAndRenderProjects();
+      }
+    });
+  }
+});
+

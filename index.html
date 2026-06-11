@@ -85,6 +85,7 @@
                 <span class="nav-label-text">Datasets</span>
               </a>
             </li>
+
             <li class="nav-item" id="nav-reports">
               <a href="#" class="nav-link" onclick="setActive(this)">
                 <span class="nav-icon">
@@ -191,585 +192,394 @@
       </header>
 
       <!-- ─── Scrollable Page Content ─── -->
-      <div class="page-content">
-
-        <!-- HERO SECTION -->
-        <section class="hero-section" id="hero">
-          <div class="hero-glow"></div>
-          <div class="hero-inner">
-            <div class="hero-eyebrow">
-              <span class="eyebrow-dot"></span>
-              Analytics Dashboard · Q2 2026
+      <div class="page-content" style="flex: 1; overflow-y: auto;">
+        
+        <!-- WELCOME & PRIMARY UPLOAD CTA (ABOVE THE FOLD) -->
+        <div class="db-hero-cta-card">
+          <div class="db-hero-glow"></div>
+          <div class="db-hero-inner">
+            <div class="db-hero-text">
+              <h1 class="db-hero-title">Welcome back, <span class="db-hero-highlight">Nishant S.</span></h1>
+              <p class="db-hero-subtitle">Upload your dataset to start cleaning, mapping formulas, and generating analytical reports in seconds.</p>
             </div>
-            <h1 class="hero-heading">Analyze Data<br/><span class="hero-gradient">Effortlessly.</span></h1>
-            <p class="hero-sub">Transform raw data into insights through a clean and<br/>intelligent analytics experience.</p>
-            <div class="hero-actions">
-              <button class="btn-primary" id="btn-get-started">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                  <polygon points="5,3 19,12 5,21"/>
+            <div class="db-hero-actions">
+              <button class="btn-primary btn-lg" id="db-btn-upload">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 8px;">
+                  <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
                 </svg>
-                Get Started
+                Upload Dataset
               </button>
-              <button class="btn-secondary" id="btn-view-demo">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <circle cx="12" cy="12" r="10"/>
-                  <polygon points="10,8 16,12 10,16"/>
-                </svg>
-                View Demo
+              <button class="btn-secondary btn-lg" id="db-btn-demo">
+                Load Demo Tracker
               </button>
             </div>
           </div>
-          <div class="hero-visual">
-            <div class="hero-visual-card">
-              <div class="mini-chart-label">Total Revenue</div>
-              <div class="mini-chart-value">$284,920</div>
-              <div class="mini-trend up">↑ 18.4%</div>
-              <div class="mini-sparkline">
-                <svg viewBox="0 0 120 40" preserveAspectRatio="none">
-                  <defs>
-                    <linearGradient id="sgA" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stop-color="#6366F1" stop-opacity="0.4"/>
-                      <stop offset="100%" stop-color="#6366F1" stop-opacity="0"/>
-                    </linearGradient>
-                  </defs>
-                  <path d="M0,35 C10,30 20,28 30,22 C40,16 50,20 60,14 C70,8 80,12 90,8 C100,4 110,6 120,3" stroke="#6366F1" stroke-width="2" fill="none"/>
-                  <path d="M0,35 C10,30 20,28 30,22 C40,16 50,20 60,14 C70,8 80,12 90,8 C100,4 110,6 120,3 L120,40 L0,40 Z" fill="url(#sgA)"/>
-                </svg>
-              </div>
+        </div>
+
+        <!-- VISUAL WORKFLOW TRACK -->
+        <div class="db-workflow-card">
+          <h3 class="db-workflow-title">Your Workflow Pipeline</h3>
+          <div class="db-workflow-steps">
+            <div class="db-workflow-step active">
+              <div class="db-step-number">1</div>
+              <div class="db-step-label">Upload Dataset</div>
+            </div>
+            <div class="db-workflow-arrow">➔</div>
+            <div class="db-workflow-step">
+              <div class="db-step-number">2</div>
+              <div class="db-step-label">Analyze & Clean</div>
+            </div>
+            <div class="db-workflow-arrow">➔</div>
+            <div class="db-workflow-step">
+              <div class="db-step-number">3</div>
+              <div class="db-step-label">Generate Report</div>
+            </div>
+            <div class="db-workflow-arrow">➔</div>
+            <div class="db-workflow-step">
+              <div class="db-step-number">4</div>
+              <div class="db-step-label">Save Project</div>
             </div>
           </div>
-        </section>
+        </div>
 
-        <!-- METRIC CARDS -->
-        <section class="metrics-section" id="metrics">
-          <div class="section-header">
-            <div>
-              <h2 class="section-title">Overview</h2>
-              <p class="section-sub">Key performance metrics at a glance</p>
+        <!-- EMPTY STATE (SHOWS WHEN NO DATASETS EXIST) -->
+        <div class="db-empty-state" id="db-empty-state" style="display: none;">
+          <div class="db-empty-visual">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <ellipse cx="12" cy="5" rx="9" ry="3"/>
+              <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/>
+              <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>
+            </svg>
+          </div>
+          <h3>No Datasets or Workspaces Yet</h3>
+          <p>Get started by uploading a CSV or Excel file, or load a demo to explore analytics features.</p>
+          <button class="btn-primary" id="db-btn-empty-upload">Upload First Dataset</button>
+        </div>
+
+        <!-- RECENT WORKSPACES & REPORTS SECTION -->
+        <div class="db-content-sections" id="db-content-sections" style="display: block;">
+          
+          <!-- Recent Datasets Grid -->
+          <div class="db-section" style="margin-bottom: 32px;">
+            <div class="db-section-header">
+              <h2 class="db-section-title">Recent Datasets</h2>
+              <a href="#" class="db-view-all-link" id="db-link-all-datasets">View All Datasets ➔</a>
             </div>
-            <div class="time-range-picker">
-              <button class="time-btn active" id="time-7d" onclick="setTimeRange(this)">7d</button>
-              <button class="time-btn" id="time-30d" onclick="setTimeRange(this)">30d</button>
-              <button class="time-btn" id="time-90d" onclick="setTimeRange(this)">90d</button>
-              <button class="time-btn" id="time-1y" onclick="setTimeRange(this)">1y</button>
+            <div class="recent-grid" id="db-recent-datasets-grid">
+              <!-- Loaded dynamically -->
             </div>
           </div>
 
-          <div class="metrics-grid">
-            <!-- Revenue -->
-            <div class="metric-card" id="card-revenue">
-              <div class="metric-card-header">
-                <div class="metric-icon revenue-icon">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/>
-                  </svg>
-                </div>
-                <span class="metric-trend up-badge">↑ 18.4%</span>
-              </div>
-              <div class="metric-value">$284,920</div>
-              <div class="metric-label">Total Revenue</div>
-              <div class="metric-chart">
-                <svg viewBox="0 0 100 32" preserveAspectRatio="none" class="sparkline revenue-spark">
-                  <defs>
-                    <linearGradient id="rg" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stop-color="#6366F1" stop-opacity="0.35"/>
-                      <stop offset="100%" stop-color="#6366F1" stop-opacity="0"/>
-                    </linearGradient>
-                  </defs>
-                  <path d="M0,28 C8,24 16,26 24,20 C32,14 40,18 48,12 C56,6 64,10 72,7 C80,4 88,6 100,3" stroke="#6366F1" stroke-width="1.8" fill="none" class="spark-line"/>
-                  <path d="M0,28 C8,24 16,26 24,20 C32,14 40,18 48,12 C56,6 64,10 72,7 C80,4 88,6 100,3 L100,32 L0,32 Z" fill="url(#rg)"/>
-                </svg>
-              </div>
+          <!-- Recent Reports Grid -->
+          <div class="db-section">
+            <div class="db-section-header">
+              <h2 class="db-section-title">Recent Reports</h2>
+              <a href="#" class="db-view-all-link" id="db-link-all-reports">View All Reports ➔</a>
             </div>
-
-            <!-- Users -->
-            <div class="metric-card" id="card-users">
-              <div class="metric-card-header">
-                <div class="metric-icon users-icon">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
-                    <circle cx="9" cy="7" r="4"/>
-                    <path d="M23 21v-2a4 4 0 00-3-3.87"/>
-                    <path d="M16 3.13a4 4 0 010 7.75"/>
-                  </svg>
-                </div>
-                <span class="metric-trend up-badge">↑ 9.1%</span>
-              </div>
-              <div class="metric-value">48,291</div>
-              <div class="metric-label">Active Users</div>
-              <div class="metric-chart">
-                <svg viewBox="0 0 100 32" preserveAspectRatio="none" class="sparkline users-spark">
-                  <defs>
-                    <linearGradient id="ug" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stop-color="#8B5CF6" stop-opacity="0.35"/>
-                      <stop offset="100%" stop-color="#8B5CF6" stop-opacity="0"/>
-                    </linearGradient>
-                  </defs>
-                  <path d="M0,26 C8,28 16,22 24,18 C32,14 40,20 48,15 C56,10 64,14 72,9 C80,5 88,8 100,5" stroke="#8B5CF6" stroke-width="1.8" fill="none"/>
-                  <path d="M0,26 C8,28 16,22 24,18 C32,14 40,20 48,15 C56,10 64,14 72,9 C80,5 88,8 100,5 L100,32 L0,32 Z" fill="url(#ug)"/>
-                </svg>
-              </div>
-            </div>
-
-            <!-- Conversion -->
-            <div class="metric-card" id="card-conversion">
-              <div class="metric-card-header">
-                <div class="metric-icon conversion-icon">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <polyline points="23,6 13.5,15.5 8.5,10.5 1,18"/>
-                    <polyline points="17,6 23,6 23,12"/>
-                  </svg>
-                </div>
-                <span class="metric-trend down-badge">↓ 2.3%</span>
-              </div>
-              <div class="metric-value">6.84%</div>
-              <div class="metric-label">Conversion Rate</div>
-              <div class="metric-chart">
-                <svg viewBox="0 0 100 32" preserveAspectRatio="none" class="sparkline conv-spark">
-                  <defs>
-                    <linearGradient id="cg" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stop-color="#22C55E" stop-opacity="0.35"/>
-                      <stop offset="100%" stop-color="#22C55E" stop-opacity="0"/>
-                    </linearGradient>
-                  </defs>
-                  <path d="M0,12 C8,10 16,14 24,16 C32,18 40,14 48,18 C56,22 64,18 72,20 C80,22 88,20 100,24" stroke="#22C55E" stroke-width="1.8" fill="none"/>
-                  <path d="M0,12 C8,10 16,14 24,16 C32,18 40,14 48,18 C56,22 64,18 72,20 C80,22 88,20 100,24 L100,32 L0,32 Z" fill="url(#cg)"/>
-                </svg>
-              </div>
-            </div>
-
-            <!-- Performance -->
-            <div class="metric-card" id="card-performance">
-              <div class="metric-card-header">
-                <div class="metric-icon perf-icon">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
-                  </svg>
-                </div>
-                <span class="metric-trend up-badge">↑ 4.7%</span>
-              </div>
-              <div class="metric-value">98.2%</div>
-              <div class="metric-label">System Performance</div>
-              <div class="metric-chart">
-                <div class="perf-bar-wrap">
-                  <div class="perf-bar-track">
-                    <div class="perf-bar-fill" style="width: 98.2%"></div>
-                  </div>
-                  <div class="perf-dots">
-                    <span class="pd green"></span>
-                    <span class="pd green"></span>
-                    <span class="pd green"></span>
-                    <span class="pd amber"></span>
-                  </div>
-                </div>
-              </div>
+            <div class="recent-grid" id="db-recent-reports-grid">
+              <!-- Loaded dynamically -->
             </div>
           </div>
-        </section>
 
-        <!-- MAIN PANEL: Analytics + Right Sidebar -->
-        <div class="dashboard-grid">
-
-          <!-- LEFT: Analytics + Projects -->
-          <div class="dashboard-left">
-
-            <!-- Analytics Panel -->
-            <section class="analytics-panel" id="analytics">
-              <div class="panel-header">
-                <div>
-                  <h2 class="panel-title">Analytics Overview</h2>
-                  <p class="panel-sub">Revenue & engagement breakdown</p>
-                </div>
-                <div class="panel-controls">
-                  <div class="filter-group">
-                    <button class="filter-btn active" onclick="setFilter(this)">All</button>
-                    <button class="filter-btn" onclick="setFilter(this)">Revenue</button>
-                    <button class="filter-btn" onclick="setFilter(this)">Users</button>
-                    <button class="filter-btn" onclick="setFilter(this)">Events</button>
-                  </div>
-                  <button class="icon-btn" id="export-btn" title="Export">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
-                      <polyline points="7,10 12,15 17,10"/>
-                      <line x1="12" y1="15" x2="12" y2="3"/>
-                    </svg>
-                  </button>
-                  <button class="icon-btn" id="refresh-btn" title="Refresh">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <polyline points="23,4 23,10 17,10"/>
-                      <path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/>
-                    </svg>
-                  </button>
-                </div>
-              </div>
-
-              <!-- Chart Area -->
-              <div class="chart-area" id="chart-area">
-                <!-- Y Axis labels -->
-                <div class="chart-y-axis">
-                  <span>$300k</span>
-                  <span>$225k</span>
-                  <span>$150k</span>
-                  <span>$75k</span>
-                  <span>$0</span>
-                </div>
-                <!-- Chart Body -->
-                <div class="chart-body">
-                  <div class="chart-grid-lines">
-                    <div class="grid-line"></div>
-                    <div class="grid-line"></div>
-                    <div class="grid-line"></div>
-                    <div class="grid-line"></div>
-                  </div>
-                  <!-- Bar Chart -->
-                  <div class="bar-chart" id="bar-chart">
-                    <div class="bar-group">
-                      <div class="bar-wrap"><div class="bar bar-primary" style="height: 42%"></div><div class="bar bar-secondary" style="height: 28%"></div></div>
-                      <span class="bar-label">Jan</span>
-                    </div>
-                    <div class="bar-group">
-                      <div class="bar-wrap"><div class="bar bar-primary" style="height: 58%"></div><div class="bar bar-secondary" style="height: 35%"></div></div>
-                      <span class="bar-label">Feb</span>
-                    </div>
-                    <div class="bar-group">
-                      <div class="bar-wrap"><div class="bar bar-primary" style="height: 51%"></div><div class="bar bar-secondary" style="height: 42%"></div></div>
-                      <span class="bar-label">Mar</span>
-                    </div>
-                    <div class="bar-group">
-                      <div class="bar-wrap"><div class="bar bar-primary" style="height: 72%"></div><div class="bar bar-secondary" style="height: 55%"></div></div>
-                      <span class="bar-label">Apr</span>
-                    </div>
-                    <div class="bar-group">
-                      <div class="bar-wrap"><div class="bar bar-primary" style="height: 65%"></div><div class="bar bar-secondary" style="height: 48%"></div></div>
-                      <span class="bar-label">May</span>
-                    </div>
-                    <div class="bar-group">
-                      <div class="bar-wrap"><div class="bar bar-primary active-bar" style="height: 89%"></div><div class="bar bar-secondary" style="height: 67%"></div></div>
-                      <span class="bar-label active-label">Jun</span>
-                    </div>
-                    <div class="bar-group">
-                      <div class="bar-wrap"><div class="bar bar-primary" style="height: 78%"></div><div class="bar bar-secondary" style="height: 58%"></div></div>
-                      <span class="bar-label">Jul</span>
-                    </div>
-                    <div class="bar-group">
-                      <div class="bar-wrap"><div class="bar bar-primary" style="height: 82%"></div><div class="bar bar-secondary" style="height: 62%"></div></div>
-                      <span class="bar-label">Aug</span>
-                    </div>
-                    <div class="bar-group">
-                      <div class="bar-wrap"><div class="bar bar-primary" style="height: 70%"></div><div class="bar bar-secondary" style="height: 52%"></div></div>
-                      <span class="bar-label">Sep</span>
-                    </div>
-                    <div class="bar-group">
-                      <div class="bar-wrap"><div class="bar bar-primary" style="height: 90%"></div><div class="bar bar-secondary" style="height: 70%"></div></div>
-                      <span class="bar-label">Oct</span>
-                    </div>
-                    <div class="bar-group">
-                      <div class="bar-wrap"><div class="bar bar-primary" style="height: 85%"></div><div class="bar bar-secondary" style="height: 65%"></div></div>
-                      <span class="bar-label">Nov</span>
-                    </div>
-                    <div class="bar-group">
-                      <div class="bar-wrap"><div class="bar bar-primary" style="height: 95%"></div><div class="bar bar-secondary" style="height: 78%"></div></div>
-                      <span class="bar-label">Dec</span>
-                    </div>
-                  </div>
-                  <!-- Tooltip -->
-                  <div class="chart-tooltip" id="chart-tooltip">
-                    <div class="tooltip-date">Jun 2026</div>
-                    <div class="tooltip-row"><span class="tooltip-dot primary-dot"></span> Revenue <strong>$284k</strong></div>
-                    <div class="tooltip-row"><span class="tooltip-dot secondary-dot"></span> Users <strong>48.3k</strong></div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Legend -->
-              <div class="chart-legend">
-                <div class="legend-item"><span class="legend-dot primary-dot"></span> Revenue</div>
-                <div class="legend-item"><span class="legend-dot secondary-dot"></span> Users</div>
-                <div class="legend-spacer"></div>
-                <div class="legend-stat"><span class="legend-stat-label">Peak:</span> $290k in Dec</div>
-                <div class="legend-stat"><span class="legend-stat-label">Avg:</span> $218k/mo</div>
-              </div>
-            </section>
-
-            <!-- Recent Projects -->
-            <section class="projects-section" id="projects">
-              <div class="panel-header">
-                <div>
-                  <h2 class="panel-title">Recent Projects</h2>
-                  <p class="panel-sub">12 active projects this quarter</p>
-                </div>
-                <button class="btn-outline" id="view-all-btn">View All</button>
-              </div>
-
-              <div class="projects-table-wrap">
-                <table class="projects-table" id="projects-table">
-                  <thead>
-                    <tr>
-                      <th>Project Name</th>
-                      <th>Status</th>
-                      <th>Dataset</th>
-                      <th>Progress</th>
-                      <th>Last Updated</th>
-                      <th></th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr class="project-row">
-                      <td>
-                        <div class="proj-name-cell">
-                          <div class="proj-icon" style="background: linear-gradient(135deg,#6366F1,#8B5CF6)">M</div>
-                          <div>
-                            <div class="proj-name">Market Segmentation v2</div>
-                            <div class="proj-meta">4 collaborators</div>
-                          </div>
-                        </div>
-                      </td>
-                      <td><span class="status-badge active">Active</span></td>
-                      <td><span class="dataset-tag">sales_q2_2026.csv</span></td>
-                      <td>
-                        <div class="prog-bar-wrap">
-                          <div class="prog-bar-track"><div class="prog-bar-fill" style="width:78%"></div></div>
-                          <span class="prog-pct">78%</span>
-                        </div>
-                      </td>
-                      <td class="date-cell">2 hours ago</td>
-                      <td><button class="row-action" aria-label="More">⋯</button></td>
-                    </tr>
-                    <tr class="project-row">
-                      <td>
-                        <div class="proj-name-cell">
-                          <div class="proj-icon" style="background: linear-gradient(135deg,#22C55E,#16A34A)">C</div>
-                          <div>
-                            <div class="proj-name">Customer Churn Analysis</div>
-                            <div class="proj-meta">2 collaborators</div>
-                          </div>
-                        </div>
-                      </td>
-                      <td><span class="status-badge complete">Complete</span></td>
-                      <td><span class="dataset-tag">crm_export_may.xlsx</span></td>
-                      <td>
-                        <div class="prog-bar-wrap">
-                          <div class="prog-bar-track"><div class="prog-bar-fill complete-fill" style="width:100%"></div></div>
-                          <span class="prog-pct">100%</span>
-                        </div>
-                      </td>
-                      <td class="date-cell">Yesterday</td>
-                      <td><button class="row-action" aria-label="More">⋯</button></td>
-                    </tr>
-                    <tr class="project-row">
-                      <td>
-                        <div class="proj-name-cell">
-                          <div class="proj-icon" style="background: linear-gradient(135deg,#F59E0B,#D97706)">P</div>
-                          <div>
-                            <div class="proj-name">Product Attribution Model</div>
-                            <div class="proj-meta">6 collaborators</div>
-                          </div>
-                        </div>
-                      </td>
-                      <td><span class="status-badge review">In Review</span></td>
-                      <td><span class="dataset-tag">attribution_raw.json</span></td>
-                      <td>
-                        <div class="prog-bar-wrap">
-                          <div class="prog-bar-track"><div class="prog-bar-fill warning-fill" style="width:56%"></div></div>
-                          <span class="prog-pct">56%</span>
-                        </div>
-                      </td>
-                      <td class="date-cell">3 days ago</td>
-                      <td><button class="row-action" aria-label="More">⋯</button></td>
-                    </tr>
-                    <tr class="project-row">
-                      <td>
-                        <div class="proj-name-cell">
-                          <div class="proj-icon" style="background: linear-gradient(135deg,#EF4444,#DC2626)">A</div>
-                          <div>
-                            <div class="proj-name">Ad Spend ROI Dashboard</div>
-                            <div class="proj-meta">3 collaborators</div>
-                          </div>
-                        </div>
-                      </td>
-                      <td><span class="status-badge paused">Paused</span></td>
-                      <td><span class="dataset-tag">ads_platform_q1.csv</span></td>
-                      <td>
-                        <div class="prog-bar-wrap">
-                          <div class="prog-bar-track"><div class="prog-bar-fill danger-fill" style="width:34%"></div></div>
-                          <span class="prog-pct">34%</span>
-                        </div>
-                      </td>
-                      <td class="date-cell">1 week ago</td>
-                      <td><button class="row-action" aria-label="More">⋯</button></td>
-                    </tr>
-                    <tr class="project-row">
-                      <td>
-                        <div class="proj-name-cell">
-                          <div class="proj-icon" style="background: linear-gradient(135deg,#06B6D4,#0891B2)">F</div>
-                          <div>
-                            <div class="proj-name">Funnel Optimization Study</div>
-                            <div class="proj-meta">5 collaborators</div>
-                          </div>
-                        </div>
-                      </td>
-                      <td><span class="status-badge active">Active</span></td>
-                      <td><span class="dataset-tag">funnel_events.parquet</span></td>
-                      <td>
-                        <div class="prog-bar-wrap">
-                          <div class="prog-bar-track"><div class="prog-bar-fill" style="width:91%"></div></div>
-                          <span class="prog-pct">91%</span>
-                        </div>
-                      </td>
-                      <td class="date-cell">5 hours ago</td>
-                      <td><button class="row-action" aria-label="More">⋯</button></td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </section>
-
-          </div><!-- end dashboard-left -->
-
-          <!-- RIGHT: Insights Panel -->
-          <aside class="insights-panel" id="insights">
-
-            <!-- Quick Stats -->
-            <div class="insight-card" id="insight-stats">
-              <div class="insight-card-header">
-                <h3 class="insight-title">Quick Stats</h3>
-                <span class="insight-dot live"></span>
-              </div>
-              <div class="quick-stats-list">
-                <div class="qs-row">
-                  <span class="qs-label">Datasets</span>
-                  <span class="qs-value">142</span>
-                </div>
-                <div class="qs-row">
-                  <span class="qs-label">Reports Generated</span>
-                  <span class="qs-value">38</span>
-                </div>
-                <div class="qs-row">
-                  <span class="qs-label">Data Processed</span>
-                  <span class="qs-value">4.8 TB</span>
-                </div>
-                <div class="qs-row">
-                  <span class="qs-label">Avg. Query Time</span>
-                  <span class="qs-value success-val">120ms</span>
-                </div>
-                <div class="qs-row">
-                  <span class="qs-label">Uptime</span>
-                  <span class="qs-value success-val">99.98%</span>
-                </div>
-              </div>
-            </div>
-
-            <!-- Quick Notes -->
-            <div class="insight-card" id="insight-notes">
-              <div class="insight-card-header">
-                <h3 class="insight-title">Quick Notes</h3>
-                <button class="icon-btn sm" id="add-note-btn" title="Add note">
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
-                    <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-                  </svg>
-                </button>
-              </div>
-              <div class="notes-list">
-                <div class="note-item">
-                  <div class="note-color nc-purple"></div>
-                  <div class="note-text">Review Q2 revenue anomaly — spike on Jun 14th needs validation.</div>
-                </div>
-                <div class="note-item">
-                  <div class="note-color nc-green"></div>
-                  <div class="note-text">Churn model achieved 94.2% accuracy — ready to ship.</div>
-                </div>
-                <div class="note-item">
-                  <div class="note-color nc-amber"></div>
-                  <div class="note-text">Attribution dataset needs re-labeling after platform update.</div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Recent Activity -->
-            <div class="insight-card" id="insight-activity">
-              <div class="insight-card-header">
-                <h3 class="insight-title">Recent Activity</h3>
-              </div>
-              <div class="activity-feed">
-                <div class="activity-item">
-                  <div class="activity-avatar" style="background: linear-gradient(135deg,#6366F1,#8B5CF6)">A</div>
-                  <div class="activity-body">
-                    <div class="activity-text"><strong>Anika R.</strong> published a new report</div>
-                    <div class="activity-time">2 min ago</div>
-                  </div>
-                </div>
-                <div class="activity-item">
-                  <div class="activity-avatar" style="background: linear-gradient(135deg,#22C55E,#16A34A)">J</div>
-                  <div class="activity-body">
-                    <div class="activity-text"><strong>James T.</strong> updated dataset schema</div>
-                    <div class="activity-time">18 min ago</div>
-                  </div>
-                </div>
-                <div class="activity-item">
-                  <div class="activity-avatar" style="background: linear-gradient(135deg,#F59E0B,#D97706)">S</div>
-                  <div class="activity-body">
-                    <div class="activity-text"><strong>Sara K.</strong> invited 2 collaborators</div>
-                    <div class="activity-time">1 hr ago</div>
-                  </div>
-                </div>
-                <div class="activity-item">
-                  <div class="activity-avatar" style="background: linear-gradient(135deg,#EF4444,#DC2626)">M</div>
-                  <div class="activity-body">
-                    <div class="activity-text"><strong>Marcus L.</strong> archived a project</div>
-                    <div class="activity-time">3 hr ago</div>
-                  </div>
-                </div>
-                <div class="activity-item">
-                  <div class="activity-avatar" style="background: linear-gradient(135deg,#06B6D4,#0891B2)">P</div>
-                  <div class="activity-body">
-                    <div class="activity-text"><strong>Priya V.</strong> ran a batch pipeline</div>
-                    <div class="activity-time">5 hr ago</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Upcoming Tasks -->
-            <div class="insight-card" id="insight-tasks">
-              <div class="insight-card-header">
-                <h3 class="insight-title">Upcoming Tasks</h3>
-                <span class="task-count-badge">5</span>
-              </div>
-              <div class="task-list">
-                <div class="task-item" id="task-1">
-                  <input type="checkbox" class="task-check" id="chk-1" onchange="toggleTask(this)"/>
-                  <label for="chk-1" class="task-label">Finalize Q2 analytics report</label>
-                  <span class="task-due urgent">Today</span>
-                </div>
-                <div class="task-item" id="task-2">
-                  <input type="checkbox" class="task-check" id="chk-2" onchange="toggleTask(this)"/>
-                  <label for="chk-2" class="task-label">Review churn model outputs</label>
-                  <span class="task-due">Jun 8</span>
-                </div>
-                <div class="task-item" id="task-3">
-                  <input type="checkbox" class="task-check" id="chk-3" onchange="toggleTask(this)"/>
-                  <label for="chk-3" class="task-label">Update attribution dataset labels</label>
-                  <span class="task-due">Jun 10</span>
-                </div>
-                <div class="task-item" id="task-4">
-                  <input type="checkbox" class="task-check" id="chk-4" onchange="toggleTask(this)"/>
-                  <label for="chk-4" class="task-label">Stakeholder presentation deck</label>
-                  <span class="task-due">Jun 12</span>
-                </div>
-                <div class="task-item" id="task-5">
-                  <input type="checkbox" class="task-check" id="chk-5" onchange="toggleTask(this)"/>
-                  <label for="chk-5" class="task-label">Export funnel study results</label>
-                  <span class="task-due">Jun 15</span>
-                </div>
-              </div>
-            </div>
-
-          </aside><!-- end insights-panel -->
-
-        </div><!-- end dashboard-grid -->
+        </div>
 
       </div><!-- end page-content -->
       </div><!-- end dashboard-view-container -->
+
+      <!-- ═══════════════════════════ PROJECTS VIEW ═══════════════════════════ -->
+      <div id="projects-view-container" style="display: none;">
+        <!-- Top Navbar -->
+        <header class="topbar">
+          <div class="topbar-left">
+            <div class="breadcrumb">
+              <span class="breadcrumb-item muted">Workspace</span>
+              <span class="breadcrumb-sep">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9,18 15,12 9,6"/></svg>
+              </span>
+              <span class="breadcrumb-item">Projects</span>
+            </div>
+          </div>
+          <div class="topbar-center">
+            <div class="search-bar" id="proj-search-bar">
+              <span class="search-icon">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+                </svg>
+              </span>
+              <input type="text" class="search-input" placeholder="Search projects by name, status or file..." id="proj-search-input"/>
+            </div>
+          </div>
+          <div class="topbar-right">
+            <button class="btn-primary" id="proj-btn-upload-new">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+              </svg>
+              New Project
+            </button>
+            <button class="topbar-btn" id="proj-theme-btn" aria-label="Toggle theme">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="5"/>
+                <line x1="12" y1="1" x2="12" y2="3"/>
+                <line x1="12" y1="21" x2="12" y2="23"/>
+                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+                <line x1="1" y1="12" x2="3" y2="12"/>
+                <line x1="21" y1="12" x2="23" y2="12"/>
+                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+              </svg>
+            </button>
+            <div class="topbar-avatar">NS</div>
+          </div>
+        </header>
+
+        <!-- Page Content -->
+        <div class="page-content" style="flex: 1; overflow-y: auto;">
+          <div class="recent-header-row">
+            <div>
+              <h1 class="recent-page-title">Analysis Projects</h1>
+              <p class="recent-page-subtitle">Your saved analysis pipelines. Rehydrate cleanings, widgets, and schemas anytime.</p>
+            </div>
+          </div>
+
+          <!-- Empty State -->
+          <div class="recent-empty-state" id="proj-empty-state" style="display: none;">
+            <div class="empty-state-visual">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/>
+              </svg>
+            </div>
+            <h3>No Saved Projects</h3>
+            <p>Upload a dataset or load a demo tracker to initialize your first project workspace.</p>
+            <button class="btn-primary" id="btn-proj-empty-upload">Upload Dataset</button>
+          </div>
+
+          <!-- Pinned Projects Section -->
+          <div class="recent-section" id="proj-favorites-section" style="display: none; margin-bottom: 28px;">
+            <div class="recent-section-header">
+              <h2 class="recent-section-title">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="color: var(--warning); margin-right: 8px; display: inline-block; vertical-align: middle;">
+                  <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                </svg>
+                Pinned Projects
+              </h2>
+            </div>
+            <div class="recent-grid" id="proj-favorites-grid">
+              <!-- Favorite Workspace Cards loaded dynamically -->
+            </div>
+          </div>
+
+          <!-- All / Recent Projects Section -->
+          <div class="recent-section" id="proj-all-section">
+            <div class="recent-section-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+              <h2 class="recent-section-title">Recent Saved Projects</h2>
+              <span class="recent-filter-label" id="proj-count-label" style="font-size: 13px; color: var(--text-secondary);">Showing 0 projects</span>
+            </div>
+            <div class="recent-grid" id="proj-all-grid">
+              <!-- Workspace Cards loaded dynamically -->
+            </div>
+
+            <!-- Show More Button -->
+            <div class="recent-load-more-wrap" id="proj-load-more-wrap" style="display: none; justify-content: center; margin-top: 32px;">
+              <button class="btn-secondary" id="btn-proj-load-more">Show More Projects</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══════════════════════════ DATASETS VIEW ═══════════════════════════ -->
+      <div id="datasets-view-container" style="display: none;">
+        <!-- Top Navbar -->
+        <header class="topbar">
+          <div class="topbar-left">
+            <div class="breadcrumb">
+              <span class="breadcrumb-item muted">Workspace</span>
+              <span class="breadcrumb-sep">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9,18 15,12 9,6"/></svg>
+              </span>
+              <span class="breadcrumb-item">Datasets</span>
+            </div>
+          </div>
+          <div class="topbar-right">
+            <button class="btn-primary" id="ds-btn-upload">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+              </svg>
+              Upload Dataset
+            </button>
+            <div class="topbar-avatar">NS</div>
+          </div>
+        </header>
+
+        <!-- Page Content -->
+        <div class="page-content" style="flex: 1; overflow-y: auto;">
+          <div class="recent-header-row">
+            <div>
+              <h1 class="recent-page-title">Dataset Management</h1>
+              <p class="recent-page-subtitle">Inspect size, properties, schemas, and manage raw files uploaded to the platform.</p>
+            </div>
+          </div>
+
+          <!-- Empty State -->
+          <div class="recent-empty-state" id="ds-empty-state" style="display: none;">
+            <div class="empty-state-visual">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <ellipse cx="12" cy="5" rx="9" ry="3"/>
+                <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/>
+                <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>
+              </svg>
+            </div>
+            <h3>No Datasets Uploaded</h3>
+            <p>Upload a CSV or Excel spreadsheet to get started.</p>
+            <button class="btn-primary" id="btn-ds-empty-upload">Upload Dataset</button>
+          </div>
+
+          <!-- Datasets Grid/Table -->
+          <div class="recent-section" id="ds-content-section">
+            <div class="db-table-card">
+              <table class="db-management-table">
+                <thead>
+                  <tr>
+                    <th>Dataset File Name</th>
+                    <th>Row Count</th>
+                    <th>Col Count</th>
+                    <th>Uploaded Date</th>
+                    <th>Status</th>
+                    <th style="text-align: right; padding-right: 24px;">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="ds-table-body">
+                  <!-- Loaded dynamically -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══════════════════════════ REPORTS VIEW ═══════════════════════════ -->
+      <div id="reports-view-container" style="display: none;">
+        <!-- Top Navbar -->
+        <header class="topbar">
+          <div class="topbar-left">
+            <div class="breadcrumb">
+              <span class="breadcrumb-item muted">Workspace</span>
+              <span class="breadcrumb-sep">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9,18 15,12 9,6"/></svg>
+              </span>
+              <span class="breadcrumb-item">Reports</span>
+            </div>
+          </div>
+          <div class="topbar-right">
+            <div class="topbar-avatar">NS</div>
+          </div>
+        </header>
+
+        <!-- Page Content -->
+        <div class="page-content" style="flex: 1; overflow-y: auto;">
+          <div class="recent-header-row">
+            <div>
+              <h1 class="recent-page-title">Generated Reports</h1>
+              <p class="recent-page-subtitle">View and export dashboards generated and saved from your project workbooks.</p>
+            </div>
+          </div>
+
+          <!-- Empty State -->
+          <div class="recent-empty-state" id="rep-empty-state" style="display: none;">
+            <div class="empty-state-visual">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+                <polyline points="14,2 14,8 20,8"/>
+              </svg>
+            </div>
+            <h3>No Reports Generated</h3>
+            <p>Load a project workbook, click "Visualize", create dashboard widgets, and click "Save" to generate a report.</p>
+          </div>
+
+          <!-- Reports Grid -->
+          <div class="recent-section" id="rep-content-section">
+            <div class="recent-grid" id="rep-grid">
+              <!-- Loaded dynamically -->
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══════════════════════════ SETTINGS VIEW ═══════════════════════════ -->
+      <div id="settings-view-container" style="display: none;">
+        <!-- Top Navbar -->
+        <header class="topbar">
+          <div class="topbar-left">
+            <div class="breadcrumb">
+              <span class="breadcrumb-item muted">Workspace</span>
+              <span class="breadcrumb-sep">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9,18 15,12 9,6"/></svg>
+              </span>
+              <span class="breadcrumb-item">Settings</span>
+            </div>
+          </div>
+          <div class="topbar-right">
+            <div class="topbar-avatar">NS</div>
+          </div>
+        </header>
+
+        <!-- Page Content -->
+        <div class="page-content" style="flex: 1; overflow-y: auto;">
+          <div class="recent-header-row">
+            <div>
+              <h1 class="recent-page-title">Settings & Preferences</h1>
+              <p class="recent-page-subtitle">Configure theme selections, autocommit settings, and manage local databases.</p>
+            </div>
+          </div>
+
+          <div class="settings-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 24px; max-width: 900px; margin-top: 16px;">
+            <!-- Profile Settings -->
+            <div class="db-settings-card">
+              <h3>Profile Settings</h3>
+              <div class="settings-field">
+                <label>User Name</label>
+                <input type="text" class="settings-input-text" id="settings-username" value="Nishant S." />
+              </div>
+              <div class="settings-field">
+                <label>Role</label>
+                <input type="text" class="settings-input-text" value="Administrator (Pro Plan)" disabled style="opacity: 0.6; cursor: not-allowed;" />
+              </div>
+            </div>
+
+            <!-- Auto-Save Preferences -->
+            <div class="db-settings-card">
+              <h3>Autosave preferences</h3>
+              <div class="settings-field">
+                <label>Autosave Delay</label>
+                <select class="settings-select" id="settings-autosave-delay">
+                  <option value="5000" selected>5 seconds (Default)</option>
+                  <option value="10000">10 seconds</option>
+                  <option value="0">Immediate Save</option>
+                </select>
+              </div>
+              <div class="settings-field">
+                <label>Default Export Format</label>
+                <select class="settings-select" id="settings-export-format">
+                  <option value="CSV" selected>CSV Spreadsheet (.csv)</option>
+                  <option value="XLSX">Excel Spreadsheet (.xlsx)</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Database Clean & Reset -->
+            <div class="db-settings-card danger-card" style="grid-column: span 2; border-color: rgba(239, 68, 68, 0.2); background: rgba(239, 68, 68, 0.02);">
+              <h3 style="color: var(--error);">Danger Zone</h3>
+              <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 16px;">
+                Resetting the database will permanently delete all saved dataset workspaces (including cleaning logs, calculations, and dashboard layouts) and all generated reports.
+              </p>
+              <div style="display: flex; gap: 12px;">
+                <button class="btn-primary" id="settings-btn-reset" style="background-color: var(--error); border-color: var(--error);">Reset Local Database</button>
+                <button class="btn-secondary" id="settings-btn-load-demo" style="margin-left: 0;">Reload Demo Datasets</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
 
       <!-- ═══════════════════════════ DATASET WORKSPACE ═══════════════════════════ -->
       <div id="workspace-view-container" style="display: none;">
@@ -822,7 +632,7 @@
               </svg>
             </button>
             <div class="ws-vertical-divider"></div>
-            <button class="btn-primary btn-sm" id="ws-btn-save">Save</button>
+            <button class="btn-primary btn-sm" id="ws-btn-save">Save Workspace</button>
             <button class="btn-secondary btn-sm" id="ws-btn-export">Export</button>
             <button class="btn-secondary btn-sm" id="ws-btn-analyze" style="background-color: rgba(99, 102, 241, 0.1); border-color: rgba(99, 102, 241, 0.2); color: var(--primary); font-weight: 600;">Analyze Dataset</button>
             <button class="btn-secondary btn-sm" id="ws-btn-visualize" style="background-color: rgba(139, 92, 246, 0.1); border-color: rgba(139, 92, 246, 0.2); color: #8B5CF6; font-weight: 600;">Visualize</button>
@@ -1186,268 +996,433 @@
               <div style="padding: 16px 20px; display: flex; flex-direction: column; gap: 16px; flex: 1; overflow-y: auto;">
               <!-- Tab Navigation -->
               <div class="viz-tabs-nav" style="display: flex; gap: 4px; flex-wrap: wrap; border-bottom: 1px solid var(--border-color); padding-bottom: 8px; margin-bottom: 0;">
-                <button class="viz-tab-btn active" data-tab="structure" style="font-size:10px; padding:4px 6px;">Structure</button>
-                <button class="viz-tab-btn" data-tab="settings" style="font-size:10px; padding:4px 6px;">Settings</button>
-                <button class="viz-tab-btn" data-tab="filters" style="font-size:10px; padding:4px 6px;">Filters</button>
+                <button class="viz-tab-btn active" data-tab="dashboard" style="font-size:10px; padding:4px 6px;">Dashboard</button>
+                <button class="viz-tab-btn" data-tab="explore" style="font-size:10px; padding:4px 6px;">Explore</button>
                 <button class="viz-tab-btn" data-tab="insights" style="font-size:10px; padding:4px 6px;">Insights</button>
-                <button class="viz-tab-btn" data-tab="calcfields" style="font-size:10px; padding:4px 6px;">Calc Fields</button>
-                <button class="viz-tab-btn" data-tab="drilldown" style="font-size:10px; padding:4px 6px;">Drill Down</button>
-                <button class="viz-tab-btn" data-tab="analysis" style="font-size:10px; padding:4px 6px;">Analysis</button>
-                <button class="viz-tab-btn" data-tab="recs" style="font-size:10px; padding:4px 6px;">Recs</button>
+                <button class="viz-tab-btn" data-tab="manage" style="font-size:10px; padding:4px 6px;">Manage</button>
               </div>
 
-              <!-- Structure Tab Content -->
-              <div class="viz-tab-content" id="viztab-structure">
-                <div class="quality-section-desc">Manage your dashboard layout and widgets.</div>
-                
-                <div class="viz-widget-list" id="viz-widget-list-container" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px;">
-                  <!-- Dynamically populated widget list showing title, type, width, up/down and delete actions -->
-                </div>
-                
-                <button class="ccm-btn ccm-btn-primary" id="btn-add-widget-trigger" style="width: 100%; justify-content: center; display: flex; align-items: center; gap: 6px;">
-                  <span>➕ Add New Widget</span>
-                </button>
-              </div>
-
-              <!-- Settings Tab Content -->
-              <div class="viz-tab-content" id="viztab-settings" style="display: none;">
-                <div class="quality-section-desc">Customize selected widget settings.</div>
-                <div id="viz-settings-form" style="display: flex; flex-direction: column; gap: 12px;">
-                  <div id="viz-no-widget-selected" style="color: var(--text-muted); font-size: 12px; text-align: center; padding: 20px;">
-                    Select a widget on the canvas or from the Structure list to customize.
+              <!-- Dashboard Tab Content -->
+              <div class="viz-tab-content" id="viztab-dashboard">
+                <div class="viz-accordion-item active" id="acc-visuals">
+                  <div class="viz-accordion-header">
+                    <span>Visuals</span>
+                    <span class="chevron">❯</span>
                   </div>
-                  <div id="viz-settings-fields" style="display: none; flex-direction: column; gap: 12px;">
-                    <div class="viz-field-group">
-                      <label class="ws-info-label" style="font-weight: 600; margin-bottom: 4px; display: inline-block;">Widget Title</label>
-                      <input type="text" class="quality-input" id="viz-widget-title-input" style="margin-top: 0;" />
+                  <div class="viz-accordion-content">
+                    <div class="quality-section-desc" style="margin-bottom: 8px;">Manage your dashboard layout and widgets.</div>
+                    <div class="viz-widget-list" id="viz-widget-list-container" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px;">
+                      <!-- Dynamically populated widget list showing title, type, width, up/down and delete actions -->
                     </div>
                     
-                    <div class="viz-field-group">
-                      <label class="ws-info-label" style="font-weight: 600; margin-bottom: 4px; display: inline-block;">Widget Type</label>
-                      <select class="quality-select" id="viz-widget-type-select">
-                        <option value="kpi">KPI Card</option>
-                        <option value="line">Line Chart</option>
-                        <option value="bar">Bar Chart</option>
-                        <option value="pie">Pie Chart</option>
-                        <option value="donut">Donut Chart</option>
-                        <option value="table">Report Table</option>
-                      </select>
-                    </div>
+                    <button class="ccm-btn ccm-btn-primary" id="btn-add-widget-trigger" style="width: 100%; justify-content: center; display: flex; align-items: center; gap: 6px; margin-bottom: 12px;">
+                      <span>➕ Add New Widget</span>
+                    </button>
 
-                    <div class="viz-field-group" id="viz-field-x-col">
-                      <label class="ws-info-label" style="font-weight: 600; margin-bottom: 4px; display: inline-block;">X-Axis Column (Categories/Dates)</label>
-                      <select class="quality-select" id="viz-widget-x-select">
-                        <!-- Options dynamically loaded -->
-                      </select>
+                    <div style="border-top: 1px solid var(--border-color); padding-top: 10px; margin-top: 10px;">
+                      <div style="font-size: 10.5px; font-weight: 700; color: var(--text-secondary); margin-bottom: 6px;">Automated Recommendations</div>
+                      <div id="viz-recs-container" style="display: flex; flex-direction: column; gap: 10px;">
+                        <!-- Recommended visual draft cards load here -->
+                      </div>
                     </div>
+                  </div>
+                </div>
 
-                    <div class="viz-field-group" id="viz-field-y-col">
-                      <label class="ws-info-label" style="font-weight: 600; margin-bottom: 4px; display: inline-block;">Y-Axis Column (Values)</label>
-                      <select class="quality-select" id="viz-widget-y-select">
-                        <!-- Options dynamically loaded -->
-                      </select>
+                <div class="viz-accordion-item" id="acc-widget-settings">
+                  <div class="viz-accordion-header">
+                    <span>Widget Settings</span>
+                    <span class="chevron">❯</span>
+                  </div>
+                  <div class="viz-accordion-content">
+                    <div class="quality-section-desc" style="margin-bottom: 8px;">Customize selected widget settings.</div>
+                    <div id="viz-settings-form" style="display: flex; flex-direction: column; gap: 12px;">
+                      <div id="viz-no-widget-selected" style="color: var(--text-muted); font-size: 12px; text-align: center; padding: 20px;">
+                        Select a widget on the canvas or from the Visuals list to customize.
+                      </div>
+                      <div id="viz-settings-fields" style="display: none; flex-direction: column; gap: 12px;">
+                        <div class="viz-field-group">
+                          <label class="ws-info-label" style="font-weight: 600; margin-bottom: 4px; display: inline-block;">Widget Title</label>
+                          <input type="text" class="quality-input" id="viz-widget-title-input" style="margin-top: 0;" />
+                        </div>
+                        
+                        <div class="viz-field-group">
+                          <label class="ws-info-label" style="font-weight: 600; margin-bottom: 4px; display: inline-block;">Widget Type</label>
+                          <select class="quality-select" id="viz-widget-type-select">
+                            <option value="kpi">KPI Card</option>
+                            <option value="line">Line Chart</option>
+                            <option value="bar">Bar Chart</option>
+                            <option value="pie">Pie Chart</option>
+                            <option value="donut">Donut Chart</option>
+                            <option value="table">Report Table</option>
+                          </select>
+                        </div>
+
+                        <div class="viz-field-group" id="viz-field-x-col">
+                          <label class="ws-info-label" style="font-weight: 600; margin-bottom: 4px; display: inline-block;">X-Axis Column (Categories/Dates)</label>
+                          <select class="quality-select" id="viz-widget-x-select">
+                            <!-- Options dynamically loaded -->
+                          </select>
+                        </div>
+
+                        <div class="viz-field-group" id="viz-field-y-col">
+                          <label class="ws-info-label" style="font-weight: 600; margin-bottom: 4px; display: inline-block;">Y-Axis Column (Values)</label>
+                          <select class="quality-select" id="viz-widget-y-select">
+                            <!-- Options dynamically loaded -->
+                          </select>
+                        </div>
+
+                        <div class="viz-field-group" id="viz-field-agg">
+                          <label class="ws-info-label" style="font-weight: 600; margin-bottom: 4px; display: inline-block;">Aggregation Method</label>
+                          <select class="quality-select" id="viz-widget-agg-select">
+                            <option value="sum">Sum</option>
+                            <option value="avg">Average</option>
+                            <option value="count">Count of Rows</option>
+                            <option value="min">Min</option>
+                            <option value="max">Max</option>
+                          </select>
+                        </div>
+
+                        <div class="viz-field-group">
+                          <label class="ws-info-label" style="font-weight: 600; margin-bottom: 4px; display: inline-block;">Grid Width (1-12 columns)</label>
+                          <select class="quality-select" id="viz-widget-width-select">
+                            <option value="3">Quarter Width (3/12)</option>
+                            <option value="4">Third Width (4/12)</option>
+                            <option value="6">Half Width (6/12)</option>
+                            <option value="8">Two-Thirds Width (8/12)</option>
+                            <option value="12">Full Width (12/12)</option>
+                          </select>
+                        </div>
+
+                        <button class="ccm-btn ccm-btn-primary" id="btn-save-widget-settings" style="margin-top: 8px; width: 100%;">Apply Changes</button>
+                      </div>
                     </div>
+                  </div>
+                </div>
 
-                    <div class="viz-field-group" id="viz-field-agg">
-                      <label class="ws-info-label" style="font-weight: 600; margin-bottom: 4px; display: inline-block;">Aggregation Method</label>
-                      <select class="quality-select" id="viz-widget-agg-select">
-                        <option value="sum">Sum</option>
-                        <option value="avg">Average</option>
-                        <option value="count">Count of Rows</option>
-                        <option value="min">Min</option>
-                        <option value="max">Max</option>
-                      </select>
+                <div class="viz-accordion-item" id="acc-dashboard-actions">
+                  <div class="viz-accordion-header">
+                    <span>Dashboard Actions</span>
+                    <span class="chevron">❯</span>
+                  </div>
+                  <div class="viz-accordion-content">
+                    <div class="quality-section-desc" style="margin-bottom: 8px;">Perform global actions on the active dashboard.</div>
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                      <button class="btn-outline btn-sm" id="btn-actions-regenerate-draft" style="width: 100%; justify-content: center; height: 32px;">
+                        🔄 Regenerate Default Draft
+                      </button>
+                      <button class="btn-outline btn-sm delete" id="btn-actions-clear-layout" style="width: 100%; justify-content: center; height: 32px; border-color: rgba(239, 68, 68, 0.2); color: var(--error);">
+                        🗑️ Clear All Widgets
+                      </button>
+                      <button class="btn-outline btn-sm" id="btn-actions-clear-filters" style="width: 100%; justify-content: center; height: 32px;">
+                        🧹 Clear Active Filters
+                      </button>
                     </div>
-
-                    <div class="viz-field-group">
-                      <label class="ws-info-label" style="font-weight: 600; margin-bottom: 4px; display: inline-block;">Grid Width (1-12 columns)</label>
-                      <select class="quality-select" id="viz-widget-width-select">
-                        <option value="3">Quarter Width (3/12)</option>
-                        <option value="4">Third Width (4/12)</option>
-                        <option value="6">Half Width (6/12)</option>
-                        <option value="8">Two-Thirds Width (8/12)</option>
-                        <option value="12">Full Width (12/12)</option>
-                      </select>
-                    </div>
-
-                    <button class="ccm-btn ccm-btn-primary" id="btn-save-widget-settings" style="margin-top: 8px; width: 100%;">Apply Changes</button>
                   </div>
                 </div>
               </div>
 
-              <!-- Filters Tab Content -->
-              <div class="viz-tab-content" id="viztab-filters" style="display: none;">
-                <div class="quality-section-desc">Filter dashboard data globally.</div>
-                <div id="viz-global-filters-container" style="display: flex; flex-direction: column; gap: 12px;">
-                  <!-- Dynamic visual filters per category column will be loaded here -->
+              <!-- Explore Tab Content -->
+              <div class="viz-tab-content" id="viztab-explore" style="display: none;">
+                <div class="viz-accordion-item active" id="acc-explore-filters">
+                  <div class="viz-accordion-header">
+                    <span>Filters</span>
+                    <span class="chevron">❯</span>
+                  </div>
+                  <div class="viz-accordion-content">
+                    <div class="quality-section-desc" style="margin-bottom: 8px;">Filter dashboard data globally.</div>
+                    <div id="viz-global-filters-container" style="display: flex; flex-direction: column; gap: 12px;">
+                      <!-- Dynamic visual filters per category column will be loaded here -->
+                    </div>
+                    <button class="btn-outline btn-sm" id="btn-clear-global-viz-filters" style="margin-top: 16px; width: 100%; justify-content: center; display: inline-flex;">
+                      Clear All Filters
+                    </button>
+                  </div>
                 </div>
-                <button class="btn-outline btn-sm" id="btn-clear-global-viz-filters" style="margin-top: 16px; width: 100%; justify-content: center; display: inline-flex;">
-                  Clear All Filters
-                </button>
-              </div>
 
-              <!-- Recommendations Tab Content -->
-              <div class="viz-tab-content" id="viztab-recs" style="display: none;">
-                <div class="quality-section-desc">Automated chart recommendations based on column types.</div>
-                <div id="viz-recs-container" style="display: flex; flex-direction: column; gap: 10px;">
-                  <!-- Recommended visual draft cards load here -->
+                <div class="viz-accordion-item" id="acc-explore-drills">
+                  <div class="viz-accordion-header">
+                    <span>Drill Paths</span>
+                    <span class="chevron">❯</span>
+                  </div>
+                  <div class="viz-accordion-content">
+                    <div class="quality-section-desc" style="margin-bottom: 8px;">Create hierarchical drill-down relationships.</div>
+                    <div id="viz-drill-list" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px;">
+                      <!-- Hierarchies list -->
+                    </div>
+                    
+                    <div id="viz-drill-create-form" style="display: flex; flex-direction: column; gap: 10px; border-top: 1px solid var(--border-color); padding-top: 12px; margin-bottom: 12px;">
+                      <div class="viz-field-group">
+                        <label class="ws-info-label" style="font-weight:600; margin-bottom:4px; display:inline-block;">Hierarchy Name</label>
+                        <input type="text" class="quality-input" id="viz-drill-name-input" placeholder="e.g. Geography" style="margin-top:0;" />
+                      </div>
+                      
+                      <div class="viz-field-group">
+                        <label class="ws-info-label" style="font-weight:600; margin-bottom:4px; display:inline-block;">Hierarchy Columns (In Order)</label>
+                        <div id="viz-drill-cols-checklist" style="max-height: 120px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 8px; display: flex; flex-direction: column; gap: 6px; background: var(--bg-secondary);">
+                          <!-- Checkbox list of columns -->
+                        </div>
+                      </div>
+                      
+                      <button class="ccm-btn ccm-btn-primary btn-sm" id="btn-drill-save-hierarchy" style="width: 100%; justify-content: center;">Save Hierarchy</button>
+                    </div>
+
+                    <div id="viz-drill-active-status" style="display:none; border-top: 1px solid var(--border-color); padding-top: 12px;">
+                      <label class="ws-info-label" style="font-weight:700; color:var(--text-primary); margin-bottom:6px; display:block;">Active Drill Path</label>
+                      <div id="viz-drill-path-display" style="font-size:11.5px; padding:8px; background:rgba(99,102,241,0.08); border-radius:var(--radius-sm); border:1px solid rgba(99,102,241,0.2); margin-bottom:12px; font-weight:600; display:flex; align-items:center; gap:6px;"></div>
+                      <div style="display: flex; gap: 8px;">
+                        <button class="btn-outline btn-sm" id="btn-drill-up" style="flex:1; justify-content:center;">Drill Up</button>
+                        <button class="btn-outline btn-sm delete" id="btn-drill-reset" style="flex:1; justify-content:center;">Reset Path</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="viz-accordion-item" id="acc-explore-calcmetrics">
+                  <div class="viz-accordion-header">
+                    <span>Calculated Metrics</span>
+                    <span class="chevron">❯</span>
+                  </div>
+                  <div class="viz-accordion-content">
+                    <div class="quality-section-desc" style="margin-bottom: 8px;">Add virtual columns computed using mathematical formulas.</div>
+                    <div id="viz-calc-fields-list" style="display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px;">
+                      <!-- Dynamically populated calculated fields list -->
+                    </div>
+                    
+                    <div id="viz-calc-field-form" style="display: flex; flex-direction: column; gap: 10px; border-top: 1px solid var(--border-color); padding-top: 12px;">
+                      <div class="viz-field-group">
+                        <label class="ws-info-label" style="font-weight:600; margin-bottom:4px; display:inline-block;">Field Name</label>
+                        <input type="text" class="quality-input" id="viz-calc-name-input" placeholder="e.g. Profit Margin" style="margin-top:0;" />
+                      </div>
+                      
+                      <div class="viz-field-group">
+                        <label class="ws-info-label" style="font-weight:600; margin-bottom:4px; display:inline-block;">Formula</label>
+                        <textarea class="quality-input" id="viz-calc-formula-input" placeholder="e.g. [Profit] / [Sales] * 100" style="margin-top:0; font-family: monospace; height: 60px; resize: vertical; font-size:11px;"></textarea>
+                      </div>
+                      
+                      <div style="display: flex; gap: 6px; margin-bottom: 8px;">
+                        <select class="quality-select" id="viz-calc-helper-cols" style="flex: 1; font-size: 10.5px;">
+                          <option value="">+ Insert Column</option>
+                        </select>
+                        <select class="quality-select" id="viz-calc-helper-funcs" style="flex: 1; font-size: 10.5px;">
+                          <option value="">+ Insert Function</option>
+                          <option value="IF(, , )">IF</option>
+                          <option value="ROUND(, )">ROUND</option>
+                          <option value="YEAR()">YEAR</option>
+                          <option value="MONTH()">MONTH</option>
+                          <option value="DAY()">DAY</option>
+                          <option value="UPPER()">UPPER</option>
+                          <option value="LOWER()">LOWER</option>
+                          <option value="CONCAT(, )">CONCAT</option>
+                        </select>
+                      </div>
+
+                      <div id="viz-calc-preview-box" style="display:none; font-size:10.5px; background:var(--bg-secondary); padding:8px; border-radius:var(--radius-sm); border:1px solid var(--border-color); margin-bottom: 8px;">
+                        <div style="font-weight:700; color:var(--text-secondary); margin-bottom:4px;">Formula Preview:</div>
+                        <div id="viz-calc-preview-text" style="font-family:monospace; color:var(--text-primary); word-break:break-all; margin-bottom:6px;"></div>
+                        <div style="font-weight:700; color:var(--text-secondary); margin-bottom:4px;">Sample Output (first 3 rows):</div>
+                        <div id="viz-calc-sample-output" style="font-family:monospace; color:var(--primary); white-space:pre-wrap;"></div>
+                      </div>
+
+                      <div id="viz-calc-validation-msg" style="font-size:11px; font-weight:600; min-height:16px; margin-bottom: 8px;"></div>
+                      
+                      <div style="display: flex; gap: 8px;">
+                        <button class="btn-outline btn-sm" id="btn-calc-validate" style="flex: 1; justify-content: center; height:30px;">Validate</button>
+                        <button class="ccm-btn ccm-btn-primary btn-sm" id="btn-calc-save" style="flex: 1; justify-content: center; height:30px;" disabled>Save Field</button>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
 
               <!-- Insights Tab Content -->
               <div class="viz-tab-content" id="viztab-insights" style="display: none;">
-                <div class="quality-section-desc">Automated, deterministic summary insights from active data.</div>
-                <div id="viz-executive-summary" style="background: rgba(99,102,241,0.06); padding: 12px; border-radius: var(--radius-sm); font-size: 11.5px; border-left: 3px solid var(--primary); color: var(--text-primary); margin-bottom: 16px; line-height: 1.5;">
-                  <!-- Loaded dynamically -->
-                </div>
-                <div id="viz-insights-container" style="display: flex; flex-direction: column; gap: 10px;">
-                  <!-- Loaded dynamically -->
-                </div>
-              </div>
-
-              <!-- Calculated Fields Tab Content -->
-              <div class="viz-tab-content" id="viztab-calcfields" style="display: none;">
-                <div class="quality-section-desc">Add virtual columns computed using mathematical formulas.</div>
-                
-                <div id="viz-calc-fields-list" style="display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px;">
-                  <!-- Dynamically populated calculated fields list -->
-                </div>
-                
-                <div id="viz-calc-field-form" style="display: flex; flex-direction: column; gap: 10px; border-top: 1px solid var(--border-color); padding-top: 12px;">
-                  <div class="viz-field-group">
-                    <label class="ws-info-label" style="font-weight:600; margin-bottom:4px; display:inline-block;">Field Name</label>
-                    <input type="text" class="quality-input" id="viz-calc-name-input" placeholder="e.g. Profit Margin" style="margin-top:0;" />
+                <div class="viz-accordion-item active" id="acc-insights-summary">
+                  <div class="viz-accordion-header">
+                    <span>Executive Summary</span>
+                    <span class="chevron">❯</span>
                   </div>
-                  
-                  <div class="viz-field-group">
-                    <label class="ws-info-label" style="font-weight:600; margin-bottom:4px; display:inline-block;">Formula</label>
-                    <textarea class="quality-input" id="viz-calc-formula-input" placeholder="e.g. [Profit] / [Sales] * 100" style="margin-top:0; font-family: monospace; height: 60px; resize: vertical; font-size:11px;"></textarea>
-                  </div>
-                  
-                  <div style="display: flex; gap: 6px;">
-                    <select class="quality-select" id="viz-calc-helper-cols" style="flex: 1; font-size: 10.5px;">
-                      <option value="">+ Insert Column</option>
-                    </select>
-                    <select class="quality-select" id="viz-calc-helper-funcs" style="flex: 1; font-size: 10.5px;">
-                      <option value="">+ Insert Function</option>
-                      <option value="IF(, , )">IF</option>
-                      <option value="ROUND(, )">ROUND</option>
-                      <option value="YEAR()">YEAR</option>
-                      <option value="MONTH()">MONTH</option>
-                      <option value="DAY()">DAY</option>
-                      <option value="UPPER()">UPPER</option>
-                      <option value="LOWER()">LOWER</option>
-                      <option value="CONCAT(, )">CONCAT</option>
-                    </select>
-                  </div>
-
-                  <div id="viz-calc-preview-box" style="display:none; font-size:10.5px; background:var(--bg-secondary); padding:8px; border-radius:var(--radius-sm); border:1px solid var(--border-color);">
-                    <div style="font-weight:700; color:var(--text-secondary); margin-bottom:4px;">Formula Preview:</div>
-                    <div id="viz-calc-preview-text" style="font-family:monospace; color:var(--text-primary); word-break:break-all; margin-bottom:6px;"></div>
-                    <div style="font-weight:700; color:var(--text-secondary); margin-bottom:4px;">Sample Output (first 3 rows):</div>
-                    <div id="viz-calc-sample-output" style="font-family:monospace; color:var(--primary); white-space:pre-wrap;"></div>
-                  </div>
-
-                  <div id="viz-calc-validation-msg" style="font-size:11px; font-weight:600; min-height:16px;"></div>
-                  
-                  <div style="display: flex; gap: 8px;">
-                    <button class="btn-outline btn-sm" id="btn-calc-validate" style="flex: 1; justify-content: center; height:30px;">Validate</button>
-                    <button class="ccm-btn ccm-btn-primary btn-sm" id="btn-calc-save" style="flex: 1; justify-content: center; height:30px;" disabled>Save Field</button>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Drill Down Tab Content -->
-              <div class="viz-tab-content" id="viztab-drilldown" style="display: none;">
-                <div class="quality-section-desc">Create hierarchical drill-down relationships.</div>
-                
-                <div id="viz-drill-list" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px;">
-                  <!-- Hierarchies list -->
-                </div>
-                
-                <div id="viz-drill-create-form" style="display: flex; flex-direction: column; gap: 10px; border-top: 1px solid var(--border-color); padding-top: 12px; margin-bottom: 16px;">
-                  <div class="viz-field-group">
-                    <label class="ws-info-label" style="font-weight:600; margin-bottom:4px; display:inline-block;">Hierarchy Name</label>
-                    <input type="text" class="quality-input" id="viz-drill-name-input" placeholder="e.g. Geography" style="margin-top:0;" />
-                  </div>
-                  
-                  <div class="viz-field-group">
-                    <label class="ws-info-label" style="font-weight:600; margin-bottom:4px; display:inline-block;">Hierarchy Columns (In Order)</label>
-                    <div id="viz-drill-cols-checklist" style="max-height: 120px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 8px; display: flex; flex-direction: column; gap: 6px; background: var(--bg-secondary);">
-                      <!-- Checkbox list of columns -->
+                  <div class="viz-accordion-content">
+                    <div id="viz-executive-summary" style="background: rgba(99,102,241,0.06); padding: 12px; border-radius: var(--radius-sm); font-size: 11.5px; border-left: 3px solid var(--primary); color: var(--text-primary); line-height: 1.5;">
+                      <!-- Loaded dynamically -->
                     </div>
                   </div>
-                  
-                  <button class="ccm-btn ccm-btn-primary btn-sm" id="btn-drill-save-hierarchy" style="width: 100%; justify-content: center;">Save Hierarchy</button>
                 </div>
 
-                <div id="viz-drill-active-status" style="display:none; border-top: 1px solid var(--border-color); padding-top: 12px;">
-                  <label class="ws-info-label" style="font-weight:700; color:var(--text-primary); margin-bottom:6px; display:block;">Active Drill Path</label>
-                  <div id="viz-drill-path-display" style="font-size:11.5px; padding:8px; background:rgba(99,102,241,0.08); border-radius:var(--radius-sm); border:1px solid rgba(99,102,241,0.2); margin-bottom:12px; font-weight:600; display:flex; align-items:center; gap:6px;"></div>
-                  <div style="display: flex; gap: 8px;">
-                    <button class="btn-outline btn-sm" id="btn-drill-up" style="flex:1; justify-content:center;">Drill Up</button>
-                    <button class="btn-outline btn-sm delete" id="btn-drill-reset" style="flex:1; justify-content:center;">Reset Path</button>
+                <div class="viz-accordion-item" id="acc-insights-performers">
+                  <div class="viz-accordion-header">
+                    <span>Best Performers</span>
+                    <span class="chevron">❯</span>
+                  </div>
+                  <div class="viz-accordion-content">
+                    <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:12px;">
+                      <div style="display:flex; gap:6px;">
+                        <select class="quality-select" id="viz-rank-dim" style="flex:1; font-size:10px; height:26px; padding:2px;"></select>
+                        <select class="quality-select" id="viz-rank-metric" style="flex:1; font-size:10px; height:26px; padding:2px;"></select>
+                      </div>
+                      <select class="quality-select" id="viz-rank-type" style="width:100%; font-size:10px; height:26px; padding:2px;">
+                        <option value="top5">Top 5 Entities</option>
+                        <option value="top10">Top 10 Entities</option>
+                        <option value="bottom5">Bottom 5 Entities</option>
+                        <option value="bottom10">Bottom 10 Entities</option>
+                      </select>
+                    </div>
+                    <div id="viz-analysis-ranks-container" style="display:flex; flex-direction:column; gap:6px;">
+                      <!-- Population -->
+                    </div>
+                  </div>
+                </div>
+
+                <div class="viz-accordion-item" id="acc-insights-trends">
+                  <div class="viz-accordion-header">
+                    <span>Trends</span>
+                    <span class="chevron">❯</span>
+                  </div>
+                  <div class="viz-accordion-content">
+                    <div id="viz-analysis-trend-container" style="display:flex; flex-direction:column; gap:8px;">
+                      <!-- Population -->
+                    </div>
+                  </div>
+                </div>
+
+                <div class="viz-accordion-item" id="acc-insights-risks">
+                  <div class="viz-accordion-header">
+                    <span>Risks & Issues</span>
+                    <span class="chevron">❯</span>
+                  </div>
+                  <div class="viz-accordion-content">
+                    <div style="font-size:10.5px; font-weight:700; color:var(--text-secondary); margin-bottom:6px;">Statistical Anomalies:</div>
+                    <div id="viz-analysis-anomalies-container" style="display:flex; flex-direction:column; gap:6px; margin-bottom: 12px;">
+                      <!-- Population -->
+                    </div>
+                    <div style="font-size:10.5px; font-weight:700; color:var(--text-secondary); margin-bottom:6px;">Dataset Quality Warnings:</div>
+                    <div id="viz-quality-warnings-container" style="display:flex; flex-direction:column; gap:6px;">
+                      <!-- Missing / type issues -->
+                    </div>
+                  </div>
+                </div>
+
+                <div class="viz-accordion-item" id="acc-insights-correlations">
+                  <div class="viz-accordion-header">
+                    <span>Correlations</span>
+                    <span class="chevron">❯</span>
+                  </div>
+                  <div class="viz-accordion-content">
+                    <div style="font-size:10.5px; font-weight:700; color:var(--text-secondary); margin-bottom:6px;">Numeric Correlations:</div>
+                    <div id="viz-analysis-correlation-container" style="display:flex; flex-direction:column; gap:6px;">
+                      <!-- Population -->
+                    </div>
                   </div>
                 </div>
               </div>
 
-              <!-- Analysis Tab Content -->
-              <div class="viz-tab-content" id="viztab-analysis" style="display: none;">
-                <div class="quality-section-desc">Advanced mathematical and statistical insights.</div>
-                
-                <div class="analysis-subtabs" style="display: flex; border-bottom: 1px solid var(--border-color); margin-bottom: 12px; gap: 2px;">
-                  <button class="analysis-subtab-btn active" data-subtab="correlation" style="flex: 1; font-size: 9.5px; padding: 4px 0; border: none; background: transparent; cursor: pointer; color: var(--text-secondary); border-bottom: 2px solid transparent; font-weight: 600;">Corr</button>
-                  <button class="analysis-subtab-btn" data-subtab="trend" style="flex: 1; font-size: 9.5px; padding: 4px 0; border: none; background: transparent; cursor: pointer; color: var(--text-secondary); border-bottom: 2px solid transparent; font-weight: 600;">Trend</button>
-                  <button class="analysis-subtab-btn" data-subtab="anomalies" style="flex: 1; font-size: 9.5px; padding: 4px 0; border: none; background: transparent; cursor: pointer; color: var(--text-secondary); border-bottom: 2px solid transparent; font-weight: 600;">Anom</button>
-                  <button class="analysis-subtab-btn" data-subtab="topbottom" style="flex: 1; font-size: 9.5px; padding: 4px 0; border: none; background: transparent; cursor: pointer; color: var(--text-secondary); border-bottom: 2px solid transparent; font-weight: 600;">Ranks</button>
-                  <button class="analysis-subtab-btn" data-subtab="benchmark" style="flex: 1; font-size: 9.5px; padding: 4px 0; border: none; background: transparent; cursor: pointer; color: var(--text-secondary); border-bottom: 2px solid transparent; font-weight: 600;">Bench</button>
-                </div>
-
-                <div class="analysis-sub-content" id="analsub-correlation">
-                  <div style="font-size:10.5px; font-weight:700; color:var(--text-secondary); margin-bottom:6px;">Numeric Correlations:</div>
-                  <div id="viz-analysis-correlation-container" style="display:flex; flex-direction:column; gap:6px;">
-                    <!-- Population -->
+              <!-- Manage Tab Content -->
+              <div class="viz-tab-content" id="viztab-manage" style="display: none;">
+                <div class="viz-accordion-item active" id="acc-manage-saveload">
+                  <div class="viz-accordion-header">
+                    <span>Save / Load Dashboard</span>
+                    <span class="chevron">❯</span>
                   </div>
-                </div>
-
-                <div class="analysis-sub-content" id="analsub-trend" style="display:none;">
-                  <div style="font-size:10.5px; font-weight:700; color:var(--text-secondary); margin-bottom:6px;">Time Series Trend:</div>
-                  <div id="viz-analysis-trend-container" style="display:flex; flex-direction:column; gap:8px;">
-                    <!-- Population -->
-                  </div>
-                </div>
-
-                <div class="analysis-sub-content" id="analsub-anomalies" style="display:none;">
-                  <div style="font-size:10.5px; font-weight:700; color:var(--text-secondary); margin-bottom:6px;">Statistical Anomalies (Outliers):</div>
-                  <div id="viz-analysis-anomalies-container" style="display:flex; flex-direction:column; gap:6px;">
-                    <!-- Population -->
-                  </div>
-                </div>
-
-                <div class="analysis-sub-content" id="analsub-topbottom" style="display:none;">
-                  <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:12px;">
-                    <div style="display:flex; gap:6px;">
-                      <select class="quality-select" id="viz-rank-dim" style="flex:1; font-size:10px; height:26px; padding:2px;"></select>
-                      <select class="quality-select" id="viz-rank-metric" style="flex:1; font-size:10px; height:26px; padding:2px;"></select>
+                  <div class="viz-accordion-content">
+                    <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px;">
+                      <input type="text" class="quality-input" id="manage-save-name-input" placeholder="Dashboard name..." style="margin-top:0; height:28px; font-size:11px; padding: 4px 8px;" />
+                      <button class="ccm-btn ccm-btn-primary btn-sm" id="btn-manage-save-dash" style="justify-content: center; height:28px;">💾 Save Current Layout</button>
                     </div>
-                    <select class="quality-select" id="viz-rank-type" style="width:100%; font-size:10px; height:26px; padding:2px;">
-                      <option value="top5">Top 5 Entities</option>
-                      <option value="top10">Top 10 Entities</option>
-                      <option value="bottom5">Bottom 5 Entities</option>
-                      <option value="bottom10">Bottom 10 Entities</option>
-                    </select>
-                  </div>
-                  <div id="viz-analysis-ranks-container" style="display:flex; flex-direction:column; gap:6px;"></div>
-                </div>
-
-                <div class="analysis-sub-content" id="analsub-benchmark" style="display:none;">
-                  <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:12px;">
-                    <div style="display:flex; gap:6px;">
-                      <select class="quality-select" id="viz-bench-dim" style="flex:1; font-size:10px; height:26px; padding:2px;"></select>
-                      <select class="quality-select" id="viz-bench-metric" style="flex:1; font-size:10px; height:26px; padding:2px;"></select>
+                    <div style="font-size: 10px; font-weight: 700; color: var(--text-secondary); margin-bottom: 6px;">Saved Dashboards</div>
+                    <div id="manage-saved-list" style="max-height: 150px; overflow-y: auto; display: flex; flex-direction: column; gap: 4px;">
+                      <!-- Saved items load here dynamically -->
                     </div>
                   </div>
-                  <div id="viz-analysis-benchmark-container" style="display:flex; flex-direction:column; gap:6px; max-height:220px; overflow-y:auto;"></div>
+                </div>
+
+                <div class="viz-accordion-item" id="acc-manage-importexport">
+                  <div class="viz-accordion-header">
+                    <span>Import / Export Layout</span>
+                    <span class="chevron">❯</span>
+                  </div>
+                  <div class="viz-accordion-content">
+                    <div class="quality-section-desc" style="margin-bottom: 8px;">Transfer dashboard configurations via JSON format.</div>
+                    <div style="display: flex; gap: 8px;">
+                      <button class="btn-outline btn-sm" id="btn-manage-export-json" style="flex: 1; justify-content: center; height: 30px;">Export JSON</button>
+                      <button class="btn-outline btn-sm" id="btn-manage-import-json-trigger" style="flex: 1; justify-content: center; height: 30px;">Import JSON</button>
+                      <input type="file" id="btn-manage-import-file-input" accept=".json" style="display: none;" />
+                    </div>
+                  </div>
+                </div>
+
+                <div class="viz-accordion-item" id="acc-manage-templates">
+                  <div class="viz-accordion-header">
+                    <span>Templates</span>
+                    <span class="chevron">❯</span>
+                  </div>
+                  <div class="viz-accordion-content">
+                    <div class="quality-section-desc" style="margin-bottom: 8px;">Instantly apply standard layout configurations.</div>
+                    <div style="display: flex; flex-direction: column; gap: 6px;">
+                      <div class="template-card" data-template="kpi">
+                        <span class="template-card-icon">🔢</span>
+                        <div class="template-card-text">
+                          <span class="template-card-title">Executive KPI Cards</span>
+                          <span class="template-card-desc">4 core summary metrics to highlight key numbers.</span>
+                        </div>
+                      </div>
+                      <div class="template-card" data-template="trend">
+                        <span class="template-card-icon">📈</span>
+                        <div class="template-card-text">
+                          <span class="template-card-title">Hero Trend Dashboard</span>
+                          <span class="template-card-desc">2 KPI cards and 1 full-width trend chart.</span>
+                        </div>
+                      </div>
+                      <div class="template-card" data-template="full">
+                        <span class="template-card-icon">📊</span>
+                        <div class="template-card-text">
+                          <span class="template-card-title">Full Analyst Dashboard</span>
+                          <span class="template-card-desc">Line/Bar/Donut charts, KPI metrics, & data report.</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="viz-accordion-item" id="acc-manage-health">
+                  <div class="viz-accordion-header">
+                    <span>Dashboard Health</span>
+                    <span class="chevron">❯</span>
+                  </div>
+                  <div class="viz-accordion-content">
+                    <div id="manage-health-list" style="display: flex; flex-direction: column; gap: 4px;">
+                      <!-- Generated dynamically -->
+                    </div>
+                  </div>
+                </div>
+
+                <div class="viz-accordion-item" id="acc-manage-dataset-info">
+                  <div class="viz-accordion-header">
+                    <span>Dataset Information</span>
+                    <span class="chevron">❯</span>
+                  </div>
+                  <div class="viz-accordion-content">
+                    <div class="ws-info-list" style="gap: 6px;">
+                      <div class="ws-info-card" style="padding: 6px 8px; margin-bottom: 0;">
+                        <span class="ws-info-label" style="font-size: 9px; margin-bottom: 2px;">Total Rows</span>
+                        <span class="ws-info-value" id="manage-info-rows" style="font-size: 13px;">-</span>
+                      </div>
+                      <div class="ws-info-card" style="padding: 6px 8px; margin-bottom: 0;">
+                        <span class="ws-info-label" style="font-size: 9px; margin-bottom: 2px;">Total Columns</span>
+                        <span class="ws-info-value" id="manage-info-cols" style="font-size: 13px;">-</span>
+                      </div>
+                      <div class="ws-info-card" style="padding: 6px 8px; margin-bottom: 0;">
+                        <span class="ws-info-label" style="font-size: 9px; margin-bottom: 2px;">Missing Values</span>
+                        <span class="ws-info-value" id="manage-info-missing" style="font-size: 13px;">-</span>
+                      </div>
+                      <div class="ws-info-card" style="padding: 6px 8px; margin-bottom: 0;">
+                        <span class="ws-info-label" style="font-size: 9px; margin-bottom: 2px;">Duplicate Rows</span>
+                        <span class="ws-info-value" id="manage-info-dups" style="font-size: 13px;">-</span>
+                      </div>
+                      <div class="ws-info-card" style="padding: 6px 8px; margin-bottom: 0;">
+                        <span class="ws-info-label" style="font-size: 9px; margin-bottom: 2px;">Data Quality Score</span>
+                        <span class="ws-info-value" id="manage-info-quality" style="font-size: 13px;">-</span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
 
