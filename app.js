@@ -61,6 +61,12 @@ window.setActive = function(element) {
   const settingsView = document.getElementById('settings-view-container');
   if (settingsView) settingsView.style.display = 'none';
 
+  const aiAnalystView = document.getElementById('ai-analyst-view-container');
+  if (aiAnalystView) aiAnalystView.style.display = 'none';
+
+  const historyView = document.getElementById('history-view-container');
+  if (historyView) historyView.style.display = 'none';
+
   // Toggle active view
   if (labelText === 'Dashboard') {
     document.getElementById('dashboard-view-container').style.display = 'block';
@@ -86,6 +92,16 @@ window.setActive = function(element) {
     if (settingsView) settingsView.style.display = 'block';
     if (typeof loadAndRenderSettings === 'function') {
       loadAndRenderSettings();
+    }
+  } else if (labelText === 'AI Analyst') {
+    if (aiAnalystView) {
+      aiAnalystView.style.display = 'flex';
+      if (typeof initAiAnalystView === 'function') initAiAnalystView();
+    }
+  } else if (labelText === 'History') {
+    if (historyView) {
+      historyView.style.display = 'flex';
+      if (typeof initHistoryView === 'function') initHistoryView();
     }
   }
 };
@@ -597,6 +613,7 @@ function loadParsedData(parsedRows, filename, type, sizeBytes) {
   // Save to IndexedDB and prune if over 25 limit
   if (typeof saveWorkspaceToDB === 'function') {
     saveWorkspaceToDB(newWorkspace).then(() => {
+      if (typeof updateCurrentDatasetContext === 'function') updateCurrentDatasetContext();
       return enforceWorkspaceLimit();
     }).catch(err => {
       console.error("Failed to save new workspace to DB:", err);
@@ -7566,7 +7583,8 @@ function getActiveWorkspaceState(existingWorkspace) {
       activeDrillState: typeof activeDrillState !== 'undefined' ? activeDrillState : null
     },
     calculatedFields: calculatedFields,
-    drillHierarchies: drillHierarchies
+    drillHierarchies: drillHierarchies,
+    aiHistory: typeof aiActiveChatHistory !== 'undefined' ? aiActiveChatHistory : []
   };
 }
 
@@ -7862,6 +7880,7 @@ function restoreDatasetWorkspace(wsState) {
   
   calculatedFields = wsState.calculatedFields || {};
   drillHierarchies = wsState.drillHierarchies || [];
+  aiActiveChatHistory = wsState.aiHistory || [];
   
   const titleEl = document.getElementById('ws-dataset-name');
   if (titleEl) {
@@ -7927,6 +7946,8 @@ function restoreDatasetWorkspace(wsState) {
     console.error("Failed to update last opened timestamp:", err);
   });
   
+  if (typeof updateCurrentDatasetContext === 'function') updateCurrentDatasetContext();
+
   setTimeout(() => {
     window.isRestoringWorkspace = false;
   }, 100);
@@ -8571,4 +8592,2981 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 });
+
+/* ==================== ONECLICK DASHBOARD BUILDER V3 LOGIC ==================== */
+
+// Global state variables for V3 features
+let globalFiltersV3 = {
+  multiselect: {}, // colKey -> Set
+  dateRange: {},   // colKey -> { min, max }
+  numericRange: {} // colKey -> { min, max }
+};
+
+let wizardState = {
+  active: false,
+  step: 1, // 1 to 6
+  chartType: 'kpi',
+  xCol: '',
+  yCol: '',
+  yCol2: '', // for metric comparison
+  agg: 'sum'
+};
+
+// 1. Dashboard Quality Score
+function calculateDashboardQuality() {
+  let score = 0;
+  const checklist = [];
+
+  // 1. KPI Coverage (20 pts)
+  const hasKPI = dashboardWidgets.some(w => w.type === 'kpi');
+  if (hasKPI) {
+    score += 20;
+    checklist.push({ title: 'KPI Coverage', passed: true });
+  } else {
+    checklist.push({ title: 'KPI Coverage Missing', passed: false });
+  }
+
+  // 2. Trend Analysis (20 pts)
+  const hasTrend = dashboardWidgets.some(w => w.type === 'line' || w.type === 'area');
+  if (hasTrend) {
+    score += 20;
+    checklist.push({ title: 'Trend Analysis', passed: true });
+  } else {
+    checklist.push({ title: 'Trend Analysis Missing', passed: false });
+  }
+
+  // 3. Category Analysis (20 pts)
+  const hasCategory = dashboardWidgets.some(w => w.type === 'bar' || w.type === 'donut' || w.type === 'pie' || w.type === 'heatmap' || w.type === 'scatter');
+  if (hasCategory) {
+    score += 20;
+    checklist.push({ title: 'Category Analysis', passed: true });
+  } else {
+    checklist.push({ title: 'Category Analysis Missing', passed: false });
+  }
+
+  // 4. Financial Analysis (20 pts)
+  const hasFinancial = dashboardWidgets.some(w => {
+    if (!w.yCol) return false;
+    const name = (headerNames[w.yCol] || w.yCol).toLowerCase();
+    return /revenue|sales|profit|price|amount|cost|spend|income/i.test(name);
+  });
+  if (hasFinancial) {
+    score += 20;
+    checklist.push({ title: 'Financial Analysis', passed: true });
+  } else {
+    checklist.push({ title: 'Financial Analysis Missing', passed: false });
+  }
+
+  // 5. Geographic Analysis (10 pts)
+  const hasGeoFields = headers.some(h => /country|region|state|city|geo/i.test((headerNames[h] || h).toLowerCase()));
+  if (!hasGeoFields) {
+    score += 10;
+    checklist.push({ title: 'Geographic Analysis (N/A)', passed: true });
+  } else {
+    const hasGeoWidget = dashboardWidgets.some(w => {
+      return w.xCol && /country|region|state|city|geo/i.test((headerNames[w.xCol] || w.xCol).toLowerCase());
+    });
+    if (hasGeoWidget) {
+      score += 10;
+      checklist.push({ title: 'Geographic Analysis', passed: true });
+    } else {
+      checklist.push({ title: 'Geographic Analysis Missing', passed: false });
+    }
+  }
+
+  // 6. Customer Analysis (10 pts)
+  const hasCustomerFields = headers.some(h => /customer|client|user|consumer|buyer/i.test((headerNames[h] || h).toLowerCase()));
+  if (!hasCustomerFields) {
+    score += 10;
+    checklist.push({ title: 'Customer Analysis (N/A)', passed: true });
+  } else {
+    const hasCustomerWidget = dashboardWidgets.some(w => {
+      return (w.xCol && /customer|client|user|consumer|buyer/i.test((headerNames[w.xCol] || w.xCol).toLowerCase())) ||
+             (w.yCol && /customer|client|user|consumer|buyer/i.test((headerNames[w.yCol] || w.yCol).toLowerCase()));
+    });
+    if (hasCustomerWidget) {
+      score += 10;
+      checklist.push({ title: 'Customer Analysis', passed: true });
+    } else {
+      checklist.push({ title: 'Customer Analysis Missing', passed: false });
+    }
+  }
+
+  return { score, checklist };
+}
+
+// 2. Dashboard Overview Live Statistics
+function updateOverviewStats() {
+  const widgetsCount = dashboardWidgets.length;
+  const kpisCount = dashboardWidgets.filter(w => w.type === 'kpi').length;
+  const chartsCount = dashboardWidgets.filter(w => w.type !== 'kpi' && w.type !== 'table').length;
+  const tablesCount = dashboardWidgets.filter(w => w.type === 'table').length;
+  
+  let activeFiltersCount = 0;
+  if (globalFiltersV3) {
+    if (globalFiltersV3.multiselect) {
+      Object.values(globalFiltersV3.multiselect).forEach(s => { if (s && s.size > 0) activeFiltersCount++; });
+    }
+    if (globalFiltersV3.dateRange) {
+      Object.values(globalFiltersV3.dateRange).forEach(r => { if (r && (r.min || r.max)) activeFiltersCount++; });
+    }
+    if (globalFiltersV3.numericRange) {
+      Object.values(globalFiltersV3.numericRange).forEach(r => { if (r && (r.min !== undefined || r.max !== undefined)) activeFiltersCount++; });
+    }
+  }
+
+  const statWidgets = document.getElementById('stat-widgets');
+  const statKpis = document.getElementById('stat-kpis');
+  const statCharts = document.getElementById('stat-charts');
+  const statTables = document.getElementById('stat-tables');
+  const statFilters = document.getElementById('stat-filters');
+  const statUpdated = document.getElementById('stat-updated');
+
+  if (statWidgets) statWidgets.innerText = widgetsCount;
+  if (statKpis) statKpis.innerText = kpisCount;
+  if (statCharts) statCharts.innerText = chartsCount;
+  if (statTables) statTables.innerText = tablesCount;
+  if (statFilters) statFilters.innerText = activeFiltersCount;
+  if (statUpdated) {
+    const now = new Date();
+    statUpdated.innerText = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  }
+}
+
+// 3. Visual Builder Wizard
+function renderWizardStep() {
+  const container = document.getElementById('wizard-step-body');
+  const titleLabel = document.getElementById('wizard-title-label');
+  const stepIndicator = document.getElementById('wizard-step-indicator');
+  if (!container) return;
+
+  stepIndicator.innerText = `Step ${wizardState.step} / 6`;
+
+  const displayCols = [...headers, ...Object.keys(calculatedFields)];
+  const getColDisplayName = (h) => headerNames[h] || (calculatedFields[h] && calculatedFields[h].title) || h;
+
+  let html = "";
+  if (wizardState.step === 1) {
+    titleLabel.innerText = "Select Chart Type";
+    html = `
+      <div class="viz-field-group">
+        <select class="quality-select" id="wiz-chart-type-select" style="margin-top:0;">
+          <option value="kpi" ${wizardState.chartType === 'kpi' ? 'selected' : ''}>KPI Card</option>
+          <option value="bar" ${wizardState.chartType === 'bar' ? 'selected' : ''}>Bar Chart</option>
+          <option value="line" ${wizardState.chartType === 'line' ? 'selected' : ''}>Line Chart</option>
+          <option value="area" ${wizardState.chartType === 'area' ? 'selected' : ''}>Area Chart</option>
+          <option value="donut" ${wizardState.chartType === 'donut' ? 'selected' : ''}>Donut Chart</option>
+          <option value="pie" ${wizardState.chartType === 'pie' ? 'selected' : ''}>Pie Chart</option>
+          <option value="scatter" ${wizardState.chartType === 'scatter' ? 'selected' : ''}>Scatter Plot</option>
+          <option value="heatmap" ${wizardState.chartType === 'heatmap' ? 'selected' : ''}>Heatmap</option>
+          <option value="table" ${wizardState.chartType === 'table' ? 'selected' : ''}>Report Table</option>
+          <option value="metric_comparison" ${wizardState.chartType === 'metric_comparison' ? 'selected' : ''}>Metric Comparison</option>
+        </select>
+      </div>
+    `;
+  } else if (wizardState.step === 2) {
+    titleLabel.innerText = "Select X-Axis";
+    if (wizardState.chartType === 'kpi' || wizardState.chartType === 'table' || wizardState.chartType === 'metric_comparison') {
+      html = `<div style="font-size:11px; color:var(--text-muted); padding:8px;">X-Axis is not required for this visual type. Click Next to continue.</div>`;
+    } else {
+      html = `
+        <div class="viz-field-group">
+          <label class="ws-info-label" style="font-weight:600; margin-bottom:4px; display:inline-block;">X-Axis Column</label>
+          <select class="quality-select" id="wiz-x-axis-select" style="margin-top:0;">
+            ${displayCols.map(h => `<option value="${h}" ${wizardState.xCol === h ? 'selected' : ''}>${getColDisplayName(h)}</option>`).join('')}
+          </select>
+        </div>
+      `;
+    }
+  } else if (wizardState.step === 3) {
+    titleLabel.innerText = "Select Y-Axis";
+    if (wizardState.chartType === 'table') {
+      html = `<div style="font-size:11px; color:var(--text-muted); padding:8px;">Y-Axis columns are automatically loaded from the dataset in Report Table. Click Next to continue.</div>`;
+    } else if (wizardState.chartType === 'metric_comparison') {
+      html = `
+        <div class="viz-field-group">
+          <label class="ws-info-label" style="font-weight:600; margin-bottom:4px; display:inline-block;">First Metric (Y-Axis)</label>
+          <select class="quality-select" id="wiz-y-axis-select" style="margin-top:0; margin-bottom:8px;">
+            ${displayCols.map(h => `<option value="${h}" ${wizardState.yCol === h ? 'selected' : ''}>${getColDisplayName(h)}</option>`).join('')}
+          </select>
+          <label class="ws-info-label" style="font-weight:600; margin-bottom:4px; display:inline-block;">Second Metric (Comparison)</label>
+          <select class="quality-select" id="wiz-y2-axis-select" style="margin-top:0;">
+            <option value="">Select column...</option>
+            ${displayCols.map(h => `<option value="${h}" ${wizardState.yCol2 === h ? 'selected' : ''}>${getColDisplayName(h)}</option>`).join('')}
+          </select>
+        </div>
+      `;
+    } else {
+      html = `
+        <div class="viz-field-group">
+          <label class="ws-info-label" style="font-weight:600; margin-bottom:4px; display:inline-block;">Y-Axis Column (Values)</label>
+          <select class="quality-select" id="wiz-y-axis-select" style="margin-top:0;">
+            <option value="" ${wizardState.yCol === '' ? 'selected' : ''}>None (Count Rows)</option>
+            ${displayCols.map(h => `<option value="${h}" ${wizardState.yCol === h ? 'selected' : ''}>${getColDisplayName(h)}</option>`).join('')}
+          </select>
+        </div>
+      `;
+    }
+  } else if (wizardState.step === 4) {
+    titleLabel.innerText = "Select Aggregation";
+    if (wizardState.chartType === 'table') {
+      html = `<div style="font-size:11px; color:var(--text-muted); padding:8px;">Aggregation is not required for Report Table. Click Next to continue.</div>`;
+    } else {
+      html = `
+        <div class="viz-field-group">
+          <label class="ws-info-label" style="font-weight:600; margin-bottom:4px; display:inline-block;">Aggregation Method</label>
+          <select class="quality-select" id="wiz-agg-select" style="margin-top:0;">
+            <option value="sum" ${wizardState.agg === 'sum' ? 'selected' : ''}>Sum</option>
+            <option value="avg" ${wizardState.agg === 'avg' ? 'selected' : ''}>Average</option>
+            <option value="count" ${wizardState.agg === 'count' ? 'selected' : ''}>Count of Rows</option>
+            <option value="count_dist" ${wizardState.agg === 'count_dist' ? 'selected' : ''}>Distinct Count</option>
+            <option value="min" ${wizardState.agg === 'min' ? 'selected' : ''}>Minimum</option>
+            <option value="max" ${wizardState.agg === 'max' ? 'selected' : ''}>Maximum</option>
+            <option value="median" ${wizardState.agg === 'median' ? 'selected' : ''}>Median</option>
+          </select>
+        </div>
+      `;
+    }
+  } else if (wizardState.step === 5) {
+    titleLabel.innerText = "Live Preview";
+    let previewSummaryText = "";
+    if (wizardState.chartType === 'table') {
+      previewSummaryText = "Will add a full-width data grid showing columns from the dataset.";
+    } else if (wizardState.chartType === 'kpi') {
+      const colLabel = wizardState.yCol ? getColDisplayName(wizardState.yCol) : "Records";
+      previewSummaryText = `Will display a KPI Card showing the ${wizardState.agg.toUpperCase()} of ${colLabel}.`;
+    } else if (wizardState.chartType === 'metric_comparison') {
+      const col1 = wizardState.yCol ? getColDisplayName(wizardState.yCol) : "Records";
+      const col2 = wizardState.yCol2 ? getColDisplayName(wizardState.yCol2) : "None";
+      previewSummaryText = `Will display a comparison KPI Card comparing ${wizardState.agg.toUpperCase()} of ${col1} vs ${col2}.`;
+    } else {
+      const xLabel = wizardState.xCol ? getColDisplayName(wizardState.xCol) : "All Data";
+      const yLabel = wizardState.yCol ? getColDisplayName(wizardState.yCol) : "Records";
+      previewSummaryText = `Will add a ${wizardState.chartType} chart showing ${wizardState.agg.toUpperCase()} of ${yLabel} grouped by ${xLabel}.`;
+    }
+
+    html = `
+      <div class="wizard-preview-box">
+        <div style="font-size: 24px; margin-bottom: 6px;">
+          ${wizardState.chartType === 'kpi' || wizardState.chartType === 'metric_comparison' ? '🔢' : wizardState.chartType === 'table' ? '📋' : '📊'}
+        </div>
+        <div style="font-weight: 700; font-size: 11px; margin-bottom: 4px;">Preview Summary</div>
+        <div style="font-size: 10.5px; color: var(--text-secondary); line-height: 1.4;">${previewSummaryText}</div>
+        <div style="font-size: 9px; color: var(--primary); font-family: var(--font-mono); margin-top: 4px;">Data Source: Active Sheet</div>
+      </div>
+    `;
+  } else if (wizardState.step === 6) {
+    titleLabel.innerText = "Add to Dashboard";
+    html = `
+      <div style="text-align: center; padding: 12px 0;">
+        <div style="font-size: 32px; margin-bottom: 12px;">✨</div>
+        <div style="font-size: 11px; font-weight: 600; color: var(--text-primary); margin-bottom: 8px;">Ready to create!</div>
+        <div style="font-size: 10.5px; color: var(--text-secondary); margin-bottom: 12px;">Click "Add Visual" to insert this visual into your canvas.</div>
+      </div>
+    `;
+  }
+
+  container.innerHTML = html;
+
+  const chartTypeSelect = document.getElementById('wiz-chart-type-select');
+  if (chartTypeSelect) {
+    chartTypeSelect.onchange = () => { wizardState.chartType = chartTypeSelect.value; };
+  }
+  const xAxisSelect = document.getElementById('wiz-x-axis-select');
+  if (xAxisSelect) {
+    xAxisSelect.onchange = () => { wizardState.xCol = xAxisSelect.value; };
+  }
+  const yAxisSelect = document.getElementById('wiz-y-axis-select');
+  if (yAxisSelect) {
+    yAxisSelect.onchange = () => { wizardState.yCol = yAxisSelect.value; };
+  }
+  const y2AxisSelect = document.getElementById('wiz-y2-axis-select');
+  if (y2AxisSelect) {
+    y2AxisSelect.onchange = () => { wizardState.yCol2 = y2AxisSelect.value; };
+  }
+  const aggSelect = document.getElementById('wiz-agg-select');
+  if (aggSelect) {
+    aggSelect.onchange = () => { wizardState.agg = aggSelect.value; };
+  }
+
+  const nextBtn = document.getElementById('btn-wizard-next');
+  if (nextBtn) {
+    nextBtn.innerText = wizardState.step === 6 ? "Add Visual" : "Next";
+  }
+}
+
+function bindWizardEvents() {
+  document.querySelectorAll('.visual-creator-card').forEach(card => {
+    card.onclick = () => {
+      const chartType = card.dataset.chartType;
+      wizardState.active = true;
+      wizardState.step = 1;
+      wizardState.chartType = chartType;
+      
+      const profile = profileColumns();
+      wizardState.xCol = profile.catCols[0] || profile.dateCols[0] || headers[0] || "";
+      wizardState.yCol = profile.numCols[0] || profile.currencyCols[0] || headers[0] || "";
+      wizardState.yCol2 = profile.numCols[1] || "";
+      wizardState.agg = 'sum';
+      
+      renderDashboardTab();
+    };
+  });
+
+  const btnWizardBack = document.getElementById('btn-wizard-back');
+  if (btnWizardBack) {
+    btnWizardBack.onclick = () => {
+      if (wizardState.step > 1) {
+        wizardState.step--;
+        renderWizardStep();
+      } else {
+        wizardState.active = false;
+        renderDashboardTab();
+      }
+    };
+  }
+
+  const btnWizardNext = document.getElementById('btn-wizard-next');
+  if (btnWizardNext) {
+    btnWizardNext.onclick = () => {
+      if (wizardState.step < 6) {
+        wizardState.step++;
+        renderWizardStep();
+      } else {
+        const newId = 'widget-' + Date.now();
+        let finalW = 6;
+        if (wizardState.chartType === 'kpi' || wizardState.chartType === 'metric_comparison') finalW = 3;
+        if (wizardState.chartType === 'table') finalW = 12;
+
+        let typeVal = wizardState.chartType;
+        let titleVal = "";
+        if (wizardState.chartType === 'kpi') {
+          titleVal = wizardState.yCol ? `${headerNames[wizardState.yCol]} KPI` : 'Records KPI';
+        } else if (wizardState.chartType === 'metric_comparison') {
+          titleVal = `Metric Comparison`;
+          typeVal = 'kpi';
+        } else {
+          const yName = wizardState.yCol ? headerNames[wizardState.yCol] : 'Records';
+          titleVal = `${yName} by ${headerNames[wizardState.xCol]}`;
+        }
+
+        const newWidget = {
+          id: newId,
+          title: titleVal,
+          type: typeVal,
+          xCol: wizardState.xCol,
+          yCol: wizardState.yCol,
+          yCol2: wizardState.yCol2,
+          agg: wizardState.agg,
+          w: finalW
+        };
+
+        dashboardWidgets.push(newWidget);
+        wizardState.active = false;
+        renderDashboardCanvas();
+        renderDashboardTab();
+        selectWidget(newId);
+        showToast("Visual added to dashboard!", "success");
+      }
+    };
+  }
+}
+
+// 4. More Actions Menu in Structure List
+function renderStructureTab() {
+  const container = document.getElementById('viz-widget-list-container');
+  if (!container) return;
+
+  container.innerHTML = "";
+
+  if (dashboardWidgets.length === 0) {
+    container.innerHTML = `<div style="text-align: center; color: var(--text-muted); font-size: 11px; padding: 12px;">No widgets in layout.</div>`;
+    return;
+  }
+
+  dashboardWidgets.forEach((widget, idx) => {
+    const item = document.createElement('div');
+    item.className = 'viz-widget-list-item';
+    item.dataset.id = widget.id;
+    if (selectedWidgetId === widget.id) {
+      item.classList.add('active');
+    }
+
+    const typeIcons = {
+      kpi: '🔢',
+      line: '📈',
+      bar: '📊',
+      pie: '🍕',
+      donut: '🍩',
+      table: '📋'
+    };
+
+    item.innerHTML = `
+      <div class="viz-widget-info">
+        <span class="viz-widget-list-title">${widget.title}</span>
+        <div class="viz-widget-list-meta">
+          <span>${typeIcons[widget.type] || '📊'} ${widget.type.toUpperCase()}</span>
+          <span class="viz-widget-list-badge">w:${widget.w}/12</span>
+        </div>
+      </div>
+      <div class="more-actions-menu-container">
+        <button class="history-step-btn btn-more-actions" style="font-size:12px; font-weight:bold; height:24px; padding:0 8px;" title="More Actions">⋮</button>
+        <div class="more-actions-menu" id="menu-${widget.id}">
+          <button class="more-actions-item btn-menu-edit">⚙️ Edit</button>
+          <button class="more-actions-item btn-menu-dup">👥 Duplicate</button>
+          <button class="more-actions-item btn-menu-up" ${idx === 0 ? 'disabled style="opacity:0.3; cursor:not-allowed;"' : ''}>▲ Move Up</button>
+          <button class="more-actions-item btn-menu-down" ${idx === dashboardWidgets.length - 1 ? 'disabled style="opacity:0.3; cursor:not-allowed;"' : ''}>▼ Move Down</button>
+          <button class="more-actions-item delete btn-menu-del">🗑️ Delete</button>
+        </div>
+      </div>
+    `;
+
+    const toggleBtn = item.querySelector('.btn-more-actions');
+    const dropdown = item.querySelector('.more-actions-menu');
+    toggleBtn.onclick = (e) => {
+      e.stopPropagation();
+      document.querySelectorAll('.more-actions-menu').forEach(menu => {
+        if (menu !== dropdown) menu.classList.remove('show');
+      });
+      dropdown.classList.toggle('show');
+    };
+
+    item.querySelector('.btn-menu-edit').onclick = (e) => {
+      e.stopPropagation();
+      dropdown.classList.remove('show');
+      selectWidget(widget.id);
+    };
+
+    item.querySelector('.btn-menu-dup').onclick = (e) => {
+      e.stopPropagation();
+      dropdown.classList.remove('show');
+      duplicateWidget(widget.id);
+    };
+
+    item.querySelector('.btn-menu-up').onclick = (e) => {
+      e.stopPropagation();
+      dropdown.classList.remove('show');
+      if (idx > 0) swapWidgets(idx, idx - 1);
+    };
+
+    item.querySelector('.btn-menu-down').onclick = (e) => {
+      e.stopPropagation();
+      dropdown.classList.remove('show');
+      if (idx < dashboardWidgets.length - 1) swapWidgets(idx, idx + 1);
+    };
+
+    item.querySelector('.btn-menu-del').onclick = (e) => {
+      e.stopPropagation();
+      dropdown.classList.remove('show');
+      deleteWidget(widget.id);
+    };
+
+    item.onclick = (e) => {
+      if (e.target.closest('.more-actions-menu-container')) return;
+      selectWidget(widget.id);
+    };
+
+    container.appendChild(item);
+  });
+}
+
+function duplicateWidget(widgetId) {
+  const orig = dashboardWidgets.find(w => w.id === widgetId);
+  if (!orig) return;
+  const copy = {
+    ...orig,
+    id: 'widget-' + Date.now() + '_' + Math.floor(Math.random() * 1000),
+    title: `${orig.title} (Copy)`
+  };
+  dashboardWidgets.push(copy);
+  renderDashboardCanvas();
+  renderDashboardTab();
+  selectWidget(copy.id);
+  showToast("Widget duplicated!", "success");
+}
+
+document.addEventListener('click', () => {
+  document.querySelectorAll('.more-actions-menu').forEach(menu => menu.classList.remove('show'));
+});
+
+// 5. Quick Actions
+function autoArrangeLayout() {
+  dashboardWidgets.sort((a, b) => {
+    const typeScore = (w) => w.type === 'kpi' ? 1 : w.type === 'table' ? 3 : 2;
+    return typeScore(a) - typeScore(b);
+  });
+  renderDashboardCanvas();
+  renderDashboardTab();
+  showToast("Dashboard widgets auto-arranged", "success");
+}
+
+function bindQuickActions() {
+  const btnRegen = document.getElementById('btn-quick-regenerate');
+  if (btnRegen) {
+    btnRegen.onclick = () => {
+      dashboardWidgets = [];
+      generateDefaultDashboardDraft();
+      renderDashboardCanvas();
+      renderDashboardTab();
+      showToast("Dashboard regenerated", "success");
+    };
+  }
+
+  const btnRefresh = document.getElementById('btn-quick-refresh');
+  if (btnRefresh) {
+    btnRefresh.onclick = () => {
+      renderDashboardCanvas();
+      renderDashboardTab();
+      showToast("Metrics and dashboard refreshed", "success");
+    };
+  }
+
+  const btnArrange = document.getElementById('btn-quick-arrange');
+  if (btnArrange) {
+    btnArrange.onclick = () => {
+      autoArrangeLayout();
+    };
+  }
+
+  const btnReset = document.getElementById('btn-quick-reset');
+  if (btnReset) {
+    btnReset.onclick = () => {
+      if (confirm("Reset dashboard to initial template state?")) {
+        dashboardWidgets = [];
+        generateDefaultDashboardDraft();
+        renderDashboardCanvas();
+        renderDashboardTab();
+        showToast("Dashboard reset successfully", "success");
+      }
+    };
+  }
+}
+
+// 6. Global Filters V3
+function getUniqueValuesForCol(colKey) {
+  const colIdx = headers.indexOf(colKey);
+  if (colIdx === -1) return [];
+  const vals = new Set();
+  for (let r = 0; r < gridData.length; r++) {
+    const v = String(gridData[r][colIdx] || "").trim();
+    if (v !== "") {
+      vals.add(v);
+      if (vals.size > 50) return null; // Too high cardinality
+    }
+  }
+  return Array.from(vals).sort();
+}
+
+function renderGlobalFiltersV3() {
+  const container = document.getElementById('explore-global-filters-container');
+  if (!container) return;
+
+  container.innerHTML = "";
+
+  headers.forEach(colKey => {
+    const colName = headerNames[colKey] || colKey;
+    const colType = detectColumnType(colKey);
+
+    const group = document.createElement('div');
+    group.className = 'explore-filter-item';
+
+    if (colType === 'date') {
+      group.innerHTML = `
+        <div class="explore-filter-header">
+          <span class="explore-filter-title">${colName} (Date Range)</span>
+        </div>
+        <div class="range-filter-inputs">
+          <input type="date" class="range-input date-min" placeholder="Start Date" />
+          <input type="date" class="range-input date-max" placeholder="End Date" />
+        </div>
+      `;
+      const minInput = group.querySelector('.date-min');
+      const maxInput = group.querySelector('.date-max');
+      const savedRange = globalFiltersV3.dateRange[colKey] || {};
+      minInput.value = savedRange.min || "";
+      maxInput.value = savedRange.max || "";
+
+      const updateDateRange = () => {
+        globalFiltersV3.dateRange[colKey] = { min: minInput.value, max: maxInput.value };
+        renderDashboardCanvas();
+      };
+      minInput.onchange = updateDateRange;
+      maxInput.onchange = updateDateRange;
+
+    } else if (colType === 'currency' || colType === 'percentage' || colType === 'number' || colType === 'numeric') {
+      group.innerHTML = `
+        <div class="explore-filter-header">
+          <span class="explore-filter-title">${colName} (Numeric Range)</span>
+        </div>
+        <div class="range-filter-inputs">
+          <input type="number" class="range-input num-min" placeholder="Min" />
+          <input type="number" class="range-input num-max" placeholder="Max" />
+        </div>
+      `;
+      const minInput = group.querySelector('.num-min');
+      const maxInput = group.querySelector('.num-max');
+      const savedRange = globalFiltersV3.numericRange[colKey] || {};
+      minInput.value = savedRange.min !== undefined ? savedRange.min : "";
+      maxInput.value = savedRange.max !== undefined ? savedRange.max : "";
+
+      const updateNumRange = () => {
+        globalFiltersV3.numericRange[colKey] = { min: minInput.value, max: maxInput.value };
+        renderDashboardCanvas();
+      };
+      minInput.oninput = updateNumRange;
+      maxInput.oninput = updateNumRange;
+
+    } else {
+      const uniqueVals = getUniqueValuesForCol(colKey);
+      if (!uniqueVals) return;
+
+      const savedSet = globalFiltersV3.multiselect[colKey] || new Set();
+
+      group.innerHTML = `
+        <div class="explore-filter-header">
+          <span class="explore-filter-title">${colName} (Multi-select)</span>
+        </div>
+        <div class="searchable-multiselect">
+          <input type="text" class="search-input-sm" placeholder="Search values..." />
+          <div class="multiselect-options-list">
+            ${uniqueVals.map(val => {
+              const isChecked = savedSet.has(val) ? 'checked' : '';
+              return `
+                <label class="multiselect-option">
+                  <input type="checkbox" value="${val}" ${isChecked} />
+                  <span>${val}</span>
+                </label>
+              `;
+            }).join('')}
+          </div>
+        </div>
+      `;
+
+      const searchInput = group.querySelector('.search-input-sm');
+      const optionsList = group.querySelector('.multiselect-options-list');
+      searchInput.oninput = () => {
+        const q = searchInput.value.toLowerCase();
+        optionsList.querySelectorAll('.multiselect-option').forEach(label => {
+          const text = label.innerText.toLowerCase();
+          label.style.display = text.includes(q) ? 'flex' : 'none';
+        });
+      };
+
+      optionsList.querySelectorAll('input[type=checkbox]').forEach(checkbox => {
+        checkbox.onchange = () => {
+          if (!globalFiltersV3.multiselect[colKey]) {
+            globalFiltersV3.multiselect[colKey] = new Set();
+          }
+          if (checkbox.checked) {
+            globalFiltersV3.multiselect[colKey].add(checkbox.value);
+          } else {
+            globalFiltersV3.multiselect[colKey].delete(checkbox.value);
+          }
+          renderDashboardCanvas();
+        };
+      });
+    }
+
+    container.appendChild(group);
+  });
+}
+
+function isRowMatchingFilters(row) {
+  if (globalFiltersV3) {
+    if (globalFiltersV3.multiselect) {
+      for (const colKey in globalFiltersV3.multiselect) {
+        const selectedSet = globalFiltersV3.multiselect[colKey];
+        if (selectedSet && selectedSet.size > 0) {
+          const rowVal = String(getRowValueByHeader(row, colKey)).trim();
+          if (!selectedSet.has(rowVal)) {
+            return false;
+          }
+        }
+      }
+    }
+
+    if (globalFiltersV3.dateRange) {
+      for (const colKey in globalFiltersV3.dateRange) {
+        const range = globalFiltersV3.dateRange[colKey];
+        if (range && (range.min || range.max)) {
+          const rowVal = getRowValueByHeader(row, colKey);
+          const rowDate = Date.parse(rowVal);
+          if (!isNaN(rowDate)) {
+            if (range.min) {
+              const minDate = Date.parse(range.min);
+              if (!isNaN(minDate) && rowDate < minDate) return false;
+            }
+            if (range.max) {
+              const maxDate = Date.parse(range.max);
+              if (!isNaN(maxDate) && rowDate > maxDate) return false;
+            }
+          }
+        }
+      }
+    }
+
+    if (globalFiltersV3.numericRange) {
+      for (const colKey in globalFiltersV3.numericRange) {
+        const range = globalFiltersV3.numericRange[colKey];
+        if (range && (range.min !== undefined || range.max !== undefined)) {
+          const rawRowVal = getRowValueByHeader(row, colKey);
+          const rowVal = getCleanNumericValue(rawRowVal);
+          if (range.min !== undefined && range.min !== "" && rowVal < parseFloat(range.min)) return false;
+          if (range.max !== undefined && range.max !== "" && rowVal > parseFloat(range.max)) return false;
+        }
+      }
+    }
+  }
+  return true;
+}
+
+const _origRenderDashboardCanvas = renderDashboardCanvas;
+renderDashboardCanvas = function() {
+  const savedGridData = gridData;
+  gridData = savedGridData.filter(row => isRowMatchingFilters(row));
+  
+  _origRenderDashboardCanvas();
+  
+  gridData = savedGridData;
+
+  const canvas = document.getElementById('dashboard-canvas');
+  if (canvas && canvas.children.length > 0) {
+    let layer = document.getElementById('executive-summary-layer');
+    if (layer) layer.remove();
+    layer = renderExecutiveSummaryLayer();
+    canvas.insertBefore(layer, canvas.firstChild);
+  }
+};
+
+if (typeof btnSwitchDash !== 'undefined' && btnSwitchDash) btnSwitchDash.onclick = window.switchToDashboardView;
+if (typeof wsBtnVisualize !== 'undefined' && wsBtnVisualize) wsBtnVisualize.onclick = window.switchToDashboardView;
+
+// 7. Calculated Metrics Operators
+function bindFormulaOperators() {
+  document.querySelectorAll('.formula-operators-keypad .operator-btn').forEach(btn => {
+    btn.onclick = () => {
+      const op = btn.dataset.operator;
+      const formulaInput = document.getElementById('viz-calc-formula-input');
+      if (!formulaInput) return;
+      if (op === 'clear') {
+        formulaInput.value = "";
+      } else {
+        const start = formulaInput.selectionStart;
+        const end = formulaInput.selectionEnd;
+        const text = formulaInput.value;
+        formulaInput.value = text.substring(0, start) + op + text.substring(end);
+        formulaInput.focus();
+        formulaInput.selectionStart = formulaInput.selectionEnd = start + op.length;
+      }
+      formulaInput.dispatchEvent(new Event('input'));
+    };
+  });
+}
+
+// 8. Interactive Drilldowns handler tweak
+const _origHandleChartClick = handleChartClick;
+handleChartClick = function(widget, clickedLabel) {
+  _origHandleChartClick(widget, clickedLabel);
+  switchVizTab('explore');
+};
+
+// 9. Computed Insights generator using actual statistics
+function runStatisticalInsights() {
+  const profile = profileColumns();
+  const dateCol = profile.dateCols[0];
+  const catCol = profile.catCols[0] || headers[0];
+  const numCol = profile.numCols[0] || profile.currencyCols[0] || headers[0];
+
+  const findings = [];
+  const risks = [];
+  const opportunities = [];
+  const recommendations = [];
+
+  const totalRows = gridData.length;
+  const colIdx = headers.indexOf(numCol);
+  const catIdx = headers.indexOf(catCol);
+
+  if (colIdx !== -1 && catIdx !== -1) {
+    const catSums = {};
+    let totalVal = 0;
+    gridData.forEach(row => {
+      const c = String(row[catIdx] || "Unknown").trim();
+      const v = getCleanNumericValue(row[colIdx]);
+      catSums[c] = (catSums[c] || 0) + v;
+      totalVal += v;
+    });
+
+    const sortedCats = Object.entries(catSums).sort((a, b) => b[1] - a[1]);
+    if (sortedCats.length > 0 && totalVal > 0) {
+      const topCat = sortedCats[0];
+      const topPct = (topCat[1] / totalVal) * 100;
+      findings.push(`${topCat[0]} contributes ${topPct.toFixed(1)}% of total ${headerNames[numCol] || numCol}.`);
+
+      if (topPct > 40) {
+        risks.push(`Category Concentration: ${topPct.toFixed(1)}% of total sales originates from ${topCat[0]}.`);
+        recommendations.push(`Monitor category concentration and diversify from ${topCat[0]}.`);
+      }
+
+      if (sortedCats.length >= 3) {
+        const top3Sum = sortedCats.slice(0, 3).reduce((sum, item) => sum + item[1], 0);
+        const top3Pct = (top3Sum / totalVal) * 100;
+        findings.push(`Top 3 categories generate ${top3Pct.toFixed(1)}% of sales.`);
+      }
+
+      opportunities.push(`Category ${sortedCats[0][0]} is the leading volume contributor with $${sortedCats[0][1].toLocaleString(undefined, {maximumFractionDigits:0})}.`);
+    }
+  }
+
+  const dateIdx = headers.indexOf(dateCol);
+  if (dateIdx !== -1 && colIdx !== -1) {
+    const monthlySums = {};
+    gridData.forEach(row => {
+      const dStr = String(row[dateIdx]).trim();
+      const date = new Date(dStr);
+      if (!isNaN(date.getTime())) {
+        const mKey = date.toISOString().substring(0, 7);
+        monthlySums[mKey] = (monthlySums[mKey] || 0) + getCleanNumericValue(row[colIdx]);
+      }
+    });
+
+    const sortedMonths = Object.entries(monthlySums).sort((a, b) => a[0].localeCompare(b[0]));
+    if (sortedMonths.length >= 2) {
+      const len = sortedMonths.length;
+      const prev = sortedMonths[len - 2];
+      const curr = sortedMonths[len - 1];
+      if (prev[1] > 0) {
+        const growth = ((curr[1] - prev[1]) / prev[1]) * 100;
+        findings.push(`${headerNames[numCol] || numCol} changed ${growth >= 0 ? '+' : ''}${growth.toFixed(1)}% month-over-month (from ${prev[0]} to ${curr[0]}).`);
+        if (growth > 5) {
+          opportunities.push(`Sales momentum is positive, growing at ${growth.toFixed(1)}% in the latest period.`);
+        } else if (growth < 0) {
+          risks.push(`Declining Trend: Sales declined ${Math.abs(growth).toFixed(1)}% in the latest period.`);
+          recommendations.push(`Investigate declining sales trend in the latest period.`);
+        }
+      }
+
+      if (len >= 3) {
+        const s1 = sortedMonths[len - 3][1];
+        const s2 = sortedMonths[len - 2][1];
+        const s3 = sortedMonths[len - 1][1];
+        if (s3 < s2 && s2 < s1) {
+          risks.push(`Sales declined across the last three reporting periods consecutively.`);
+          recommendations.push(`Perform urgent operational audit on the declining three-period trend.`);
+        }
+      }
+    }
+  }
+
+  if (colIdx !== -1) {
+    const numericVals = gridData.map(r => getCleanNumericValue(r[colIdx])).sort((a, b) => a - b);
+    if (numericVals.length >= 4) {
+      const q1 = numericVals[Math.floor(numericVals.length * 0.25)];
+      const q3 = numericVals[Math.floor(numericVals.length * 0.75)];
+      const iqr = q3 - q1;
+      const lowerBound = q1 - 1.5 * iqr;
+      const upperBound = q3 + 1.5 * iqr;
+      const outliers = numericVals.filter(v => v < lowerBound || v > upperBound);
+      if (outliers.length > 0) {
+        risks.push(`Outliers: Detected ${outliers.length} anomalous transactions beyond normal range.`);
+        recommendations.push(`Review high-value outlier transactions to verify coding correctness.`);
+      }
+    }
+  }
+
+  const missingValCount = document.getElementById('q-stat-missing') ? parseInt(document.getElementById('q-stat-missing').innerText) || 0 : 0;
+  if (missingValCount > 0) {
+    risks.push(`Data Quality warning: Dataset contains ${missingValCount} missing cell values.`);
+    recommendations.push(`Run Preprocessing recipe steps to impute empty values.`);
+  }
+
+  if (findings.length === 0) findings.push("Dataset profile loaded successfully.");
+  if (risks.length === 0) risks.push("No immediate concentration, trend, or outliers risks found.");
+  if (opportunities.length === 0) opportunities.push("Volume distribution is aligned with average levels.");
+  if (recommendations.length === 0) {
+    const geoFields = headers.filter(h => /country|region|state|city/i.test((headerNames[h] || h).toLowerCase()));
+    if (geoFields.length > 0) {
+      recommendations.push(`Add regional analysis chart using ${headerNames[geoFields[0]]} column.`);
+    } else {
+      recommendations.push("Investigate category metrics to identify secondary growth drivers.");
+    }
+  }
+
+  return { findings, risks, opportunities, recommendations };
+}
+
+// 10. Prebuilt Templates & Manage Workspace
+function applyPrebuiltTemplate(templateName) {
+  const profile = profileColumns();
+  const dateCol = profile.dateCols[0];
+  const catCol = profile.catCols[0] || headers[0];
+  const numCol = profile.numCols[0] || profile.currencyCols[0] || headers[0];
+
+  let widgets = [];
+  const now = Date.now();
+
+  if (templateName === 'executive_summary') {
+    widgets = [
+      { id: 't-kpi1-' + now, title: `Total ${headerNames[numCol] || numCol}`, type: 'kpi', xCol: '', yCol: numCol, agg: 'sum', w: 6 },
+      { id: 't-kpi2-' + now, title: `Average ${headerNames[numCol] || numCol}`, type: 'kpi', xCol: '', yCol: numCol, agg: 'avg', w: 6 },
+      { id: 't-trend-' + now, title: `Performance Trend`, type: 'line', xCol: dateCol || catCol, yCol: numCol, agg: 'sum', w: 12 },
+      { id: 't-table-' + now, title: `Detail Transaction Table`, type: 'table', xCol: '', yCol: '', agg: '', w: 12 }
+    ];
+  } else if (templateName === 'sales') {
+    widgets = [
+      { id: 't-sale-kpi1-' + now, title: `Total Revenue`, type: 'kpi', xCol: '', yCol: numCol, agg: 'sum', w: 4 },
+      { id: 't-sale-kpi2-' + now, title: `Average Sales`, type: 'kpi', xCol: '', yCol: numCol, agg: 'avg', w: 4 },
+      { id: 't-sale-kpi3-' + now, title: `Transaction Count`, type: 'kpi', xCol: '', yCol: '', agg: 'count', w: 4 },
+      { id: 't-sale-bar-' + now, title: `Sales by Category`, type: 'bar', xCol: catCol, yCol: numCol, agg: 'sum', w: 6 },
+      { id: 't-sale-trend-' + now, title: `Revenue over Time`, type: 'line', xCol: dateCol || catCol, yCol: numCol, agg: 'sum', w: 6 }
+    ];
+  } else if (templateName === 'marketing') {
+    widgets = [
+      { id: 't-mkt-kpi1-' + now, title: `Marketing Spends`, type: 'kpi', xCol: '', yCol: numCol, agg: 'sum', w: 6 },
+      { id: 't-mkt-kpi2-' + now, title: `Conversion Volume`, type: 'kpi', xCol: '', yCol: '', agg: 'count', w: 6 },
+      { id: 't-mkt-donut-' + now, title: `Spend Breakdown`, type: 'donut', xCol: catCol, yCol: numCol, agg: 'sum', w: 12 }
+    ];
+  } else if (templateName === 'operations') {
+    widgets = [
+      { id: 't-ops-kpi1-' + now, title: `Units Fulfilled`, type: 'kpi', xCol: '', yCol: numCol, agg: 'sum', w: 6 },
+      { id: 't-ops-bar-' + now, title: `Volume by Category`, type: 'bar', xCol: catCol, yCol: numCol, agg: 'count', w: 12 }
+    ];
+  } else if (templateName === 'finance') {
+    widgets = [
+      { id: 't-fin-kpi1-' + now, title: `Financial Sum`, type: 'kpi', xCol: '', yCol: numCol, agg: 'sum', w: 3 },
+      { id: 't-fin-kpi2-' + now, title: `Average Ticket`, type: 'kpi', xCol: '', yCol: numCol, agg: 'avg', w: 3 },
+      { id: 't-fin-kpi3-' + now, title: `Minimum Order`, type: 'kpi', xCol: '', yCol: numCol, agg: 'min', w: 3 },
+      { id: 't-fin-kpi4-' + now, title: `Maximum Order`, type: 'kpi', xCol: '', yCol: numCol, agg: 'max', w: 3 }
+    ];
+  } else if (templateName === 'risk') {
+    widgets = [
+      { id: 't-risk-kpi1-' + now, title: `Anomalies / Missing Cells`, type: 'kpi', xCol: '', yCol: '', agg: 'count', w: 6 },
+      { id: 't-risk-table-' + now, title: `Risk Transactions Log`, type: 'table', xCol: '', yCol: '', agg: '', w: 12 }
+    ];
+  }
+
+  dashboardWidgets = widgets;
+  selectedWidgetId = null;
+  renderDashboardCanvas();
+  renderDashboardTab();
+  showToast(`Applied ${templateName.replace('_', ' ')} template`, "success");
+}
+
+function renderManageDatasetInfo() {
+  const container = document.getElementById('manage-dataset-info-list');
+  if (!container) return;
+
+  const datasetName = document.getElementById('ws-dataset-name').innerText;
+  const rowCount = gridData.length.toLocaleString();
+  const colCount = headers.length;
+  
+  const missingValCount = document.getElementById('q-stat-missing') ? parseInt(document.getElementById('q-stat-missing').innerText) || 0 : 0;
+  const duplicateValCount = document.getElementById('q-stat-dups') ? parseInt(document.getElementById('q-stat-dups').innerText) || 0 : 0;
+  const totalCells = gridData.length * headers.length;
+  const missingPct = totalCells > 0 ? (missingValCount / totalCells) : 0;
+  const dataQualityScore = Math.max(0, Math.round((1 - missingPct - (duplicateValCount / (gridData.length || 1))) * 100));
+
+  container.innerHTML = `
+    <div class="ws-info-card" style="padding: 6px 8px; margin-bottom: 0;">
+      <span class="ws-info-label" style="font-size: 9px; margin-bottom: 2px;">Dataset Name</span>
+      <span class="ws-info-value" style="font-size: 11.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 130px;" title="${datasetName}">${datasetName}</span>
+    </div>
+    <div class="ws-info-card" style="padding: 6px 8px; margin-bottom: 0;">
+      <span class="ws-info-label" style="font-size: 9px; margin-bottom: 2px;">Total Rows</span>
+      <span class="ws-info-value" style="font-size: 13px;">${rowCount}</span>
+    </div>
+    <div class="ws-info-card" style="padding: 6px 8px; margin-bottom: 0;">
+      <span class="ws-info-label" style="font-size: 9px; margin-bottom: 2px;">Total Columns</span>
+      <span class="ws-info-value" style="font-size: 13px;">${colCount}</span>
+    </div>
+    <div class="ws-info-card" style="padding: 6px 8px; margin-bottom: 0;">
+      <span class="ws-info-label" style="font-size: 9px; margin-bottom: 2px;">Missing Values</span>
+      <span class="ws-info-value ${missingValCount > 0 ? 'warning' : ''}" style="font-size: 13px;">${missingValCount}</span>
+    </div>
+    <div class="ws-info-card" style="padding: 6px 8px; margin-bottom: 0;">
+      <span class="ws-info-label" style="font-size: 9px; margin-bottom: 2px;">Duplicate Rows</span>
+      <span class="ws-info-value" style="font-size: 13px;">${duplicateValCount}</span>
+    </div>
+    <div class="ws-info-card" style="padding: 6px 8px; margin-bottom: 0;">
+      <span class="ws-info-label" style="font-size: 9px; margin-bottom: 2px;">Data Quality Score</span>
+      <span class="ws-info-value" style="font-size: 13px; color: ${dataQualityScore >= 80 ? 'var(--success)' : 'var(--warning)'};">${dataQualityScore}%</span>
+    </div>
+    <div class="ws-info-card" style="padding: 6px 8px; margin-bottom: 0;">
+      <span class="ws-info-label" style="font-size: 9px; margin-bottom: 2px;">Last Updated</span>
+      <span class="ws-info-value" style="font-size: 13px;">Just Now</span>
+    </div>
+  `;
+}
+
+// 11. Executive Summary Layer (report-style Section)
+function renderExecutiveSummaryLayer() {
+  const datasetNameEl = document.getElementById('ws-dataset-name');
+  const datasetName = datasetNameEl ? datasetNameEl.innerText : 'Dataset';
+  const rowCount = gridData.length.toLocaleString();
+  const colCount = headers.length;
+  
+  const missingValCount = document.getElementById('q-stat-missing') ? parseInt(document.getElementById('q-stat-missing').innerText) || 0 : 0;
+  const duplicateValCount = document.getElementById('q-stat-dups') ? parseInt(document.getElementById('q-stat-dups').innerText) || 0 : 0;
+  const totalCells = gridData.length * headers.length;
+  const missingPct = totalCells > 0 ? (missingValCount / totalCells) : 0;
+  const dataQualityScore = Math.max(0, Math.round((1 - missingPct - (duplicateValCount / (gridData.length || 1))) * 100));
+
+  const { findings, risks, recommendations } = runStatisticalInsights();
+
+  const savedGrid = gridData;
+  gridData = savedGrid.filter(row => isRowMatchingFilters(row));
+  const kpiWidgets = dashboardWidgets.filter(w => w.type === 'kpi');
+  let kpisHtml = "";
+  if (kpiWidgets.length > 0) {
+    kpisHtml = kpiWidgets.slice(0, 3).map(w => {
+      const rawVal = getKpiValue(w);
+      const valStr = formatKpiValue(rawVal, w.yCol, w.agg);
+      return `
+        <div class="exec-kpi-pill">
+          <span class="exec-kpi-pill-val">${valStr}</span>
+          <span class="exec-kpi-pill-label">${w.title}</span>
+        </div>
+      `;
+    }).join('');
+  } else {
+    kpisHtml = `<div style="font-size:11px; color:var(--text-muted); padding: 4px 0;">No KPI widgets available.</div>`;
+  }
+  gridData = savedGrid;
+
+  const layer = document.createElement('div');
+  layer.className = 'executive-summary-layer';
+  layer.id = 'executive-summary-layer';
+  layer.innerHTML = `
+    <div class="exec-summary-header">
+      <div class="exec-summary-title">Executive Summary</div>
+      <div class="exec-summary-subtitle">Automated analytics synthesis for ${datasetName}</div>
+    </div>
+    <div class="exec-summary-grid">
+      <div class="exec-section-card">
+        <span class="exec-section-title">Dataset Summary</span>
+        <div class="exec-kpi-pill-grid" style="margin-bottom: 14px;">
+          <div class="exec-kpi-pill">
+            <span class="exec-kpi-pill-val">${rowCount}</span>
+            <span class="exec-kpi-pill-label">Total Rows</span>
+          </div>
+          <div class="exec-kpi-pill">
+            <span class="exec-kpi-pill-val">${colCount}</span>
+            <span class="exec-kpi-pill-label">Columns</span>
+          </div>
+          <div class="exec-kpi-pill">
+            <span class="exec-kpi-pill-val">${missingValCount}</span>
+            <span class="exec-kpi-pill-label">Missing Cells</span>
+          </div>
+          <div class="exec-kpi-pill" style="border-left: 2px solid ${dataQualityScore >= 80 ? 'var(--success)' : 'var(--warning)'};">
+            <span class="exec-kpi-pill-val">${dataQualityScore}%</span>
+            <span class="exec-kpi-pill-label">Quality Score</span>
+          </div>
+        </div>
+
+        <span class="exec-section-title">KPI Summary Highlights</span>
+        <div class="exec-kpi-pill-grid">
+          ${kpisHtml}
+        </div>
+      </div>
+
+      <div class="exec-section-card">
+        <span class="exec-section-title">Key Findings</span>
+        <ul class="exec-list" style="margin-bottom: 12px;">
+          ${findings.slice(0, 3).map(f => `<li class="exec-list-item">${f}</li>`).join('')}
+        </ul>
+
+        <span class="exec-section-title">Anomalies & Risks</span>
+        <ul class="exec-list" style="margin-bottom: 12px;">
+          ${risks.slice(0, 2).map(r => `<li class="exec-list-item warning">${r}</li>`).join('')}
+        </ul>
+
+        <span class="exec-section-title">Recommendations</span>
+        <ul class="exec-list">
+          ${recommendations.slice(0, 2).map(rec => `<li class="exec-list-item action">${rec}</li>`).join('')}
+        </ul>
+      </div>
+    </div>
+  `;
+  return layer;
+}
+
+// 12. Exporters center
+function exportToPDF() {
+  const printWindow = window.open('', '_blank');
+  const doc = printWindow.document;
+  
+  doc.write('<html><head><title>OneClick Analytics Report</title>');
+  doc.write('<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">');
+  doc.write('<style>');
+  doc.write('body { font-family: "Inter", sans-serif; padding: 40px; color: #1e293b; background: #fff; }');
+  doc.write('.header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #6366f1; padding-bottom: 20px; margin-bottom: 30px; }');
+  doc.write('.title { font-size: 24px; font-weight: 800; color: #1e1b4b; }');
+  doc.write('.meta { font-size: 12px; color: #64748b; }');
+  doc.write('.section { margin-bottom: 30px; }');
+  doc.write('.section-title { font-size: 16px; font-weight: 700; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px; margin-bottom: 15px; color: #4f46e5; }');
+  doc.write('.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }');
+  doc.write('.kpi-box { border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px; background: #f8fafc; }');
+  doc.write('.kpi-val { font-size: 20px; font-weight: 800; color: #0f172a; }');
+  doc.write('.kpi-label { font-size: 11px; color: #64748b; margin-top: 4px; }');
+  doc.write('.list { padding-left: 20px; line-height: 1.6; }');
+  doc.write('.list-item { font-size: 13px; margin-bottom: 6px; }');
+  doc.write('.chart-img { max-width: 100%; border: 1px solid #e2e8f0; border-radius: 6px; margin-bottom: 20px; }');
+  doc.write('.table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 12px; }');
+  doc.write('.table th, .table td { border: 1px solid #e2e8f0; padding: 8px 12px; text-align: left; }');
+  doc.write('.table th { background: #f1f5f9; }');
+  doc.write('</style></head><body>');
+  
+  const datasetName = document.getElementById('ws-dataset-name').innerText;
+  doc.write('<div class="header">');
+  doc.write(`<div><div class="title">OneClick Analyst Report</div><div class="meta">Dataset: ${datasetName} &middot; Generated: ${new Date().toLocaleDateString()}</div></div>`);
+  doc.write('</div>');
+
+  const { findings, risks, recommendations } = runStatisticalInsights();
+  doc.write('<div class="section">');
+  doc.write('<div class="section-title">Executive Summary</div>');
+  doc.write('<div class="grid-2">');
+  
+  doc.write('<div>');
+  doc.write('<div style="font-weight:600; font-size:14px; margin-bottom:10px;">Analytical Findings</div>');
+  doc.write('<ul class="list">');
+  findings.forEach(f => doc.write(`<li class="list-item">${f}</li>`));
+  doc.write('</ul>');
+  doc.write('</div>');
+  
+  doc.write('<div>');
+  doc.write('<div style="font-weight:600; font-size:14px; margin-bottom:10px;">Risks & Actions</div>');
+  doc.write('<ul class="list">');
+  risks.forEach(r => doc.write(`<li class="list-item" style="color:#b91c1c;">⚠️ ${r}</li>`));
+  recommendations.forEach(rec => doc.write(`<li class="list-item" style="color:#15803d;">→ ${rec}</li>`));
+  doc.write('</ul>');
+  doc.write('</div>');
+
+  doc.write('</div>');
+  doc.write('</div>');
+
+  doc.write('<div class="section">');
+  doc.write('<div class="section-title">Visualizations</div>');
+  doc.write('<div class="grid-2">');
+  
+  const savedGrid = gridData;
+  gridData = savedGrid.filter(row => isRowMatchingFilters(row));
+  
+  dashboardWidgets.forEach(w => {
+    if (w.type === 'kpi') {
+      const rawVal = getKpiValue(w);
+      const valStr = formatKpiValue(rawVal, w.yCol, w.agg);
+      doc.write(`
+        <div class="kpi-box">
+          <div class="kpi-val">${valStr}</div>
+          <div class="kpi-label">${w.title}</div>
+        </div>
+      `);
+    } else if (w.type !== 'table') {
+      const chartInst = activeChartInstances[w.id];
+      if (chartInst) {
+        const imgUrl = chartInst.toBase64Image();
+        doc.write(`
+          <div>
+            <div style="font-size:12px; font-weight:600; margin-bottom:6px;">${w.title}</div>
+            <img src="${imgUrl}" class="chart-img" />
+          </div>
+        `);
+      }
+    }
+  });
+  gridData = savedGrid;
+  
+  doc.write('</div>');
+  doc.write('</div>');
+
+  const tableWidget = dashboardWidgets.find(w => w.type === 'table');
+  if (tableWidget) {
+    doc.write('<div class="section">');
+    doc.write('<div class="section-title">Dataset Data Details</div>');
+    doc.write('<table class="table">');
+    const displayHeaders = [...headers].slice(0, 8);
+    doc.write('<thead><tr>' + displayHeaders.map(h => `<th>${headerNames[h] || h}</th>`).join('') + '</tr></thead>');
+    doc.write('<tbody>');
+    gridData.slice(0, 15).forEach(row => {
+      doc.write('<tr>' + displayHeaders.map(h => `<td>${getRowValueByHeader(row, h) || ""}</td>`).join('') + '</tr>');
+    });
+    doc.write('</tbody></table>');
+    doc.write('</div>');
+  }
+
+  doc.write('</body></html>');
+  doc.close();
+  
+  printWindow.onload = () => {
+    printWindow.print();
+  };
+}
+
+function exportToWord() {
+  const datasetName = document.getElementById('ws-dataset-name').innerText;
+  const { findings, risks, recommendations } = runStatisticalInsights();
+  
+  let html = `<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>`;
+  html += `<head><title>OneClick Analytics Report</title><style>`;
+  html += `body { font-family: Arial, sans-serif; padding: 20px; }`;
+  html += `h1 { color: #4f46e5; border-bottom: 2px solid #6366f1; padding-bottom: 10px; }`;
+  html += `h2 { color: #1e1b4b; border-bottom: 1px solid #e2e8f0; margin-top: 20px; }`;
+  html += `ul { margin: 10px 0; padding-left: 20px; }`;
+  html += `li { margin-bottom: 6px; }`;
+  html += `</style></head><body>`;
+  html += `<h1>OneClick Analyst Report</h1>`;
+  html += `<p><strong>Dataset Name:</strong> ${datasetName}<br/><strong>Date Generated:</strong> ${new Date().toLocaleDateString()}</p>`;
+  
+  html += `<h2>Executive Summary</h2>`;
+  html += `<h3>Key Findings</h3><ul>`;
+  findings.forEach(f => { html += `<li>${f}</li>`; });
+  html += `</ul>`;
+  
+  html += `<h3>Risks & Anomalies</h3><ul>`;
+  risks.forEach(r => { html += `<li>⚠️ ${r}</li>`; });
+  html += `</ul>`;
+  
+  html += `<h3>Strategic Recommendations</h3><ul>`;
+  recommendations.forEach(rec => { html += `<li>→ ${rec}</li>`; });
+  html += `</ul>`;
+  
+  html += `<h2>Key Metrics Summary</h2>`;
+  const savedGrid = gridData;
+  gridData = savedGrid.filter(row => isRowMatchingFilters(row));
+  dashboardWidgets.forEach(w => {
+    if (w.type === 'kpi') {
+      const rawVal = getKpiValue(w);
+      const valStr = formatKpiValue(rawVal, w.yCol, w.agg);
+      html += `<p><strong>${w.title}:</strong> ${valStr}</p>`;
+    }
+  });
+  gridData = savedGrid;
+
+  html += `</body></html>`;
+  
+  const blob = new Blob([html], { type: 'application/msword' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `${datasetName.split('.')[0]}_report.doc`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  showToast("Word Report downloaded!", "success");
+}
+
+function exportToPPTX() {
+  showToast("Generating PowerPoint deck...", "info");
+  const script = document.createElement('script');
+  script.src = "https://cdn.jsdelivr.net/gh/gitbrent/PptxGenJS@3.12.0/dist/pptxgen.bundle.js";
+  script.onload = () => {
+    try {
+      const pptx = new PptxGenJS();
+      const datasetName = document.getElementById('ws-dataset-name').innerText;
+      const { findings, risks, recommendations } = runStatisticalInsights();
+
+      // Slide 1: Title
+      const slide1 = pptx.addSlide();
+      slide1.background = { color: "1E1B4B" };
+      slide1.addText("OneClick Dashboard Analytics Report", { x: 0.5, y: 1.8, w: 9, h: 1, fontSize: 32, bold: true, color: "FFFFFF" });
+      slide1.addText(`Dataset: ${datasetName}\nGenerated: ${new Date().toLocaleDateString()}`, { x: 0.5, y: 3.0, w: 9, h: 1, fontSize: 16, color: "94A3B8" });
+
+      // Slide 2: Key Findings
+      const slide2 = pptx.addSlide();
+      slide2.addText("Key Findings", { x: 0.5, y: 0.5, fontSize: 22, bold: true, color: "4F46E5" });
+      slide2.addText(findings.join("\n\n"), { x: 0.5, y: 1.2, w: 9, h: 4.5, fontSize: 14, color: "1E293B" });
+
+      // Slide 3: Risks & Recommendations
+      const slide3 = pptx.addSlide();
+      slide3.addText("Risks & Recommendations", { x: 0.5, y: 0.5, fontSize: 22, bold: true, color: "B91C1C" });
+      const riskText = "Risks:\n" + risks.map(r => `• ${r}`).join("\n") + "\n\nRecommendations:\n" + recommendations.map(rec => `• ${rec}`).join("\n");
+      slide3.addText(riskText, { x: 0.5, y: 1.2, w: 9, h: 4.5, fontSize: 14, color: "1E293B" });
+
+      // Slide 4: Charts
+      const slide4 = pptx.addSlide();
+      slide4.addText("Key Visuals Summary", { x: 0.5, y: 0.5, fontSize: 22, bold: true, color: "4F46E5" });
+      
+      let yOffset = 1.2;
+      const savedGrid = gridData;
+      gridData = savedGrid.filter(row => isRowMatchingFilters(row));
+      dashboardWidgets.forEach((w, idx) => {
+        if (idx < 4) {
+          if (w.type === 'kpi') {
+            const rawVal = getKpiValue(w);
+            const valStr = formatKpiValue(rawVal, w.yCol, w.agg);
+            slide4.addText(`${w.title}: ${valStr}`, { x: 0.5, y: yOffset, w: 4.5, h: 0.4, fontSize: 13, bold: true });
+            yOffset += 0.5;
+          } else if (w.type !== 'table') {
+            const chartInst = activeChartInstances[w.id];
+            if (chartInst) {
+              slide4.addImage({ data: chartInst.toBase64Image(), x: 5.2, y: 1.2, w: 4.2, h: 3.5 });
+            }
+          }
+        }
+      });
+      gridData = savedGrid;
+
+      pptx.writeFile({ fileName: `${datasetName.split('.')[0]}_presentation.pptx` }).then(() => {
+        showToast("PowerPoint exported!", "success");
+      });
+    } catch (err) {
+      showToast("PPTX export failed: " + err.message, "error");
+    }
+  };
+  script.onerror = () => {
+    showToast("Failed to load PPTX deck builder", "error");
+  };
+  document.head.appendChild(script);
+}
+
+function exportToPNG() {
+  showToast("Generating PNG snapshot...", "info");
+  const script = document.createElement('script');
+  script.src = "https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js";
+  script.onload = () => {
+    const element = document.getElementById('dashboard-canvas');
+    if (!element) {
+      showToast("Dashboard canvas element not found", "error");
+      return;
+    }
+    html2canvas(element, { backgroundColor: "#0b0f19", logging: false, scale: 2 }).then(canvas => {
+      const imgData = canvas.toDataURL('image/png');
+      const datasetName = document.getElementById('ws-dataset-name').innerText;
+      const link = document.createElement('a');
+      link.href = imgData;
+      link.download = `${datasetName.split('.')[0]}_snapshot.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      showToast("PNG Snapshot downloaded!", "success");
+    }).catch(err => {
+      showToast("PNG export failed: " + err.message, "error");
+    });
+  };
+  script.onerror = () => {
+    showToast("Failed to load PNG screenshot capture library", "error");
+  };
+  document.head.appendChild(script);
+}
+
+function exportCSVSnapshot() {
+  let csvContent = "data:text/csv;charset=utf-8,";
+  csvContent += headers.map(h => headerNames[h] || h).join(",") + "\n";
+  
+  gridData.forEach(row => {
+    if (isRowMatchingFilters(row)) {
+      csvContent += row.map(val => {
+        const cleaned = String(val).replace(/"/g, '""');
+        return cleaned.includes(",") ? `"${cleaned}"` : cleaned;
+      }).join(",") + "\n";
+    }
+  });
+
+  const datasetName = document.getElementById('ws-dataset-name').innerText;
+  const encodedUri = encodeURI(csvContent);
+  const link = document.createElement('a');
+  link.setAttribute("href", encodedUri);
+  link.setAttribute("download", `${datasetName.split('.')[0]}_filtered_snapshot.csv`);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  showToast("CSV Snapshot downloaded!", "success");
+}
+
+function bindExportActions() {
+  const pdfBtn = document.getElementById('btn-export-pdf');
+  if (pdfBtn) pdfBtn.onclick = exportToPDF;
+
+  const pptxBtn = document.getElementById('btn-export-pptx');
+  if (pptxBtn) pptxBtn.onclick = exportToPPTX;
+
+  const docxBtn = document.getElementById('btn-export-docx');
+  if (docxBtn) docxBtn.onclick = exportToWord;
+
+  const pngBtn = document.getElementById('btn-export-png');
+  if (pngBtn) pngBtn.onclick = exportToPNG;
+
+  const jsonBtn = document.getElementById('btn-export-json');
+  if (jsonBtn) jsonBtn.onclick = exportDashboardJSON;
+
+  const csvBtn = document.getElementById('btn-export-csv');
+  if (csvBtn) csvBtn.onclick = exportCSVSnapshot;
+}
+
+// 13. Render Overrides for Tabs
+function renderDashboardTab() {
+  const { score, checklist } = calculateDashboardQuality();
+  const scoreRadial = document.getElementById('quality-score-radial');
+  if (scoreRadial) {
+    scoreRadial.innerHTML = `${score}<div>Score</div>`;
+    if (score >= 80) {
+      scoreRadial.style.borderColor = 'var(--success)';
+      scoreRadial.style.color = 'var(--success)';
+    } else if (score >= 50) {
+      scoreRadial.style.borderColor = 'var(--warning)';
+      scoreRadial.style.color = 'var(--warning)';
+    } else {
+      scoreRadial.style.borderColor = 'var(--error)';
+      scoreRadial.style.color = 'var(--error)';
+    }
+  }
+
+  const checklistContainer = document.getElementById('quality-checklist-container');
+  if (checklistContainer) {
+    checklistContainer.innerHTML = checklist.map(item => {
+      const cls = item.passed ? 'passed' : 'warning';
+      const indicator = item.passed ? '✓' : '⚠';
+      return `
+        <div class="checklist-item ${cls}">
+          <span>${indicator}</span>
+          <span>${item.title}</span>
+        </div>
+      `;
+    }).join('');
+  }
+
+  updateOverviewStats();
+  renderStructureTab();
+
+  const wizardGrid = document.getElementById('visual-creation-cards-grid');
+  const wizardContainer = document.getElementById('visual-wizard-container');
+  if (wizardGrid && wizardContainer) {
+    if (wizardState.active) {
+      wizardGrid.style.display = 'none';
+      wizardContainer.style.display = 'flex';
+      renderWizardStep();
+    } else {
+      wizardGrid.style.display = 'grid';
+      wizardContainer.style.display = 'none';
+    }
+  }
+
+  bindWizardEvents();
+  bindQuickActions();
+}
+
+function renderExploreTab() {
+  renderGlobalFiltersV3();
+  renderDrillHierarchiesList();
+  initDrillColChecklist();
+  updateDrillStatus();
+  renderCalcFieldsList();
+  initCalcFieldHelpers();
+  bindFormulaOperators();
+}
+
+const _origRenderInsightsTab = renderInsightsTab;
+renderInsightsTab = function() {
+  _origRenderInsightsTab();
+  
+  const containerFindings = document.getElementById('insights-findings-container');
+  const containerRisks = document.getElementById('insights-risks-container');
+  const containerOpps = document.getElementById('insights-opps-container');
+  const containerRecs = document.getElementById('insights-recs-container');
+
+  if (!containerFindings || !containerRisks || !containerOpps || !containerRecs) return;
+
+  const { findings, risks, opportunities, recommendations } = runStatisticalInsights();
+
+  containerFindings.innerHTML = findings.map(f => `
+    <div class="viz-insight-card">
+      <div class="viz-insight-title">✓ Key Finding</div>
+      <div style="font-size:11px; color:var(--text-secondary); line-height:1.4;">${f}</div>
+    </div>
+  `).join('');
+
+  containerRisks.innerHTML = risks.map(r => `
+    <div class="viz-insight-card" style="border-left: 3px solid var(--error);">
+      <div class="viz-insight-title" style="color:var(--error);">⚠ Risk Detected</div>
+      <div style="font-size:11px; color:var(--text-secondary); line-height:1.4;">${r}</div>
+    </div>
+  `).join('');
+
+  containerOpps.innerHTML = opportunities.map(o => `
+    <div class="viz-insight-card" style="border-left: 3px solid var(--success);">
+      <div class="viz-insight-title" style="color:var(--success);">✨ Opportunity</div>
+      <div style="font-size:11px; color:var(--text-secondary); line-height:1.4;">${o}</div>
+    </div>
+  `).join('');
+
+  containerRecs.innerHTML = recommendations.map(rec => `
+    <div class="viz-insight-card" style="border-left: 3px solid var(--primary);">
+      <div class="viz-insight-title" style="color:var(--primary);">→ Action Item</div>
+      <div style="font-size:11px; color:var(--text-secondary); line-height:1.4;">${rec}</div>
+    </div>
+  `).join('');
+};
+
+function renderManageTab() {
+  if (!gridData || gridData.length === 0) return;
+
+  renderManageSavedDashboards();
+
+  const saveBtn = document.getElementById('btn-manage-save-dash');
+  if (saveBtn) {
+    saveBtn.onclick = () => {
+      const nameInput = document.getElementById('manage-save-name-input');
+      const name = nameInput ? nameInput.value.trim() : "";
+      if (!name) { alert("Please enter a dashboard name."); return; }
+      const key = saveDashboardToStorage(name);
+      if (key) {
+        showToast("Dashboard saved!", "success");
+        if (nameInput) nameInput.value = "";
+        renderManageSavedDashboards();
+      }
+    };
+  }
+
+  const saveTemplateBtn = document.getElementById('btn-manage-save-template');
+  if (saveTemplateBtn) {
+    saveTemplateBtn.onclick = () => {
+      const nameInput = document.getElementById('manage-save-name-input');
+      const name = nameInput ? nameInput.value.trim() : "Template";
+      const key = saveDashboardToStorage(`Template_${name}`);
+      if (key) {
+        showToast("Saved dashboard as template!", "success");
+        renderManageSavedDashboards();
+      }
+    };
+  }
+
+  const updateExistingBtn = document.getElementById('btn-manage-update-existing');
+  if (updateExistingBtn) {
+    updateExistingBtn.onclick = () => {
+      if (typeof performSaveWorkspace === 'function') {
+        performSaveWorkspace().then(() => {
+          showToast("Workspace database updated!", "success");
+        });
+      }
+    };
+  }
+
+  bindExportActions();
+
+  document.querySelectorAll('#viztab-manage [data-template]').forEach(card => {
+    card.onclick = () => {
+      const templateName = card.dataset.template;
+      if (confirm(`Apply prebuilt template "${templateName.toUpperCase()}"? This will replace all current widgets.`)) {
+        applyPrebuiltTemplate(templateName);
+      }
+    };
+  });
+
+  renderManageDatasetInfo();
+}
+
+window.switchVizTab = function(tabName) {
+  activeVizTab = tabName;
+  
+  document.querySelectorAll('.viz-tab-btn').forEach(btn => {
+    if (btn.dataset.tab === tabName) btn.classList.add('active');
+    else btn.classList.remove('active');
+  });
+
+  document.querySelectorAll('.viz-tab-content').forEach(content => {
+    content.style.display = content.id === `viztab-${tabName}` ? 'block' : 'none';
+  });
+
+  initVizAccordions();
+
+  if (tabName === 'dashboard') renderDashboardTab();
+  else if (tabName === 'explore') renderExploreTab();
+  else if (tabName === 'insights') renderInsightsTab();
+  else if (tabName === 'manage') renderManageTab();
+};
+
+document.querySelectorAll('.viz-tab-btn').forEach(function(btn) {
+  btn.onclick = function() { window.switchVizTab(btn.dataset.tab); };
+});
+
+/* ==================== ONECLICK AI ANALYST V1 LOGIC ==================== */
+
+// Global state variables for AI module
+let aiActiveChatHistory = [];
+let aiPendingAction = null; // Stores parsed spreadsheet actions awaiting confirmation
+let sessionAuditLogs = [];  // Actions timeline for the History View
+
+// 1. Dataset Context Engine
+let currentDatasetContext = {
+  columns: [],
+  columnTypes: {},
+  dateColumns: [],
+  numericColumns: [],
+  categoricalColumns: [],
+  rowCount: 0,
+  calculatedFields: {},
+  dashboardMetrics: [],
+  dashboardFilters: {},
+  dashboardWidgets: [],
+  columnStatistics: {},
+  missingValueStats: {},
+  duplicateStats: 0,
+  dataQualityScore: 100
+};
+
+function updateCurrentDatasetContext() {
+  if (!gridData || gridData.length === 0) {
+    currentDatasetContext = {
+      columns: [],
+      columnTypes: {},
+      dateColumns: [],
+      numericColumns: [],
+      categoricalColumns: [],
+      rowCount: 0,
+      calculatedFields: {},
+      dashboardMetrics: [],
+      dashboardFilters: {},
+      dashboardWidgets: [],
+      columnStatistics: {},
+      missingValueStats: {},
+      duplicateStats: 0,
+      dataQualityScore: 100
+    };
+    renderDatasetContextSnapshot();
+    return;
+  }
+
+  const cols = headers;
+  const colTypes = {};
+  const dateCols = [];
+  const numCols = [];
+  const catCols = [];
+  const missingStats = {};
+  const stats = {};
+  const totalRows = gridData.length;
+
+  // Scan columns for stats
+  cols.forEach(colKey => {
+    const t = detectColumnType(colKey);
+    colTypes[colKey] = t;
+    if (t === 'date') dateCols.push(colKey);
+    else if (t === 'currency' || t === 'percentage' || t === 'number' || t === 'numeric') numCols.push(colKey);
+    else catCols.push(colKey);
+
+    const colIdx = headers.indexOf(colKey);
+    let missing = 0;
+    let sum = 0;
+    let min = Infinity;
+    let max = -Infinity;
+    let nonMissingVals = [];
+    const uniques = new Set();
+
+    for (let r = 0; r < totalRows; r++) {
+      const rawVal = gridData[r][colIdx];
+      const valStr = String(rawVal !== undefined && rawVal !== null ? rawVal : "").trim();
+      if (valStr === "") {
+        missing++;
+      } else {
+        uniques.add(valStr);
+        if (t === 'currency' || t === 'percentage' || t === 'number' || t === 'numeric') {
+          const valNum = getCleanNumericValue(rawVal);
+          sum += valNum;
+          if (valNum < min) min = valNum;
+          if (valNum > max) max = valNum;
+          nonMissingVals.push(valNum);
+        } else {
+          nonMissingVals.push(valStr);
+        }
+      }
+    }
+
+    missingStats[colKey] = missing;
+
+    let median = null;
+    let mean = null;
+    if (nonMissingVals.length > 0) {
+      if (t === 'currency' || t === 'percentage' || t === 'number' || t === 'numeric') {
+        nonMissingVals.sort((a, b) => a - b);
+        const mid = Math.floor(nonMissingVals.length / 2);
+        median = nonMissingVals.length % 2 !== 0 ? nonMissingVals[mid] : (nonMissingVals[mid - 1] + nonMissingVals[mid]) / 2;
+        mean = sum / nonMissingVals.length;
+      } else {
+        nonMissingVals.sort();
+        const mid = Math.floor(nonMissingVals.length / 2);
+        median = nonMissingVals[mid];
+      }
+    }
+
+    stats[colKey] = {
+      type: t,
+      missingCount: missing,
+      uniqueCount: uniques.size,
+      mean: mean,
+      min: min === Infinity ? null : min,
+      max: max === -Infinity ? null : max,
+      median: median
+    };
+  });
+
+  // Count duplicate rows
+  let duplicates = 0;
+  const seenRows = new Set();
+  for (let r = 0; r < totalRows; r++) {
+    const rowStr = JSON.stringify(gridData[r]);
+    if (seenRows.has(rowStr)) {
+      duplicates++;
+    } else {
+      seenRows.add(rowStr);
+    }
+  }
+
+  // Calculate Data Quality Score
+  const totalCells = totalRows * cols.length;
+  let totalMissing = 0;
+  Object.values(missingStats).forEach(v => totalMissing += v);
+  const missingPenalty = totalCells > 0 ? (totalMissing / totalCells) * 100 : 0;
+  const duplicatePenalty = totalRows > 0 ? (duplicates / totalRows) * 100 : 0;
+  const qualityScore = Math.max(0, Math.round(100 - missingPenalty - duplicatePenalty));
+
+  currentDatasetContext = {
+    columns: cols,
+    columnTypes: colTypes,
+    dateColumns: dateCols,
+    numericColumns: numCols,
+    categoricalColumns: catCols,
+    rowCount: totalRows,
+    calculatedFields: Object.assign({}, calculatedFields || {}),
+    dashboardMetrics: dashboardWidgets.filter(w => w.type === 'kpi'),
+    dashboardFilters: Object.assign({}, globalFiltersV3 || {}),
+    dashboardWidgets: [...dashboardWidgets],
+    columnStatistics: stats,
+    missingValueStats: missingStats,
+    duplicateStats: duplicates,
+    dataQualityScore: qualityScore
+  };
+
+  renderDatasetContextSnapshot();
+}
+
+function renderDatasetContextSnapshot() {
+  const container = document.getElementById('ai-context-snapshot');
+  if (!container) return;
+
+  if (!gridData || gridData.length === 0) {
+    container.innerHTML = `<div style="text-align: center; color: var(--text-muted); padding: 8px 0;">No active dataset loaded.</div>`;
+    return;
+  }
+
+  container.innerHTML = `
+    <div style="display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,0.03);">
+      <span>Total Rows</span>
+      <span style="font-weight: 700; color: var(--text-primary);">${currentDatasetContext.rowCount.toLocaleString()}</span>
+    </div>
+    <div style="display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,0.03);">
+      <span>Total Columns</span>
+      <span style="font-weight: 700; color: var(--text-primary);">${currentDatasetContext.columns.length}</span>
+    </div>
+    <div style="display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,0.03);">
+      <span>Date Fields</span>
+      <span style="font-weight: 700; color: var(--text-primary);">${currentDatasetContext.dateColumns.length}</span>
+    </div>
+    <div style="display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,0.03);">
+      <span>Numeric Fields</span>
+      <span style="font-weight: 700; color: var(--text-primary);">${currentDatasetContext.numericColumns.length}</span>
+    </div>
+    <div style="display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,0.03);">
+      <span>Duplicates</span>
+      <span style="font-weight: 700; color: ${currentDatasetContext.duplicateStats > 0 ? 'var(--warning)' : 'var(--text-primary)'};">${currentDatasetContext.duplicateStats.toLocaleString()}</span>
+    </div>
+    <div style="display: flex; justify-content: space-between; padding: 4px 0;">
+      <span>Quality score</span>
+      <span style="font-weight: 700; color: ${currentDatasetContext.dataQualityScore >= 80 ? 'var(--success)' : 'var(--warning)'};">${currentDatasetContext.dataQualityScore}%</span>
+    </div>
+  `;
+}
+
+// 2. Chat UI & Controllers
+window.setAiPrompt = function(promptText) {
+  const input = document.getElementById('ai-prompt-input');
+  if (input) {
+    input.value = promptText;
+    input.focus();
+  }
+};
+
+window.initAiAnalystView = function() {
+  const datasetNameEl = document.getElementById('ws-dataset-name');
+  const datasetName = datasetNameEl ? datasetNameEl.innerText : "";
+  const label = document.getElementById('ai-active-dataset-label');
+
+  if (label) {
+    if (gridData && gridData.length > 0) {
+      label.innerText = `Active Dataset: ${datasetName} (${gridData.length.toLocaleString()} Rows)`;
+    } else {
+      label.innerText = "Active Dataset: None (Please load data)";
+    }
+  }
+
+  updateCurrentDatasetContext();
+  renderAiChatHistory();
+  renderPastConversationsList();
+
+  // Bind prompt inputs
+  const btnSend = document.getElementById('btn-ai-send');
+  if (btnSend) {
+    btnSend.onclick = handleAiPromptSubmit;
+  }
+
+  const promptInput = document.getElementById('ai-prompt-input');
+  if (promptInput) {
+    promptInput.onkeydown = (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        handleAiPromptSubmit();
+      }
+    };
+  }
+
+  const btnClear = document.getElementById('btn-ai-clear-chat');
+  if (btnClear) {
+    btnClear.onclick = () => {
+      aiActiveChatHistory = [];
+      saveChatHistoryToWorkspace();
+      renderAiChatHistory();
+    };
+  }
+
+  // Bind safe action confirmation overlay
+  const btnYes = document.getElementById('btn-ai-confirm-yes');
+  if (btnYes) btnYes.onclick = () => resolveAiSpreadsheetCommand(true);
+
+  const btnNo = document.getElementById('btn-ai-confirm-no');
+  if (btnNo) btnNo.onclick = () => resolveAiSpreadsheetCommand(false);
+};
+
+function renderAiChatHistory() {
+  const feed = document.getElementById('ai-chat-feed');
+  if (!feed) return;
+
+  // Preserve welcome bubble
+  let html = `
+    <div class="ai-message assistant" style="display: flex; gap: 12px; max-width: 85%;">
+      <div class="ai-msg-avatar" style="width: 28px; height: 28px; border-radius: 50%; background: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0;">🤖</div>
+      <div class="ai-msg-body" style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-color); border-radius: 0 12px 12px 12px; padding: 12px 16px;">
+        <h3 style="font-size: 13px; font-weight: 700; margin: 0 0 6px 0; color: var(--text-primary);">Hello! I am your OneClick AI Analyst.</h3>
+        <p style="font-size: 12px; color: var(--text-secondary); margin: 0; line-height: 1.5;">
+          I am fully aware of your loaded dataset and can help you answer questions, calculate aggregations, build charts, create KPI cards, explain data anomalies, or clean data.
+        </p>
+        <p style="font-size: 12px; color: var(--text-secondary); margin: 8px 0 0 0; line-height: 1.5;">
+          All my computations are executed locally and securely using actual calculations. Ask a question or click on one of the suggestions to get started!
+        </p>
+      </div>
+    </div>
+  `;
+
+  aiActiveChatHistory.forEach(msg => {
+    const isUser = msg.sender === 'user';
+    const avatar = isUser ? '👤' : '🤖';
+    const msgClass = isUser ? 'user' : 'assistant';
+    
+    html += `
+      <div class="ai-message ${msgClass}" style="display: flex; gap: 12px; max-width: 85%; margin-top: 10px;">
+        <div class="ai-msg-avatar" style="width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0;">${avatar}</div>
+        <div class="ai-msg-body" style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-color); padding: 12px 16px; border-radius: ${isUser ? '12px 0 12px 12px' : '0 12px 12px 12px'};">
+          ${msg.contentHtml || `<p style="font-size: 12px; color: var(--text-secondary); margin: 0; line-height: 1.5;">${msg.text}</p>`}
+        </div>
+      </div>
+    `;
+  });
+
+  feed.innerHTML = html;
+  feed.scrollTop = feed.scrollHeight;
+}
+
+function renderPastConversationsList() {
+  const container = document.getElementById('ai-conversations-list');
+  if (!container) return;
+
+  openDB().then(db => {
+    const tx = db.transaction(STORE_NAME, 'readonly');
+    const store = tx.objectStore(STORE_NAME);
+    const request = store.getAll();
+    request.onsuccess = (e) => {
+      const workspaces = e.target.result || [];
+      const withHistory = workspaces.filter(w => w.aiHistory && w.aiHistory.length > 0);
+      
+      if (withHistory.length === 0) {
+        container.innerHTML = `<div style="text-align: center; color: var(--text-muted); padding: 8px 0; font-size: 11px;">No past conversations saved.</div>`;
+        return;
+      }
+
+      container.innerHTML = withHistory.map(w => {
+        const lastMsg = w.aiHistory[w.aiHistory.length - 1];
+        const snippet = lastMsg.text.length > 30 ? lastMsg.text.substring(0, 30) + '...' : lastMsg.text;
+        return `
+          <div class="ai-history-item" onclick="loadWorkspaceAndChat('${w.workspaceId}')">
+            <div style="display:flex; flex-direction:column; overflow:hidden;">
+              <span style="font-weight:600; color:var(--text-primary); text-overflow:ellipsis; white-space:nowrap; overflow:hidden;">${w.workspaceName}</span>
+              <span style="font-size:9.5px; color:var(--text-muted); text-overflow:ellipsis; white-space:nowrap; overflow:hidden;">${snippet}</span>
+            </div>
+            <span style="font-size:9px; color:var(--primary);">❯</span>
+          </div>
+        `;
+      }).join('');
+    };
+  });
+}
+
+window.loadWorkspaceAndChat = function(wsId) {
+  if (typeof openWorkspace === 'function') {
+    openWorkspace(wsId);
+    setTimeout(() => {
+      window.switchVizTab('AI Analyst');
+      setActive(document.getElementById('nav-ai-analyst').querySelector('a'));
+    }, 300);
+  }
+};
+
+function saveChatHistoryToWorkspace() {
+  if (!currentWorkspaceId) return;
+  openDB().then(db => {
+    const tx = db.transaction(STORE_NAME, 'readwrite');
+    const store = tx.objectStore(STORE_NAME);
+    const getReq = store.get(currentWorkspaceId);
+    getReq.onsuccess = (e) => {
+      const ws = e.target.result;
+      if (ws) {
+        ws.aiHistory = aiActiveChatHistory;
+        store.put(ws);
+        renderPastConversationsList();
+      }
+    };
+  });
+}
+
+// 3. User Prompt Submission
+function handleAiPromptSubmit() {
+  const input = document.getElementById('ai-prompt-input');
+  if (!input) return;
+  const prompt = input.value.trim();
+  if (!prompt) return;
+
+  // Add User message
+  aiActiveChatHistory.push({
+    sender: 'user',
+    text: prompt
+  });
+  input.value = "";
+  renderAiChatHistory();
+
+  // Safety Check
+  if (!gridData || gridData.length === 0) {
+    setTimeout(() => {
+      aiActiveChatHistory.push({
+        sender: 'assistant',
+        text: "Please load a dataset workspace before asking analysis questions.",
+        contentHtml: `<p style="font-size: 12px; color: var(--text-secondary); margin: 0;">⚠️ Please load a dataset workspace before asking analysis questions.</p>`
+      });
+      saveChatHistoryToWorkspace();
+      renderAiChatHistory();
+    }, 400);
+    return;
+  }
+
+  showLoading("AI Analyst", "Interpreting query intent and scanning context...", 40);
+  setTimeout(() => {
+    const plan = parseUserPrompt(prompt);
+    hideLoading();
+    
+    if (!plan) {
+      aiActiveChatHistory.push({
+        sender: 'assistant',
+        text: "Unable to calculate from current dataset.",
+        contentHtml: `<p style="font-size: 12px; color: var(--text-secondary); margin: 0;">❌ Unable to calculate from current dataset.</p>`
+      });
+      saveChatHistoryToWorkspace();
+      renderAiChatHistory();
+      return;
+    }
+
+    if (plan.type === "spreadsheet") {
+      showAiSpreadsheetConfirmation(plan);
+    } else if (plan.type === "chart_command") {
+      executeChartCommand(plan);
+    } else if (plan.type === "kpi_command") {
+      executeKpiCommand(plan);
+    } else {
+      const result = executeAiCalculation(plan);
+      if (result.error) {
+        aiActiveChatHistory.push({
+          sender: 'assistant',
+          text: result.error,
+          contentHtml: `<p style="font-size: 12px; color: var(--text-secondary); margin: 0;">⚠️ ${result.error}</p>`
+        });
+      } else {
+        const responseHtml = generateHtmlResponse(result);
+        aiActiveChatHistory.push({
+          sender: 'assistant',
+          text: result.title + ": " + result.answer,
+          contentHtml: responseHtml
+        });
+      }
+      saveChatHistoryToWorkspace();
+      renderAiChatHistory();
+    }
+  }, 400);
+}
+
+// 4. Intent Parser Classifier
+function parseUserPrompt(prompt) {
+  const normalized = prompt.toLowerCase().trim();
+  const cols = currentDatasetContext.columns;
+  
+  const matchedCols = [];
+  cols.forEach(colKey => {
+    const colName = (headerNames[colKey] || colKey).toLowerCase();
+    if (normalized.includes(colName) || normalized.includes(colKey.toLowerCase())) {
+      matchedCols.push({ colKey, name: colName, length: colName.length });
+    }
+  });
+  matchedCols.sort((a, b) => b.length - a.length);
+
+  const getCol = () => matchedCols[0] ? matchedCols[0].colKey : null;
+
+  // 1. Spreadsheet Commands
+  if (normalized.includes("duplicate")) {
+    return { type: "spreadsheet", action: "remove_duplicates" };
+  }
+  if (normalized.includes("missing") || normalized.includes("impute") || normalized.includes("fill")) {
+    const colKey = getCol() || currentDatasetContext.numericColumns[0];
+    let method = "median";
+    if (normalized.includes("mean") || normalized.includes("average")) method = "mean";
+    else if (normalized.includes("mode")) method = "mode";
+    return { type: "spreadsheet", action: "fill_missing", colKey, method };
+  }
+  if (normalized.includes("delete empty") || normalized.includes("remove empty") || normalized.includes("delete blank") || normalized.includes("delete empty rows")) {
+    return { type: "spreadsheet", action: "delete_empty_rows" };
+  }
+  if (normalized.includes("convert date") || normalized.includes("date format") || normalized.includes("to date")) {
+    const colKey = getCol() || currentDatasetContext.dateColumns[0];
+    return { type: "spreadsheet", action: "convert_date", colKey };
+  }
+  if (normalized.includes("rename")) {
+    const match = normalized.match(/rename\s+(\w+)\s+to\s+([\w\s\$%_]+)/);
+    const colKey = match ? cols.find(c => c.toLowerCase() === match[1] || (headerNames[c] || "").toLowerCase() === match[1]) : getCol();
+    const newName = match ? match[2].trim() : "New Named Column";
+    return { type: "spreadsheet", action: "rename_column", colKey, newName };
+  }
+  if (normalized.includes("merge")) {
+    return { type: "spreadsheet", action: "merge_columns" };
+  }
+  if (normalized.includes("split")) {
+    const colKey = getCol();
+    return { type: "spreadsheet", action: "split_column", colKey };
+  }
+
+  // 2. KPI creation commands
+  if (normalized.includes("create kpi") || normalized.includes("add kpi") || (normalized.startsWith("kpi") && normalized.includes("for"))) {
+    const colKey = getCol() || currentDatasetContext.numericColumns[0];
+    let agg = "sum";
+    if (normalized.includes("average") || normalized.includes("avg") || normalized.includes("mean")) agg = "avg";
+    else if (normalized.includes("count")) agg = "count";
+    else if (normalized.includes("min")) agg = "min";
+    else if (normalized.includes("max")) agg = "max";
+    return { type: "kpi_command", colKey, agg };
+  }
+
+  // 3. Chart creation commands
+  if (normalized.includes("chart") || normalized.includes("plot") || normalized.includes("visual")) {
+    let chartType = "bar";
+    if (normalized.includes("line")) chartType = "line";
+    else if (normalized.includes("pie")) chartType = "pie";
+    else if (normalized.includes("donut")) chartType = "donut";
+    else if (normalized.includes("area")) chartType = "area";
+    else if (normalized.includes("scatter")) chartType = "scatter";
+    else if (normalized.includes("heatmap")) chartType = "heatmap";
+    else if (normalized.includes("table")) chartType = "table";
+
+    const numericCols = currentDatasetContext.numericColumns;
+    const catCols = currentDatasetContext.categoricalColumns;
+    const dateCols = currentDatasetContext.dateColumns;
+
+    let xCol = matchedCols.find(c => catCols.includes(c.colKey) || dateCols.includes(c.colKey))?.colKey;
+    if (!xCol) xCol = catCols[0] || dateCols[0] || cols[0];
+
+    let yCol = matchedCols.find(c => numericCols.includes(c.colKey) && c.colKey !== xCol)?.colKey;
+    if (!yCol) yCol = numericCols[0] || cols[0];
+
+    let agg = "sum";
+    if (normalized.includes("average") || normalized.includes("avg")) agg = "avg";
+    else if (normalized.includes("count")) agg = "count";
+
+    return { type: "chart_command", chartType, xCol, yCol, agg };
+  }
+
+  // 4. Trend Analysis
+  if (normalized.includes("trend") || normalized.includes("growth") || normalized.includes("over time")) {
+    const colKey = getCol() || currentDatasetContext.numericColumns[0];
+    const dateCol = currentDatasetContext.dateColumns[0] || cols[0];
+    return { type: "trend", colKey, dateCol };
+  }
+
+  // 5. Explain Data
+  if (normalized.startsWith("why") || normalized.includes("explain")) {
+    const colKey = getCol() || currentDatasetContext.numericColumns[0];
+    return { type: "explain", colKey };
+  }
+
+  // 6. Ranking Queries
+  if (normalized.includes("top") || normalized.includes("bottom") || normalized.includes("best") || normalized.includes("worst")) {
+    const direction = (normalized.includes("bottom") || normalized.includes("worst")) ? "bottom" : "top";
+    const numMatch = normalized.match(/\d+/);
+    const count = numMatch ? parseInt(numMatch[0]) : 5;
+    
+    const numericCols = currentDatasetContext.numericColumns;
+    const catCols = currentDatasetContext.categoricalColumns;
+
+    let yCol = matchedCols.find(c => numericCols.includes(c.colKey))?.colKey;
+    if (!yCol) yCol = numericCols[0] || cols[0];
+
+    let xCol = matchedCols.find(c => catCols.includes(c.colKey) && c.colKey !== yCol)?.colKey;
+    if (!xCol) xCol = catCols[0] || cols[0];
+
+    return { type: "ranking", direction, count, xCol, yCol };
+  }
+
+  // 7. Comparison Queries
+  if (normalized.includes("compare") || normalized.includes(" vs ")) {
+    const numericCols = currentDatasetContext.numericColumns;
+    let yCol = matchedCols.find(c => numericCols.includes(c.colKey))?.colKey;
+    if (!yCol) yCol = numericCols[0] || cols[0];
+
+    let compItems = [];
+    if (normalized.includes(" vs ")) {
+      const parts = normalized.split(" vs ");
+      const beforeWords = parts[0].trim().split(" ");
+      const afterWords = parts[1].trim().split(" ");
+      compItems = [beforeWords[beforeWords.length - 1], afterWords[0]];
+    }
+
+    return { type: "comparison", yCol, compItems };
+  }
+
+  // 8. Aggregations (default)
+  let op = null;
+  if (normalized.includes("total") || normalized.includes("sum")) op = "sum";
+  else if (normalized.includes("average") || normalized.includes("avg") || normalized.includes("mean")) op = "avg";
+  else if (normalized.includes("unique") || normalized.includes("distinct")) op = "count_dist";
+  else if (normalized.includes("count") || normalized.includes("how many") || normalized.includes("number of")) op = "count";
+  else if (normalized.includes("min") || normalized.includes("lowest") || normalized.includes("minimum")) op = "min";
+  else if (normalized.includes("max") || normalized.includes("highest") || normalized.includes("maximum")) op = "max";
+  else if (normalized.includes("median")) op = "median";
+
+  if (op) {
+    const colKey = getCol() || (op === 'count' ? null : currentDatasetContext.numericColumns[0]);
+    let dateFilter = null;
+    const dateCol = currentDatasetContext.dateColumns[0];
+    
+    if (dateCol) {
+      const months = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
+      let foundMonths = [];
+      months.forEach((m, idx) => {
+        if (normalized.includes(m)) {
+          foundMonths.push(idx);
+        }
+      });
+      
+      const yearMatch = normalized.match(/\b(20\d{2})\b/);
+      const year = yearMatch ? parseInt(yearMatch[1]) : 2026;
+
+      if (foundMonths.length > 0) {
+        const dayMatches = normalized.match(/\b([1-9]|[12]\d|3[01])\b/g);
+        let startDay = 1;
+        let endDay = 28;
+        if (dayMatches && dayMatches.length >= 2) {
+          startDay = parseInt(dayMatches[0]);
+          endDay = parseInt(dayMatches[1]);
+        } else if (dayMatches && dayMatches.length === 1) {
+          startDay = 1;
+          endDay = parseInt(dayMatches[0]);
+        } else {
+          startDay = 1;
+          endDay = 30;
+        }
+
+        const startMonth = foundMonths[0];
+        const endMonth = foundMonths[foundMonths.length - 1];
+
+        const minDate = new Date(year, startMonth, startDay);
+        const maxDate = new Date(year, endMonth, endDay);
+        dateFilter = { dateCol, min: minDate, max: maxDate };
+      }
+    }
+
+    return { type: "aggregation", op, colKey, dateFilter };
+  }
+
+  if (getCol()) {
+    const colKey = getCol();
+    const isNum = currentDatasetContext.numericColumns.includes(colKey);
+    return { type: "aggregation", op: isNum ? "sum" : "count", colKey };
+  }
+
+  return null;
+}
+
+// 5. Query Calculation local execution
+function executeAiCalculation(plan) {
+  if (!plan) return { error: "Unable to calculate from current dataset." };
+
+  const totalRows = gridData.length;
+  if (totalRows === 0) return { error: "Dataset is empty." };
+
+  if (plan.type === "aggregation") {
+    const colIdx = headers.indexOf(plan.colKey);
+    const op = plan.op;
+    let values = [];
+    
+    let filteredCount = 0;
+    for (let r = 0; r < totalRows; r++) {
+      const row = gridData[r];
+      
+      if (plan.dateFilter) {
+        const dateIdx = headers.indexOf(plan.dateFilter.dateCol);
+        if (dateIdx !== -1) {
+          const rowDateStr = String(row[dateIdx]).trim();
+          const rowDate = new Date(rowDateStr);
+          if (isNaN(rowDate.getTime()) || rowDate < plan.dateFilter.min || rowDate > plan.dateFilter.max) {
+            continue;
+          }
+        }
+      }
+
+      filteredCount++;
+      if (colIdx !== -1) {
+        const raw = row[colIdx];
+        if (op === "count") {
+          values.push(raw);
+        } else if (op === "count_dist") {
+          values.push(String(raw).trim());
+        } else {
+          const num = getCleanNumericValue(raw);
+          if (raw !== undefined && raw !== null && String(raw).trim() !== "" && !isNaN(num)) {
+            values.push(num);
+          }
+        }
+      } else {
+        values.push(1);
+      }
+    }
+
+    if (values.length === 0 && op !== "count") {
+      return { error: "No numeric values found in the column." };
+    }
+
+    let resultValue = null;
+    let calcString = "";
+    const colLabel = plan.colKey ? (headerNames[plan.colKey] || plan.colKey) : "Rows";
+
+    if (op === "sum") {
+      resultValue = values.reduce((sum, v) => sum + v, 0);
+      calcString = `SUM(${colLabel})`;
+    } else if (op === "avg") {
+      const sum = values.reduce((sum, v) => sum + v, 0);
+      resultValue = sum / values.length;
+      calcString = `AVERAGE(${colLabel})`;
+    } else if (op === "min") {
+      resultValue = Math.min(...values);
+      calcString = `MIN(${colLabel})`;
+    } else if (op === "max") {
+      resultValue = Math.max(...values);
+      calcString = `MAX(${colLabel})`;
+    } else if (op === "median") {
+      values.sort((a, b) => a - b);
+      const mid = Math.floor(values.length / 2);
+      resultValue = values.length % 2 !== 0 ? values[mid] : (values[mid - 1] + values[mid]) / 2;
+      calcString = `MEDIAN(${colLabel})`;
+    } else if (op === "count") {
+      resultValue = values.length;
+      calcString = `COUNT(${colLabel})`;
+    } else if (op === "count_dist") {
+      const uniques = new Set(values);
+      resultValue = uniques.size;
+      calcString = `COUNT DISTINCT(${colLabel})`;
+    }
+
+    let dateRangeStr = "";
+    if (plan.dateFilter) {
+      dateRangeStr = ` filtered from ${plan.dateFilter.min.toLocaleDateString()} to ${plan.dateFilter.max.toLocaleDateString()}`;
+    }
+
+    return {
+      title: `${op.toUpperCase()} of ${colLabel}${dateRangeStr}`,
+      answer: formatKpiValue(resultValue, plan.colKey, op),
+      calcDetails: `${calcString}\nRows Used: ${filteredCount.toLocaleString()} / ${totalRows.toLocaleString()}`,
+      op,
+      colKey: plan.colKey,
+      rawAnswer: resultValue
+    };
+  }
+
+  if (plan.type === "ranking") {
+    const xIdx = headers.indexOf(plan.xCol);
+    const yIdx = headers.indexOf(plan.yCol);
+    
+    if (xIdx === -1 || yIdx === -1) {
+      return { error: "Unable to calculate ranking: columns not found." };
+    }
+
+    const groups = {};
+    for (let r = 0; r < totalRows; r++) {
+      const row = gridData[r];
+      const g = String(row[xIdx] || "Unknown").trim();
+      const v = getCleanNumericValue(row[yIdx]);
+      if (!isNaN(v)) {
+        groups[g] = (groups[g] || 0) + v;
+      }
+    }
+
+    const sorted = Object.entries(groups).sort((a, b) => {
+      return plan.direction === "top" ? b[1] - a[1] : a[1] - b[1];
+    });
+
+    const list = sorted.slice(0, plan.count).map((item, idx) => {
+      return {
+        rank: idx + 1,
+        label: item[0],
+        value: formatKpiValue(item[1], plan.yCol, "sum")
+      };
+    });
+
+    const xLabel = headerNames[plan.xCol] || plan.xCol;
+    const yLabel = headerNames[plan.yCol] || plan.yCol;
+
+    return {
+      title: `${plan.direction.toUpperCase()} ${plan.count} ${xLabel} by ${yLabel}`,
+      type: "table",
+      items: list,
+      calcDetails: `GROUP BY(${xLabel}), SUM(${yLabel}), SORT(${plan.direction === "top" ? "DESC" : "ASC"}), LIMIT(${plan.count})\nRows Used: ${totalRows.toLocaleString()}`,
+      xCol: plan.xCol,
+      yCol: plan.yCol
+    };
+  }
+
+  if (plan.type === "comparison") {
+    const yIdx = headers.indexOf(plan.yCol);
+    if (yIdx === -1) return { error: "Target column for comparison not found." };
+
+    const numericVals = gridData.map(r => getCleanNumericValue(r[yIdx])).filter(v => !isNaN(v)).sort((a, b) => a - b);
+    if (numericVals.length === 0) return { error: "No numeric values found to compare." };
+
+    let comparisonHTML = "";
+    let answer = "";
+    const yLabel = headerNames[plan.yCol] || plan.yCol;
+
+    const profile = profileColumns();
+    const catCol = profile.catCols[0];
+    const catIdx = headers.indexOf(catCol);
+
+    if (catIdx !== -1 && plan.compItems.length >= 2) {
+      const valA = plan.compItems[0].toLowerCase();
+      const valB = plan.compItems[1].toLowerCase();
+
+      let sumA = 0, countA = 0;
+      let sumB = 0, countB = 0;
+
+      for (let r = 0; r < totalRows; r++) {
+        const row = gridData[r];
+        const rowCat = String(row[catIdx] || "").trim().toLowerCase();
+        const v = getCleanNumericValue(row[yIdx]);
+        if (!isNaN(v)) {
+          if (rowCat.includes(valA)) {
+            sumA += v;
+            countA++;
+          } else if (rowCat.includes(valB)) {
+            sumB += v;
+            countB++;
+          }
+        }
+      }
+
+      if (countA > 0 || countB > 0) {
+        const diff = sumA - sumB;
+        const pctDiff = sumB !== 0 ? (diff / sumB) * 100 : 0;
+        const labelA = plan.compItems[0];
+        const labelB = plan.compItems[1];
+        const winner = sumA > sumB ? labelA : labelB;
+
+        answer = `${winner} is higher`;
+        comparisonHTML = `
+          <div style="font-size: 11.5px; line-height: 1.5; color: var(--text-secondary);">
+            <strong>${labelA}:</strong> ${formatKpiValue(sumA, plan.yCol, "sum")}<br/>
+            <strong>${labelB}:</strong> ${formatKpiValue(sumB, plan.yCol, "sum")}<br/>
+            <strong>Difference:</strong> ${formatKpiValue(Math.abs(diff), plan.yCol, "sum")} (${Math.abs(pctDiff).toFixed(1)}% ${diff >= 0 ? 'higher' : 'lower'} for ${labelA})
+          </div>
+        `;
+        return {
+          title: `Comparison: ${labelA} vs ${labelB} on ${yLabel}`,
+          type: "comparison",
+          answer,
+          comparisonHTML,
+          calcDetails: `SUM(${yLabel}) GROUP BY(${headerNames[catCol] || catCol}) FILTER(${labelA}, ${labelB})`,
+          rawAnswer: diff
+        };
+      }
+    }
+
+    const sum = numericVals.reduce((a, b) => a + b, 0);
+    const mean = sum / numericVals.length;
+    const median = numericVals[Math.floor(numericVals.length / 2)];
+    
+    return {
+      title: `Distribution statistics for ${yLabel}`,
+      type: "comparison",
+      answer: `Mean: ${formatKpiValue(mean, plan.yCol, "avg")}`,
+      comparisonHTML: `
+        <div style="font-size:11.5px; line-height:1.5; color: var(--text-secondary);">
+          <strong>Average (Mean):</strong> ${formatKpiValue(mean, plan.yCol, "avg")}<br/>
+          <strong>Median:</strong> ${formatKpiValue(median, plan.yCol, "median")}<br/>
+          <strong>Range:</strong> ${formatKpiValue(numericVals[0], plan.yCol, "min")} to ${formatKpiValue(numericVals[numericVals.length - 1], plan.yCol, "max")}
+        </div>
+      `,
+      calcDetails: `MEAN(${yLabel}), MEDIAN(${yLabel}), MIN/MAX\nRows Used: ${totalRows.toLocaleString()}`
+    };
+  }
+
+  if (plan.type === "trend") {
+    const colIdx = headers.indexOf(plan.colKey);
+    const dateIdx = headers.indexOf(plan.dateCol);
+
+    if (colIdx === -1 || dateIdx === -1) {
+      return { error: "Unable to calculate trend: columns not found." };
+    }
+
+    const monthly = {};
+    for (let r = 0; r < totalRows; r++) {
+      const row = gridData[r];
+      const dStr = String(row[dateIdx]).trim();
+      const date = new Date(dStr);
+      if (!isNaN(date.getTime())) {
+        const mKey = date.toISOString().substring(0, 7);
+        const v = getCleanNumericValue(row[colIdx]);
+        if (!isNaN(v)) {
+          monthly[mKey] = (monthly[mKey] || 0) + v;
+        }
+      }
+    }
+
+    const sortedMonths = Object.entries(monthly).sort((a, b) => a[0].localeCompare(b[0]));
+    if (sortedMonths.length < 2) {
+      return { error: "Not enough date intervals found to compute trend." };
+    }
+
+    const start = sortedMonths[0];
+    const end = sortedMonths[sortedMonths.length - 1];
+    const diff = end[1] - start[1];
+    const pct = start[1] !== 0 ? (diff / start[1]) * 100 : 0;
+    
+    const yLabel = headerNames[plan.colKey] || plan.colKey;
+    const xLabel = headerNames[plan.dateCol] || plan.dateCol;
+
+    return {
+      title: `${yLabel} Trend analysis over time`,
+      type: "trend",
+      answer: `${pct >= 0 ? 'Upward' : 'Downward'} trend of ${Math.abs(pct).toFixed(1)}%`,
+      comparisonHTML: `
+        <div style="font-size:11.5px; line-height:1.5; color: var(--text-secondary);">
+          <strong>Start Period (${start[0]}):</strong> ${formatKpiValue(start[1], plan.colKey, "sum")}<br/>
+          <strong>End Period (${end[0]}):</strong> ${formatKpiValue(end[1], plan.colKey, "sum")}<br/>
+          <strong>Net Change:</strong> ${pct >= 0 ? '+' : ''}${Math.abs(pct).toFixed(1)}% MoM change
+        </div>
+      `,
+      calcDetails: `AGGREGATE(${yLabel}) GROUP BY(Month of ${xLabel})`,
+      xCol: plan.dateCol,
+      yCol: plan.colKey
+    };
+  }
+
+  if (plan.type === "explain") {
+    const stats = runStatisticalInsights();
+    const colLabel = plan.colKey ? (headerNames[plan.colKey] || plan.colKey) : "Sales";
+
+    const primary = stats.findings[0] || "Leading category contribution is high.";
+    const secondary = stats.opportunities[0] || "Positive volume momentum in recent cycles.";
+    const riskItem = stats.risks[0] || "Category concentration limits diversity.";
+    
+    return {
+      title: `Root-Cause Diagnostic for ${colLabel}`,
+      type: "explain",
+      primary,
+      secondary,
+      riskItem,
+      confidence: 85
+    };
+  }
+
+  return { error: "Unable to calculate from current dataset." };
+}
+
+// 6. Response Generators
+function generateHtmlResponse(result) {
+  if (result.type === "table") {
+    const rowsHtml = result.items.map(item => `
+      <tr style="border-bottom:1px solid rgba(255,255,255,0.03);">
+        <td style="padding: 6px 4px; font-weight:700; color:var(--text-muted);">${item.rank}</td>
+        <td style="padding: 6px 4px; color:var(--text-primary);">${item.label}</td>
+        <td style="padding: 6px 4px; text-align:right; font-weight:700; color:var(--text-primary);">${item.value}</td>
+      </tr>
+    `).join('');
+
+    return `
+      <div class="ai-msg-response-card" style="background: rgba(255,255,255,0.01); border:1px solid var(--border-color); border-radius: 8px; padding: 14px; width: 100%;">
+        <div style="font-weight: 700; font-size:12px; color:var(--primary); margin-bottom:10px;">📊 ${result.title}</div>
+        <table class="ai-response-table" style="width:100%; border-collapse:collapse; font-size:11.5px; color:var(--text-secondary); margin-bottom:12px;">
+          <thead>
+            <tr style="border-bottom: 1px solid var(--border-color); text-align:left;">
+              <th style="padding: 6px 4px; font-size:9.5px; text-transform:uppercase; color:var(--text-muted);">Rank</th>
+              <th style="padding: 6px 4px; font-size:9.5px; text-transform:uppercase; color:var(--text-muted);">Item</th>
+              <th style="padding: 6px 4px; text-align:right; font-size:9.5px; text-transform:uppercase; color:var(--text-muted);">Sum Value</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rowsHtml}
+          </tbody>
+        </table>
+        <div style="border-top:1px solid rgba(255,255,255,0.03); padding-top:8px; font-size:9.5px; color:var(--text-muted); font-family:var(--font-mono); line-height:1.4; margin-bottom: 12px;">
+          ${result.calcDetails.replace('\n', '<br/>')}
+        </div>
+        <div style="display:flex; gap:6px;">
+          <button class="ai-response-action-btn" onclick="injectTableChart('${result.xCol}', '${result.yCol}')">📊 Create Chart</button>
+          <button class="ai-response-action-btn" onclick="exportCSVSnapshot()">📅 Export CSV</button>
+        </div>
+      </div>
+    `;
+  }
+
+  if (result.type === "comparison" || result.type === "trend") {
+    const isTrend = result.type === "trend";
+    const chartAction = isTrend 
+      ? `<button class="ai-response-action-btn" onclick="injectTrendChart('${result.xCol}', '${result.yCol}')">📈 Add Trend Chart</button>`
+      : ``;
+
+    return `
+      <div class="ai-msg-response-card" style="background: rgba(255,255,255,0.01); border:1px solid var(--border-color); border-radius: 8px; padding: 14px; width: 100%;">
+        <div style="font-weight: 700; font-size:12px; color:var(--primary); margin-bottom:4px;">📊 ${result.title}</div>
+        <div style="font-weight: 800; font-size:18px; color:var(--text-primary); margin-bottom:10px;">${result.answer}</div>
+        <div style="margin-bottom:12px;">${result.comparisonHTML}</div>
+        <div style="border-top:1px solid rgba(255,255,255,0.03); padding-top:8px; font-size:9.5px; color:var(--text-muted); font-family:var(--font-mono); line-height:1.4; margin-bottom: 12px;">
+          ${result.calcDetails.replace('\n', '<br/>')}
+        </div>
+        ${chartAction ? `<div style="display:flex; gap:6px;">${chartAction}</div>` : ''}
+      </div>
+    `;
+  }
+
+  if (result.type === "explain") {
+    return `
+      <div class="ai-msg-response-card" style="background: rgba(255,255,255,0.01); border:1px solid var(--border-color); border-radius: 8px; padding: 14px; width: 100%;">
+        <div style="font-weight: 700; font-size:12px; color:var(--primary); margin-bottom:8px;">🔎 ${result.title}</div>
+        <div style="display:flex; flex-direction:column; gap:8px; font-size:11.5px; color:var(--text-secondary); line-height:1.5;">
+          <div><strong>Summary Finding:</strong> ${result.primary}</div>
+          <div><strong>Secondary Cause:</strong> ${result.secondary}</div>
+          <div><strong>Risks & Anomaly Warnings:</strong> <span style="color:var(--warning);">${result.riskItem}</span></div>
+          <div><strong>Confidence Score:</strong> <span style="color:var(--success); font-weight:700;">${result.confidence}%</span></div>
+        </div>
+      </div>
+    `;
+  }
+
+  // Standard aggregation
+  return `
+    <div class="ai-msg-response-card" style="background: rgba(255,255,255,0.01); border:1px solid var(--border-color); border-radius: 8px; padding: 14px; width: 100%;">
+      <div style="font-weight: 700; font-size:12px; color:var(--primary); margin-bottom:4px;">📊 ${result.title}</div>
+      <div style="font-weight: 800; font-size:24px; color:var(--text-primary); margin-bottom:12px;">${result.answer}</div>
+      <div style="border-top:1px solid rgba(255,255,255,0.03); padding-top:8px; font-size:9.5px; color:var(--text-muted); font-family:var(--font-mono); line-height:1.4; margin-bottom:12px;">
+        ${result.calcDetails.replace('\n', '<br/>')}
+      </div>
+      <div style="display:flex; gap:6px;">
+        <button class="ai-response-action-btn" onclick="injectKpiCard('${result.colKey}', '${result.op}')">🔢 Add KPI Card</button>
+      </div>
+    </div>
+  `;
+}
+
+// 7. Automated Widget Injection Commands
+window.injectKpiCard = function(colKey, agg) {
+  const newId = 'ai-kpi-' + Date.now();
+  const title = colKey && colKey !== "null" ? `${headerNames[colKey] || colKey} KPI` : 'Records KPI';
+  
+  const widget = {
+    id: newId,
+    title: title,
+    type: 'kpi',
+    xCol: '',
+    yCol: (colKey && colKey !== "null") ? colKey : '',
+    yCol2: '',
+    agg: agg || 'sum',
+    w: 3
+  };
+  
+  dashboardWidgets.push(widget);
+  renderDashboardCanvas();
+  showToast("KPI added to dashboard canvas!", "success");
+  
+  logActivity("Create KPI", `Added KPI widget for ${title} via AI Analyst.`, "Success");
+};
+
+window.injectTableChart = function(xCol, yCol) {
+  const newId = 'ai-bar-' + Date.now();
+  const title = `${headerNames[yCol] || yCol} by ${headerNames[xCol] || xCol}`;
+
+  const widget = {
+    id: newId,
+    title: title,
+    type: 'bar',
+    xCol: xCol,
+    yCol: yCol,
+    yCol2: '',
+    agg: 'sum',
+    w: 6
+  };
+
+  dashboardWidgets.push(widget);
+  renderDashboardCanvas();
+  showToast("Bar chart added to dashboard canvas!", "success");
+  
+  logActivity("Create Chart", `Added Bar chart widget for ${title} via AI Analyst.`, "Success");
+};
+
+window.injectTrendChart = function(xCol, yCol) {
+  const newId = 'ai-trend-' + Date.now();
+  const title = `${headerNames[yCol] || yCol} Trend over Time`;
+
+  const widget = {
+    id: newId,
+    title: title,
+    type: 'line',
+    xCol: xCol,
+    yCol: yCol,
+    yCol2: '',
+    agg: 'sum',
+    w: 12
+  };
+
+  dashboardWidgets.push(widget);
+  renderDashboardCanvas();
+  showToast("Trend chart added to dashboard canvas!", "success");
+  
+  logActivity("Create Chart", `Added Trend Line chart widget for ${title} via AI Analyst.`, "Success");
+};
+
+function executeChartCommand(plan) {
+  const newId = 'ai-chart-' + Date.now();
+  const title = `${headerNames[plan.yCol] || plan.yCol} by ${headerNames[plan.xCol] || plan.xCol}`;
+  let finalW = plan.chartType === 'table' ? 12 : 6;
+
+  const widget = {
+    id: newId,
+    title: title,
+    type: plan.chartType,
+    xCol: plan.xCol,
+    yCol: plan.yCol,
+    yCol2: '',
+    agg: plan.agg,
+    w: finalW
+  };
+
+  dashboardWidgets.push(widget);
+  renderDashboardCanvas();
+
+  aiActiveChatHistory.push({
+    sender: 'assistant',
+    text: `Successfully created ${plan.chartType} chart for ${title} and added it to your dashboard.`,
+    contentHtml: `
+      <div style="font-size:12px; color:var(--text-primary);">
+        ✨ <strong>Visual Created:</strong> Added <strong>${plan.chartType.toUpperCase()}</strong> chart for ${title} to dashboard layout.
+      </div>
+    `
+  });
+  saveChatHistoryToWorkspace();
+  renderAiChatHistory();
+  showToast("Chart created and added!", "success");
+  
+  logActivity("Create Chart", `Added ${plan.chartType} widget via AI Analyst commands.`, "Success");
+}
+
+function executeKpiCommand(plan) {
+  const newId = 'ai-kpi-' + Date.now();
+  const title = plan.colKey ? `${headerNames[plan.colKey] || plan.colKey} KPI` : 'Records KPI';
+
+  const widget = {
+    id: newId,
+    title: title,
+    type: 'kpi',
+    xCol: '',
+    yCol: plan.colKey || '',
+    yCol2: '',
+    agg: plan.agg,
+    w: 3
+  };
+
+  dashboardWidgets.push(widget);
+  renderDashboardCanvas();
+
+  aiActiveChatHistory.push({
+    sender: 'assistant',
+    text: `Successfully created KPI card for ${title} and added it to your dashboard.`,
+    contentHtml: `
+      <div style="font-size:12px; color:var(--text-primary);">
+        🔢 <strong>KPI Created:</strong> Added <strong>${title}</strong> card to dashboard layout.
+      </div>
+    `
+  });
+  saveChatHistoryToWorkspace();
+  renderAiChatHistory();
+  showToast("KPI card added!", "success");
+  
+  logActivity("Create KPI", `Added KPI widget via AI Analyst commands.`, "Success");
+}
+
+// 8. Safe Preprocessing Spreadsheet Actions Confirmation & Resolvers
+function showAiSpreadsheetConfirmation(plan) {
+  const overlay = document.getElementById('ai-confirmation-overlay');
+  const titleEl = document.getElementById('ai-confirm-title');
+  const descEl = document.getElementById('ai-confirm-desc');
+  if (!overlay || !titleEl || !descEl) return;
+
+  aiPendingAction = plan;
+  let textTitle = "";
+  let textDesc = "";
+
+  if (plan.action === "remove_duplicates") {
+    textTitle = `Remove duplicate rows`;
+    textDesc = `We detected <strong>${currentDatasetContext.duplicateStats} duplicate rows</strong> in the active sheet. Do you want to delete them?`;
+  } else if (plan.action === "fill_missing") {
+    const count = currentDatasetContext.missingValueStats[plan.colKey] || 0;
+    const colName = headerNames[plan.colKey] || plan.colKey;
+    textTitle = `Fill missing values in ${colName}`;
+    textDesc = `Impute <strong>${count} empty values</strong> in column <em>${colName}</em> using the <strong>${plan.method}</strong> value?`;
+  } else if (plan.action === "delete_empty_rows") {
+    let emptyCount = 0;
+    for (let r = 0; r < gridData.length; r++) {
+      if (gridData[r].every(v => String(v).trim() === "")) emptyCount++;
+    }
+    textTitle = `Delete empty rows`;
+    textDesc = `Found <strong>${emptyCount} empty rows</strong> with zero values. Delete them from spreadsheet data?`;
+  } else if (plan.action === "convert_date") {
+    const colName = headerNames[plan.colKey] || plan.colKey;
+    textTitle = `Convert ${colName} to Date format`;
+    textDesc = `Convert elements of <strong>${colName}</strong> to clean YYYY-MM-DD date strings?`;
+  } else if (plan.action === "rename_column") {
+    const colName = headerNames[plan.colKey] || plan.colKey;
+    textTitle = `Rename ${colName} Column`;
+    textDesc = `Rename column <em>${colName}</em> to <strong>${plan.newName}</strong>?`;
+  } else if (plan.action === "merge_columns") {
+    textTitle = `Merge active columns`;
+    textDesc = `Merge first two columns into a single hyphen-separated column?`;
+  } else if (plan.action === "split_column") {
+    const colName = headerNames[plan.colKey] || plan.colKey;
+    textTitle = `Split ${colName} Column`;
+    textDesc = `Split column <em>${colName}</em> on whitespace delimiters into two fields?`;
+  }
+
+  titleEl.innerHTML = `⚠️ ` + textTitle;
+  descEl.innerHTML = textDesc;
+  overlay.style.display = 'flex';
+}
+
+function resolveAiSpreadsheetCommand(isConfirmed) {
+  const overlay = document.getElementById('ai-confirmation-overlay');
+  if (overlay) overlay.style.display = 'none';
+
+  if (!isConfirmed) {
+    aiActiveChatHistory.push({
+      sender: 'assistant',
+      text: "Operation cancelled.",
+      contentHtml: `<p style="font-size:12px; color:var(--text-muted); margin:0;">❌ Spreadsheet operation cancelled.</p>`
+    });
+    aiPendingAction = null;
+    saveChatHistoryToWorkspace();
+    renderAiChatHistory();
+    return;
+  }
+
+  const plan = aiPendingAction;
+  if (!plan) return;
+
+  showLoading("Executing operation", "Modifying active sheet values locally...", 50);
+  setTimeout(() => {
+    let resultMessage = "";
+    let affectedRows = 0;
+
+    if (plan.action === "remove_duplicates") {
+      const unique = [];
+      const seen = new Set();
+      let removed = 0;
+      for (let r = 0; r < gridData.length; r++) {
+        const rowStr = JSON.stringify(gridData[r]);
+        if (seen.has(rowStr)) {
+          removed++;
+        } else {
+          seen.add(rowStr);
+          unique.push(gridData[r]);
+        }
+      }
+      gridData = unique;
+      affectedRows = removed;
+      resultMessage = `Cleaned spreadsheet: deleted <strong>${removed} duplicate rows</strong> successfully.`;
+      logActivity("Deduplication", `Removed ${removed} duplicates.`, "Success");
+    } else if (plan.action === "fill_missing") {
+      const colIdx = headers.indexOf(plan.colKey);
+      const colName = headerNames[plan.colKey] || plan.colKey;
+      const values = [];
+      for (let r = 0; r < gridData.length; r++) {
+        const v = getCleanNumericValue(gridData[r][colIdx]);
+        if (gridData[r][colIdx] !== "" && !isNaN(v)) {
+          values.push(v);
+        }
+      }
+      
+      let fillVal = 0;
+      if (values.length > 0) {
+        if (plan.method === "mean") {
+          fillVal = values.reduce((sum, v) => sum + v, 0) / values.length;
+        } else {
+          values.sort((a,b) => a-b);
+          fillVal = values[Math.floor(values.length / 2)];
+        }
+      }
+
+      let filled = 0;
+      for (let r = 0; r < gridData.length; r++) {
+        if (String(gridData[r][colIdx]).trim() === "") {
+          gridData[r][colIdx] = fillVal;
+          filled++;
+        }
+      }
+      affectedRows = filled;
+      resultMessage = `Imputed <strong>${filled} missing values</strong> in column <em>${colName}</em> with the ${plan.method} value of <strong>${fillVal.toFixed(1)}</strong>.`;
+      logActivity("Data Imputation", `Filled ${filled} cells in ${colName}.`, "Success");
+    } else if (plan.action === "delete_empty_rows") {
+      const clean = [];
+      let deleted = 0;
+      for (let r = 0; r < gridData.length; r++) {
+        const isEmpty = gridData[r].every(val => String(val).trim() === "");
+        if (isEmpty) {
+          deleted++;
+        } else {
+          clean.push(gridData[r]);
+        }
+      }
+      gridData = clean;
+      affectedRows = deleted;
+      resultMessage = `Deleted <strong>${deleted} blank rows</strong> from the active table.`;
+      logActivity("Rows deletion", `Removed ${deleted} blank rows.`, "Success");
+    } else if (plan.action === "convert_date") {
+      const colIdx = headers.indexOf(plan.colKey);
+      const colName = headerNames[plan.colKey] || plan.colKey;
+      let converted = 0;
+      for (let r = 0; r < gridData.length; r++) {
+        const dStr = String(gridData[r][colIdx]).trim();
+        const d = new Date(dStr);
+        if (!isNaN(d.getTime())) {
+          gridData[r][colIdx] = d.toISOString().substring(0, 10);
+          converted++;
+        }
+      }
+      affectedRows = converted;
+      resultMessage = `Converted <strong>${converted} fields</strong> in <em>${colName}</em> to standard date strings (YYYY-MM-DD).`;
+      logActivity("Reformat dates", `Converted dates in ${colName}.`, "Success");
+    } else if (plan.action === "rename_column") {
+      const oldName = headerNames[plan.colKey] || plan.colKey;
+      headerNames[plan.colKey] = plan.newName;
+      affectedRows = 1;
+      resultMessage = `Renamed column <em>${oldName}</em> to <strong>${plan.newName}</strong>.`;
+      logActivity("Rename column", `Renamed ${oldName} to ${plan.newName}.`, "Success");
+    } else if (plan.action === "merge_columns") {
+      if (headers.length >= 2) {
+        const colA = headers[0];
+        const colB = headers[1];
+        const idxA = headers.indexOf(colA);
+        const idxB = headers.indexOf(colB);
+        for (let r = 0; r < gridData.length; r++) {
+          gridData[r][idxA] = String(gridData[r][idxA]) + " - " + String(gridData[r][idxB]);
+        }
+        affectedRows = gridData.length;
+        resultMessage = `Merged columns <em>${headerNames[colA]}</em> and <em>${headerNames[colB]}</em>.`;
+        logActivity("Merge columns", `Merged first two columns.`, "Success");
+      }
+    } else if (plan.action === "split_column") {
+      const colIdx = headers.indexOf(plan.colKey);
+      const colName = headerNames[plan.colKey] || plan.colKey;
+      const newColKey = 'col_split_' + Date.now();
+      headers.push(newColKey);
+      headerNames[newColKey] = colName + " (Split)";
+      for (let r = 0; r < gridData.length; r++) {
+        const parts = String(gridData[r][colIdx]).split(/[\s-]/);
+        gridData[r][colIdx] = parts[0] || "";
+        gridData[r].push(parts.slice(1).join(" ") || "");
+      }
+      affectedRows = gridData.length;
+      resultMessage = `Split column <em>${colName}</em> into two separate columns.`;
+      logActivity("Split column", `Split ${colName} column.`, "Success");
+    }
+
+    viewIndices = gridData.map((_, i) => i);
+    if (typeof applySearchSortAndFilters === 'function') applySearchSortAndFilters();
+    if (typeof renderGridTable === 'function') renderGridTable();
+    if (typeof updateMetadata === 'function') updateMetadata();
+    
+    updateCurrentDatasetContext();
+    autoSaveActiveWorkspace();
+
+    hideLoading();
+    aiActiveChatHistory.push({
+      sender: 'assistant',
+      text: `Spreadsheet action completed: ${affectedRows} cells/rows affected.`,
+      contentHtml: `
+        <div style="font-size:12px; color:var(--text-primary);">
+          ✨ <strong>Action executed successfully:</strong><br/>
+          ${resultMessage}
+        </div>
+      `
+    });
+    aiPendingAction = null;
+    saveChatHistoryToWorkspace();
+    renderAiChatHistory();
+    showToast("Data modified successfully!", "success");
+  }, 500);
+}
+
+// 9. History View Activity Logs
+function logActivity(type, details, status) {
+  const datasetNameEl = document.getElementById('ws-dataset-name');
+  const datasetName = datasetNameEl ? datasetNameEl.innerText : "raw_dataset";
+  
+  const logItem = {
+    time: new Date().toLocaleTimeString(),
+    type,
+    details,
+    datasetName,
+    status
+  };
+
+  sessionAuditLogs.unshift(logItem);
+}
+
+window.initHistoryView = function() {
+  const container = document.getElementById('history-table-body');
+  if (!container) return;
+
+  if (sessionAuditLogs.length === 0) {
+    logActivity("Session Started", "Analytics platform loaded workspace environment.", "Completed");
+  }
+
+  let html = sessionAuditLogs.map(log => `
+    <tr>
+      <td style="font-family:var(--font-mono); font-size:11px;">${log.time}</td>
+      <td style="font-weight:600; color:var(--text-primary);">${log.type}</td>
+      <td style="color:var(--text-secondary);">${log.details}</td>
+      <td style="font-size:12px; color:var(--text-muted);">${log.datasetName}</td>
+      <td style="text-align: right; padding-right:24px;">
+        <span class="recent-status-badge cleaned" style="background-color:rgba(34,197,94,0.08);">${log.status}</span>
+      </td>
+    </tr>
+  `).join('');
+
+  container.innerHTML = html;
+};
+
+
 
