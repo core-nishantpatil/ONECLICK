@@ -26,6 +26,21 @@ themeBtn.addEventListener('click', () => {
       <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
     `;
   }
+
+  // Sync settings theme choice to cloud if signed in
+  if (typeof currentFirebaseUser !== 'undefined' && currentFirebaseUser) {
+    const uid = currentFirebaseUser.uid || currentFirebaseUser.email;
+    const settingsObj = {
+      theme: isDarkMode ? 'dark-theme' : 'light-theme',
+      username: localStorage.getItem('oneclick_username') || 'Nishant S.',
+      autosaveDelay: localStorage.getItem('oneclick_autosave_delay') || '5000',
+      exportFormat: localStorage.getItem('oneclick_export_format') || 'CSV',
+      updatedAt: Date.now()
+    };
+    if (typeof saveSettingsToFirestore === 'function') {
+      saveSettingsToFirestore(uid, settingsObj);
+    }
+  }
 });
 
 // ═══════════════════════════ NAVIGATION CONTROL ═══════════════════════════
@@ -61,9 +76,6 @@ window.setActive = function(element) {
   const settingsView = document.getElementById('settings-view-container');
   if (settingsView) settingsView.style.display = 'none';
 
-  const aiAnalystView = document.getElementById('ai-analyst-view-container');
-  if (aiAnalystView) aiAnalystView.style.display = 'none';
-
   const historyView = document.getElementById('history-view-container');
   if (historyView) historyView.style.display = 'none';
 
@@ -92,11 +104,6 @@ window.setActive = function(element) {
     if (settingsView) settingsView.style.display = 'block';
     if (typeof loadAndRenderSettings === 'function') {
       loadAndRenderSettings();
-    }
-  } else if (labelText === 'AI Analyst') {
-    if (aiAnalystView) {
-      aiAnalystView.style.display = 'flex';
-      if (typeof initAiAnalystView === 'function') initAiAnalystView();
     }
   } else if (labelText === 'History') {
     if (historyView) {
@@ -381,7 +388,7 @@ function processUploadedFile(file) {
         complete: function(results) {
           showLoading("Rendering Grid", "Generating high-performance spreadsheet workspace...", 90);
           setTimeout(() => {
-            loadParsedData(results.data, file.name, "CSV", file.size);
+            loadParsedData(results.data, file.name, "CSV", file.size, file);
             hideLoading();
           }, 100);
         },
@@ -403,7 +410,7 @@ function processUploadedFile(file) {
           
           showLoading("Rendering Grid", "Generating high-performance spreadsheet workspace...", 90);
           setTimeout(() => {
-            loadParsedData(parsed, file.name, extension.toUpperCase(), file.size);
+            loadParsedData(parsed, file.name, extension.toUpperCase(), file.size, file);
             hideLoading();
           }, 100);
         } catch (err) {
@@ -468,7 +475,7 @@ function hideLoading() {
 }
 
 // Load dynamic dataset
-function loadParsedData(parsedRows, filename, type, sizeBytes) {
+function loadParsedData(parsedRows, filename, type, sizeBytes, originalFile = null) {
   if (!parsedRows || parsedRows.length === 0) {
     alert("Empty file detected.");
     return;
@@ -510,8 +517,12 @@ function loadParsedData(parsedRows, filename, type, sizeBytes) {
 
   // Setup Workspace Headers
   document.getElementById('ws-dataset-name').innerText = filename;
-  document.querySelector('.ws-file-type-badge').innerText = type;
-  document.getElementById('ws-info-size').innerText = formattedSize;
+  if (document.querySelector('.ws-file-type-badge')) {
+    document.querySelector('.ws-file-type-badge').innerText = type;
+  }
+  if (document.getElementById('ws-info-size')) {
+    document.getElementById('ws-info-size').innerText = formattedSize;
+  }
 
   // Initialize engine state
   originalGridData = JSON.parse(JSON.stringify(gridData));
@@ -612,11 +623,59 @@ function loadParsedData(parsedRows, filename, type, sizeBytes) {
 
   // Save to IndexedDB and prune if over 25 limit
   if (typeof saveWorkspaceToDB === 'function') {
+    window.setCloudSyncStatus('saving');
+    
     saveWorkspaceToDB(newWorkspace).then(() => {
-      if (typeof updateCurrentDatasetContext === 'function') updateCurrentDatasetContext();
+      if (typeof currentFirebaseUser !== 'undefined' && currentFirebaseUser) {
+        const uid = currentFirebaseUser.uid || currentFirebaseUser.email;
+        
+        let fileOrBlob = originalFile;
+        if (!fileOrBlob) {
+          const headersList = newWorkspace.datasetData.headers.map(h => newWorkspace.datasetData.headerNames[h] || h);
+          const fullRows = [headersList, ...newWorkspace.datasetData.gridData];
+          const csvString = Papa.unparse(fullRows);
+          fileOrBlob = new Blob([csvString], { type: "text/csv" });
+        }
+        
+        uploadDatasetFileToStorage(uid, currentWorkspaceId, fileOrBlob, filename).then(storageResult => {
+          newWorkspace.datasetMetadata = {
+            fileUrl: storageResult.fileUrl,
+            storagePath: storageResult.storagePath,
+            fileSize: sizeBytes || fileOrBlob.size,
+            fileType: type,
+            rowCount: newWorkspace.rowCount,
+            columnCount: newWorkspace.columnCount,
+            headers: newWorkspace.datasetData.headers,
+            columnTypes: newWorkspace.datasetData.columnTypes || []
+          };
+          
+          // Truncate raw arrays from Firestore body
+          const cloudWorkspace = JSON.parse(JSON.stringify(newWorkspace));
+          cloudWorkspace.datasetData.gridData = [];
+          cloudWorkspace.datasetData.originalGridData = [];
+          cloudWorkspace.isCloudSyncTruncated = true;
+          
+          saveWorkspaceToFirestore(uid, cloudWorkspace).then(() => {
+            // Cache metadata (including storage links) to local IndexedDB
+            openDB().then(db => {
+              const tx = db.transaction(STORE_NAME, 'readwrite');
+              tx.objectStore(STORE_NAME).put(newWorkspace);
+            });
+            window.setCloudSyncStatus('synced');
+            if (typeof updateCurrentDatasetContext === 'function') updateCurrentDatasetContext();
+          });
+        }).catch(err => {
+          console.error("Firebase storage upload failed:", err);
+          window.setCloudSyncStatus('offline');
+        });
+      } else {
+        window.setCloudSyncStatus('saved');
+        if (typeof updateCurrentDatasetContext === 'function') updateCurrentDatasetContext();
+      }
       return enforceWorkspaceLimit();
     }).catch(err => {
       console.error("Failed to save new workspace to DB:", err);
+      window.setCloudSyncStatus('offline');
     });
   }
 }
@@ -1607,6 +1666,9 @@ function updateMetadata() {
   document.getElementById('ws-info-dups').innerText = duplicates.toLocaleString();
   if (typeof autoSaveActiveWorkspace === 'function') {
     autoSaveActiveWorkspace(!!window.isCellEditing);
+  }
+  if (typeof updateCopilotHeaderDetails === 'function') {
+    updateCopilotHeaderDetails();
   }
 }
 
@@ -7115,9 +7177,47 @@ function applyDashboardState(state) {
 }
 
 function saveDashboardToStorage(name) {
-  var key = 'oneclick_dash_' + name.replace(/\s+/g, '_') + '_' + Date.now();
-  try { localStorage.setItem(key, JSON.stringify(getDashboardState())); return key; }
-  catch(e) { alert('Storage quota exceeded.'); return null; }
+  if (typeof window.setCloudSyncStatus === 'function') {
+    window.setCloudSyncStatus('saving');
+  }
+  var rawName = name.replace(/\s+/g, '_') + '_' + Date.now();
+  var key = 'oneclick_dash_' + rawName;
+  const state = getDashboardState();
+  state.id = rawName;
+  state.savedAt = new Date().toISOString();
+  
+  try { 
+    localStorage.setItem(key, JSON.stringify(state)); 
+    
+    if (typeof currentFirebaseUser !== 'undefined' && currentFirebaseUser) {
+      const uid = currentFirebaseUser.uid || currentFirebaseUser.email;
+      if (name.startsWith('Template_')) {
+        saveTemplateToFirestore(uid, rawName, state).then(() => {
+          if (typeof window.setCloudSyncStatus === 'function') {
+            window.setCloudSyncStatus('synced');
+          }
+        });
+      } else {
+        saveReportToFirestore(uid, rawName, state).then(() => {
+          if (typeof window.setCloudSyncStatus === 'function') {
+            window.setCloudSyncStatus('synced');
+          }
+        });
+      }
+    } else {
+      if (typeof window.setCloudSyncStatus === 'function') {
+        window.setCloudSyncStatus('saved');
+      }
+    }
+    return key; 
+  }
+  catch(e) { 
+    if (typeof window.setCloudSyncStatus === 'function') {
+      window.setCloudSyncStatus('offline');
+    }
+    alert('Storage quota exceeded.'); 
+    return null; 
+  }
 }
 
 function exportDashboardJSON() {
@@ -7477,7 +7577,18 @@ function saveWorkspaceToDB(workspace) {
       const tx = db.transaction(STORE_NAME, 'readwrite');
       const store = tx.objectStore(STORE_NAME);
       const request = store.put(workspace);
-      request.onsuccess = () => resolve();
+      request.onsuccess = () => {
+        if (typeof currentFirebaseUser !== 'undefined' && currentFirebaseUser) {
+          saveWorkspaceToFirestore(currentFirebaseUser.uid || currentFirebaseUser.email, workspace)
+            .then(() => resolve())
+            .catch(err => {
+              console.error("Firestore sync error during local save:", err);
+              resolve(); // Resolve anyway so we do not block local saves
+            });
+        } else {
+          resolve();
+        }
+      };
       request.onerror = (e) => reject(e.target.error);
     });
   });
@@ -7513,7 +7624,18 @@ function deleteWorkspaceFromDB(workspaceId) {
       const tx = db.transaction(STORE_NAME, 'readwrite');
       const store = tx.objectStore(STORE_NAME);
       const request = store.delete(workspaceId);
-      request.onsuccess = () => resolve();
+      request.onsuccess = () => {
+        if (typeof currentFirebaseUser !== 'undefined' && currentFirebaseUser) {
+          deleteWorkspaceFromFirestore(currentFirebaseUser.uid || currentFirebaseUser.email, workspaceId)
+            .then(() => resolve())
+            .catch(err => {
+              console.error("Firestore delete error during local delete:", err);
+              resolve();
+            });
+        } else {
+          resolve();
+        }
+      };
       request.onerror = (e) => reject(e.target.error);
     });
   });
@@ -7617,10 +7739,32 @@ function performSaveWorkspace() {
     return Promise.reject(new Error("No active workspace to save."));
   }
   
+  if (typeof window.setCloudSyncStatus === 'function') {
+    window.setCloudSyncStatus('saving');
+  }
+  
   return getWorkspaceFromDB(currentWorkspaceId).then(existingWorkspace => {
     const updatedWorkspace = getActiveWorkspaceState(existingWorkspace);
+    
+    // Crucial check: Preserve cloud dataset storage references in active state
+    if (existingWorkspace && existingWorkspace.datasetMetadata) {
+      updatedWorkspace.datasetMetadata = existingWorkspace.datasetMetadata;
+    }
+    
     return saveWorkspaceToDB(updatedWorkspace).then(() => {
+      if (typeof window.setCloudSyncStatus === 'function') {
+        if (typeof currentFirebaseUser !== 'undefined' && currentFirebaseUser) {
+          window.setCloudSyncStatus('synced');
+        } else {
+          window.setCloudSyncStatus('saved');
+        }
+      }
       return enforceWorkspaceLimit();
+    }).catch(err => {
+      if (typeof window.setCloudSyncStatus === 'function') {
+        window.setCloudSyncStatus('offline');
+      }
+      throw err;
     });
   });
 }
@@ -7861,6 +8005,10 @@ function restoreDatasetWorkspace(wsState) {
   columnWidths = wsState.datasetData.columnWidths || {};
   hiddenColumns = new Set(wsState.datasetData.hiddenColumns || []);
   
+  if (wsState.isCloudSyncTruncated && (!gridData || gridData.length === 0)) {
+    showToast("Cloud Sync Warning: Large dataset raw data must be re-uploaded or opened on the original browser", "error");
+  }
+  
   preprocessingHistory = (wsState.cleaningHistory && wsState.cleaningHistory.preprocessingHistory) ? wsState.cleaningHistory.preprocessingHistory : [];
   preprocessingRedoHistory = (wsState.cleaningHistory && wsState.cleaningHistory.preprocessingRedoHistory) ? wsState.cleaningHistory.preprocessingRedoHistory : [];
   
@@ -7881,6 +8029,8 @@ function restoreDatasetWorkspace(wsState) {
   calculatedFields = wsState.calculatedFields || {};
   drillHierarchies = wsState.drillHierarchies || [];
   aiActiveChatHistory = wsState.aiHistory || [];
+  lastResolvedPlan = null;
+  if (typeof renderAiChatHistory === 'function') renderAiChatHistory();
   
   const titleEl = document.getElementById('ws-dataset-name');
   if (titleEl) {
@@ -7954,16 +8104,120 @@ function restoreDatasetWorkspace(wsState) {
 }
 
 window.openWorkspace = function(workspaceId) {
+  showLoading("Opening Workspace", "Fetching workspace parameters...", 15);
+  
   getWorkspaceFromDB(workspaceId).then(workspace => {
-    if (!workspace) {
-      showToast("Workspace not found!", "error");
-      return;
+    if (workspace) {
+      if (workspace.datasetData && workspace.datasetData.gridData && workspace.datasetData.gridData.length > 0) {
+        hideLoading();
+        restoreDatasetWorkspace(workspace);
+      } else if (workspace.datasetMetadata && workspace.datasetMetadata.fileUrl) {
+        downloadAndRestoreWorkspace(workspace);
+      } else {
+        hideLoading();
+        restoreDatasetWorkspace(workspace);
+      }
+    } else {
+      if (typeof currentFirebaseUser !== 'undefined' && currentFirebaseUser) {
+        const uid = currentFirebaseUser.uid || currentFirebaseUser.email;
+        getWorkspaceFromFirestore(uid, workspaceId).then(cloudWs => {
+          if (cloudWs) {
+            downloadAndRestoreWorkspace(cloudWs);
+          } else {
+            hideLoading();
+            showToast("Workspace not found in cloud or locally.", "error");
+          }
+        }).catch(err => {
+          hideLoading();
+          showToast("Failed to query cloud: " + err.message, "error");
+        });
+      } else {
+        hideLoading();
+        showToast("Workspace not found locally.", "error");
+      }
     }
-    restoreDatasetWorkspace(workspace);
   }).catch(err => {
+    hideLoading();
     showToast("Failed to load workspace: " + err.message, "error");
   });
 };
+
+function downloadAndRestoreWorkspace(workspace) {
+  showLoading("Downloading Dataset", `Downloading ${workspace.fileName} from cloud...`, 40);
+  
+  getDatasetFileFromStorage(workspace.datasetMetadata.fileUrl).then(blob => {
+    showLoading("Parsing Cloud Data", "Reconstructing spreadsheet sheets client-side...", 75);
+    
+    const extension = workspace.fileName.split('.').pop().toLowerCase();
+    
+    if (extension === 'csv') {
+      Papa.parse(blob, {
+        skipEmptyLines: 'greedy',
+        complete: function(results) {
+          rehydrateWorkspaceData(workspace, results.data);
+        },
+        error: function(err) {
+          hideLoading();
+          showToast("CSV parser failed: " + err.message, "error");
+        }
+      });
+    } else {
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const data = new Uint8Array(e.target.result);
+          const workbook = XLSX.read(data, { type: 'array' });
+          const firstSheetName = workbook.SheetNames[0];
+          const worksheet = workbook.Sheets[firstSheetName];
+          const parsed = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: "" });
+          rehydrateWorkspaceData(workspace, parsed);
+        } catch (err) {
+          hideLoading();
+          showToast("Excel parser failed: " + err.message, "error");
+        }
+      };
+      reader.onerror = function() {
+        hideLoading();
+        showToast("Error reading storage file.", "error");
+      };
+      reader.readAsArrayBuffer(blob);
+    }
+  }).catch(err => {
+    hideLoading();
+    showToast("Cloud download failed: " + err.message, "error");
+  });
+}
+
+function rehydrateWorkspaceData(workspace, parsedRows) {
+  const firstRow = parsedRows[0];
+  const colsCount = firstRow.length;
+  
+  const gData = [];
+  for (let r = 1; r < parsedRows.length; r++) {
+    let row = [...parsedRows[r]];
+    while (row.length < colsCount) {
+      row.push("");
+    }
+    gData.push(row);
+  }
+  
+  workspace.datasetData.gridData = gData;
+  workspace.datasetData.originalGridData = JSON.parse(JSON.stringify(gData));
+  
+  openDB().then(db => {
+    const tx = db.transaction(STORE_NAME, 'readwrite');
+    const store = tx.objectStore(STORE_NAME);
+    store.put(workspace);
+    tx.oncomplete = () => {
+      hideLoading();
+      restoreDatasetWorkspace(workspace);
+      showToast("Workspace synchronized and loaded!", "success");
+    };
+  }).catch(err => {
+    hideLoading();
+    restoreDatasetWorkspace(workspace);
+  });
+}
 
 window.toggleWorkspaceFavorite = function(event, workspaceId) {
   if (event) event.stopPropagation();
@@ -8398,6 +8652,22 @@ window.loadAndRenderSettings = function() {
     const savedFormat = localStorage.getItem('oneclick_export_format');
     if (savedFormat) exportFormatSelect.value = savedFormat;
   }
+
+  // Populate Firebase inputs if config is saved
+  try {
+    const storedConfig = localStorage.getItem("oneclick_firebase_config");
+    if (storedConfig) {
+      const config = JSON.parse(storedConfig);
+      if (document.getElementById("fb-apiKey")) document.getElementById("fb-apiKey").value = config.apiKey || "";
+      if (document.getElementById("fb-authDomain")) document.getElementById("fb-authDomain").value = config.authDomain || "";
+      if (document.getElementById("fb-projectId")) document.getElementById("fb-projectId").value = config.projectId || "";
+      if (document.getElementById("fb-storageBucket")) document.getElementById("fb-storageBucket").value = config.storageBucket || "";
+      if (document.getElementById("fb-messagingSenderId")) document.getElementById("fb-messagingSenderId").value = config.messagingSenderId || "";
+      if (document.getElementById("fb-appId")) document.getElementById("fb-appId").value = config.appId || "";
+    }
+  } catch (e) {
+    console.error("Error loading firebase settings inputs:", e);
+  }
 };
 
 function updateUsernameDOM(username) {
@@ -8451,6 +8721,73 @@ function wireGlobalUploadButtons() {
 /* ═══════════════════════════ INITIALIZATION & INTERACTIVE EVENTS ═══════════════════════════ */
 
 document.addEventListener('DOMContentLoaded', () => {
+  // Initialize Firebase Cloud Engine
+  if (typeof initFirebaseEngine === 'function') {
+    initFirebaseEngine();
+  }
+
+  // Toggle Custom Firebase configuration visibility
+  const toggleConfigBtn = document.getElementById('btn-toggle-config-fields');
+  const configFieldsContainer = document.getElementById('firebase-config-fields');
+  if (toggleConfigBtn && configFieldsContainer) {
+    toggleConfigBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      const isHidden = configFieldsContainer.style.display === 'none' || configFieldsContainer.style.display === '';
+      configFieldsContainer.style.display = isHidden ? 'flex' : 'none';
+      toggleConfigBtn.innerText = isHidden ? 'Hide Settings' : 'Show Settings';
+    });
+  }
+
+  // Save Custom Firebase Credentials
+  const saveFbConfigBtn = document.getElementById('btn-save-fb-config');
+  if (saveFbConfigBtn) {
+    saveFbConfigBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      const apiKey = document.getElementById('fb-apiKey').value.trim();
+      const authDomain = document.getElementById('fb-authDomain').value.trim();
+      const projectId = document.getElementById('fb-projectId').value.trim();
+      const storageBucket = document.getElementById('fb-storageBucket').value.trim();
+      const messagingSenderId = document.getElementById('fb-messagingSenderId').value.trim();
+      const appId = document.getElementById('fb-appId').value.trim();
+
+      if (!apiKey || !projectId) {
+        showToast("API Key and Project ID are required!", "error");
+        return;
+      }
+
+      const config = { apiKey, authDomain, projectId, storageBucket, messagingSenderId, appId };
+      localStorage.setItem('oneclick_firebase_config', JSON.stringify(config));
+      showToast("Firebase credentials saved. Reinitializing...", "success");
+      
+      // Re-initialize Firebase Engine
+      if (typeof initFirebaseEngine === 'function') {
+        initFirebaseEngine();
+      }
+    });
+  }
+
+  // Reset/Clear Firebase Credentials
+  const clearFbConfigBtn = document.getElementById('btn-clear-fb-config');
+  if (clearFbConfigBtn) {
+    clearFbConfigBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      localStorage.removeItem('oneclick_firebase_config');
+      document.getElementById('fb-apiKey').value = '';
+      document.getElementById('fb-authDomain').value = '';
+      document.getElementById('fb-projectId').value = '';
+      document.getElementById('fb-storageBucket').value = '';
+      document.getElementById('fb-messagingSenderId').value = '';
+      document.getElementById('fb-appId').value = '';
+      
+      showToast("Reset to default sandbox settings.", "info");
+      
+      // Re-initialize Firebase Engine
+      if (typeof initFirebaseEngine === 'function') {
+        initFirebaseEngine();
+      }
+    });
+  }
+
   // Initialize user profile settings from localStorage
   const savedUsername = localStorage.getItem('oneclick_username');
   if (savedUsername) {
@@ -8522,8 +8859,15 @@ document.addEventListener('DOMContentLoaded', () => {
           const store = tx.objectStore(STORE_NAME);
           const request = store.clear();
           request.onsuccess = () => {
-            // Clear localStorage dashboards
-            const keys = Object.keys(localStorage).filter(k => k.startsWith('oneclick_dash_') || k === 'oneclick_username' || k === 'oneclick_autosave_delay');
+            // Clear localStorage dashboards and Firebase credentials
+            const keys = Object.keys(localStorage).filter(k => 
+              k.startsWith('oneclick_dash_') || 
+              k === 'oneclick_username' || 
+              k === 'oneclick_autosave_delay' || 
+              k === 'oneclick_firebase_config' || 
+              k === 'oneclick_mock_user_session' || 
+              k === 'oneclick_mock_cloud_workspaces'
+            );
             keys.forEach(k => localStorage.removeItem(k));
             
             showToast("Database successfully wiped!", "info");
@@ -8535,7 +8879,14 @@ document.addEventListener('DOMContentLoaded', () => {
             showToast("Failed to wipe database: " + e.target.error, "error");
           };
         }).catch(err => {
-          const keys = Object.keys(localStorage).filter(k => k.startsWith('oneclick_dash_') || k === 'oneclick_username' || k === 'oneclick_autosave_delay');
+          const keys = Object.keys(localStorage).filter(k => 
+            k.startsWith('oneclick_dash_') || 
+            k === 'oneclick_username' || 
+            k === 'oneclick_autosave_delay' || 
+            k === 'oneclick_firebase_config' || 
+            k === 'oneclick_mock_user_session' || 
+            k === 'oneclick_mock_cloud_workspaces'
+          );
           keys.forEach(k => localStorage.removeItem(k));
           window.location.reload();
         });
@@ -8544,6 +8895,24 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   
   // Wire settings fields input events
+  // Helper to trigger Settings Firestore sync
+  function triggerSettingsCloudSync() {
+    if (typeof currentFirebaseUser !== 'undefined' && currentFirebaseUser) {
+      const uid = currentFirebaseUser.uid || currentFirebaseUser.email;
+      const settingsObj = {
+        theme: document.body.classList.contains('light-theme') ? 'light-theme' : 'dark-theme',
+        username: localStorage.getItem('oneclick_username') || 'Nishant S.',
+        autosaveDelay: localStorage.getItem('oneclick_autosave_delay') || '5000',
+        exportFormat: localStorage.getItem('oneclick_export_format') || 'CSV',
+        updatedAt: Date.now()
+      };
+      if (typeof saveSettingsToFirestore === 'function') {
+        saveSettingsToFirestore(uid, settingsObj);
+      }
+    }
+  }
+
+  // Wire settings fields input events
   const usernameInput = document.getElementById('settings-username');
   if (usernameInput) {
     usernameInput.addEventListener('input', (e) => {
@@ -8551,6 +8920,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (val) {
         localStorage.setItem('oneclick_username', val);
         updateUsernameDOM(val);
+        triggerSettingsCloudSync();
       }
     });
   }
@@ -8560,6 +8930,7 @@ document.addEventListener('DOMContentLoaded', () => {
     autosaveDelaySelect.addEventListener('change', (e) => {
       localStorage.setItem('oneclick_autosave_delay', e.target.value);
       showToast("Autosave settings updated", "success");
+      triggerSettingsCloudSync();
     });
   }
 
@@ -8568,6 +8939,7 @@ document.addEventListener('DOMContentLoaded', () => {
     exportFormatSelect.addEventListener('change', (e) => {
       localStorage.setItem('oneclick_export_format', e.target.value);
       showToast("Default export format updated", "success");
+      triggerSettingsCloudSync();
     });
   }
   
@@ -8591,6 +8963,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   }
+  if (typeof initFloatingCopilot === 'function') initFloatingCopilot();
 });
 
 /* ==================== ONECLICK DASHBOARD BUILDER V3 LOGIC ==================== */
@@ -10182,6 +10555,7 @@ document.querySelectorAll('.viz-tab-btn').forEach(function(btn) {
 
 // Global state variables for AI module
 let aiActiveChatHistory = [];
+let lastResolvedPlan = null;
 let aiPendingAction = null; // Stores parsed spreadsheet actions awaiting confirmation
 let sessionAuditLogs = [];  // Actions timeline for the History View
 
@@ -10290,6 +10664,7 @@ function updateCurrentDatasetContext() {
       type: t,
       missingCount: missing,
       uniqueCount: uniques.size,
+      uniqueValues: Array.from(uniques),
       mean: mean,
       min: min === Infinity ? null : min,
       max: max === -Infinity ? null : max,
@@ -10510,8 +10885,7 @@ window.loadWorkspaceAndChat = function(wsId) {
   if (typeof openWorkspace === 'function') {
     openWorkspace(wsId);
     setTimeout(() => {
-      window.switchVizTab('AI Analyst');
-      setActive(document.getElementById('nav-ai-analyst').querySelector('a'));
+      if (typeof toggleAiCopilot === 'function') toggleAiCopilot(true);
     }, 300);
   }
 };
@@ -10546,6 +10920,7 @@ function handleAiPromptSubmit() {
     text: prompt
   });
   input.value = "";
+  input.style.height = 'auto'; // Reset textarea height after clearing
   renderAiChatHistory();
 
   // Safety Check
@@ -10562,11 +10937,52 @@ function handleAiPromptSubmit() {
     return;
   }
 
-  showLoading("AI Analyst", "Interpreting query intent and scanning context...", 40);
+  // Non-blocking UI indicator
+  const fab = document.getElementById('ai-copilot-fab');
+  const posClass = getCopilotPositionClass ? getCopilotPositionClass() : 'fab-bottom-right';
+  if (fab) {
+    fab.className = `ai-copilot-fab ${posClass} state-processing`;
+  }
+
+  const feed = document.getElementById('ai-chat-feed');
+  let typingBubble = null;
+  if (feed) {
+    typingBubble = document.createElement('div');
+    typingBubble.className = 'ai-message assistant typing-indicator';
+    typingBubble.style.cssText = 'display: flex; gap: 12px; max-width: 85%; margin-top: 10px;';
+    typingBubble.innerHTML = `
+      <div class="ai-msg-avatar" style="width: 28px; height: 28px; border-radius: 50%; background: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0;">🤖</div>
+      <div class="ai-msg-body" style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-color); border-radius: 0 12px 12px 12px; padding: 12px 16px;">
+        <span style="font-size: 12px; color: var(--text-muted);">OneClick is analyzing...</span>
+      </div>
+    `;
+    feed.appendChild(typingBubble);
+    feed.scrollTop = feed.scrollHeight;
+  }
+
   setTimeout(() => {
-    const plan = parseUserPrompt(prompt);
-    hideLoading();
+    // Remove typing bubble
+    if (typingBubble && typingBubble.parentNode) {
+      typingBubble.parentNode.removeChild(typingBubble);
+    }
+
+    if (fab) {
+      fab.className = `ai-copilot-fab ${posClass} state-responding`;
+      setTimeout(() => {
+        const drawer = document.getElementById('ai-copilot-drawer');
+        const isOpen = drawer && drawer.classList.contains('open');
+        fab.className = `ai-copilot-fab ${posClass} ${isOpen ? 'state-listening' : 'state-idle'}`;
+      }, 2000);
+    }
+
+    const intent = classifyUserIntent(prompt);
+    let plan = parseUserPrompt(prompt);
     
+    // Memory merging for follow-up or bare questions
+    if ((intent === "General Follow-up" || !plan) && lastResolvedPlan) {
+      plan = mergeConversationalMemory(prompt, lastResolvedPlan);
+    }
+
     if (!plan) {
       aiActiveChatHistory.push({
         sender: 'assistant',
@@ -10582,8 +10998,14 @@ function handleAiPromptSubmit() {
       showAiSpreadsheetConfirmation(plan);
     } else if (plan.type === "chart_command") {
       executeChartCommand(plan);
+    } else if (plan.type === "modify_chart_command") {
+      executeModifyChartCommand(plan);
     } else if (plan.type === "kpi_command") {
       executeKpiCommand(plan);
+    } else if (plan.type === "export_command") {
+      executeExportCommand(plan);
+    } else if (plan.type === "report") {
+      executeReportGeneration(plan);
     } else {
       const result = executeAiCalculation(plan);
       if (result.error) {
@@ -10593,17 +11015,250 @@ function handleAiPromptSubmit() {
           contentHtml: `<p style="font-size: 12px; color: var(--text-secondary); margin: 0;">⚠️ ${result.error}</p>`
         });
       } else {
+        // Update lastResolvedPlan for conversational memory
+        lastResolvedPlan = plan;
+
+        // Dynamic suggestions
+        const suggestions = getSuggestionsForIntent(intent, plan);
+
         const responseHtml = generateHtmlResponse(result);
         aiActiveChatHistory.push({
           sender: 'assistant',
           text: result.title + ": " + result.answer,
-          contentHtml: responseHtml
+          contentHtml: responseHtml,
+          suggestions: suggestions
         });
       }
       saveChatHistoryToWorkspace();
       renderAiChatHistory();
     }
-  }, 400);
+  }, 450);
+}
+
+function escapeRegExp(string) {
+  return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function classifyUserIntent(prompt) {
+  const normalized = prompt.toLowerCase().trim();
+  
+  // 1. Dashboard Action
+  if (normalized.includes("add to dashboard") || normalized.includes("add this chart") || normalized.includes("add widget") || normalized.includes("remove widget") || normalized.includes("delete widget") || normalized.includes("resize widget") || normalized.includes("change width") || normalized.includes("change size")) {
+    return "Dashboard Action";
+  }
+  
+  // 2. Report Generation
+  if (normalized.includes("executive summary") || normalized.includes("generate report") || normalized.includes("create report") || (normalized.includes("findings") && normalized.includes("report")) || normalized.includes("summary report") || normalized.includes("overview report")) {
+    return "Report Generation";
+  }
+  
+  // 3. Data Cleaning Action
+  if (normalized.includes("duplicate") || normalized.includes("missing") || normalized.includes("impute") || normalized.includes("fill") || normalized.includes("delete empty") || normalized.includes("remove empty") || normalized.includes("rename") || normalized.includes("merge") || normalized.includes("split") || normalized.includes("convert date") || normalized.includes("clean data")) {
+    return "Data Cleaning Action";
+  }
+  
+  // 4. Visualization
+  if (normalized.includes("chart") || normalized.includes("plot") || normalized.includes("visual") || normalized.includes("graph") || normalized.includes("histogram") || normalized.includes("scatter") || normalized.includes("trend chart") || normalized.includes("pie") || normalized.includes("donut") || normalized.includes("bar chart") || normalized.includes("line chart")) {
+    return "Visualization";
+  }
+  
+  // 5. Insight
+  if (normalized.startsWith("why") || normalized.includes("explain") || normalized.includes("anomaly") || normalized.includes("outlier") || normalized.includes("insight") || normalized.includes("reason for") || normalized.includes("cause of")) {
+    return "Insight";
+  }
+  
+  // 6. Question
+  if (normalized.includes("dataset") || normalized.includes("using") || normalized.includes("schema") || normalized.includes("columns") || normalized.includes("data type") || normalized.includes("headers") || normalized.includes("fields") || normalized.includes("what sheet") || normalized.includes("what file") || normalized.startsWith("what is the name of")) {
+    return "Question";
+  }
+  
+  // 7. Calculation
+  if (normalized.includes("total") || normalized.includes("sum") || normalized.includes("average") || normalized.includes("avg") || normalized.includes("mean") || normalized.includes("median") || normalized.includes("max") || normalized.includes("min") || normalized.includes("count") || normalized.includes("how many") || normalized.includes("rows") || normalized.includes("columns count") || normalized.includes("uniques") || normalized.includes("distinct")) {
+    return "Calculation";
+  }
+  
+  // Fallback follow-ups
+  const followUpTriggers = ["what about", "and for", "only for", "excluding", "how about", "in ", "for ", "what is", "and ", "excl"];
+  if (followUpTriggers.some(trigger => normalized.startsWith(trigger)) || lastResolvedPlan) {
+    return "Calculation"; 
+  }
+  
+  return "Question";
+}
+
+function extractPromptParameters(prompt) {
+  const normalized = prompt.toLowerCase().trim();
+  const cols = currentDatasetContext.columns;
+  
+  // Column matching
+  const matchedCols = [];
+  const aliases = {
+    "rev": ["revenue", "sales", "turnover"],
+    "revenue": ["revenue", "sales", "turnover"],
+    "sales": ["sales", "revenue"],
+    "prof": ["profit", "income", "earnings", "margin"],
+    "profit": ["profit", "income", "margin"],
+    "cust": ["customer", "client", "buyer"],
+    "customer": ["customer", "client"],
+    "cat": ["category", "type", "group", "genre"],
+    "category": ["category", "type", "group"],
+    "qty": ["quantity", "volume", "units", "count"],
+    "quantity": ["quantity", "volume", "units"]
+  };
+
+  cols.forEach(colKey => {
+    const colName = (headerNames[colKey] || colKey).toLowerCase();
+    if (normalized.includes(colName) || normalized.includes(colKey.toLowerCase())) {
+      matchedCols.push({ colKey, name: colName, length: colName.length });
+    } else {
+      Object.entries(aliases).forEach(([aliasKey, searchTerms]) => {
+        if (normalized.split(/\s+/).some(word => word.startsWith(aliasKey))) {
+          if (searchTerms.some(term => colName.includes(term))) {
+            matchedCols.push({ colKey, name: colName, length: aliasKey.length });
+          }
+        }
+      });
+    }
+  });
+  matchedCols.sort((a, b) => b.length - a.length);
+  const colKey = matchedCols[0] ? matchedCols[0].colKey : null;
+
+  // Operator matching
+  let op = null;
+  if (normalized.includes("total") || normalized.includes("sum")) op = "sum";
+  else if (normalized.includes("average") || normalized.includes("avg") || normalized.includes("mean")) op = "avg";
+  else if (normalized.includes("unique") || normalized.includes("distinct")) op = "count_dist";
+  else if (normalized.includes("count") || normalized.includes("how many") || normalized.includes("number of")) op = "count";
+  else if (normalized.includes("min") || normalized.includes("lowest") || normalized.includes("minimum")) op = "min";
+  else if (normalized.includes("max") || normalized.includes("highest") || normalized.includes("maximum")) op = "max";
+  else if (normalized.includes("median")) op = "median";
+
+  // Date filter matching
+  let dateFilter = null;
+  const dateCol = currentDatasetContext.dateColumns[0];
+  if (dateCol) {
+    const months = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
+    const monthFullNames = ["january", "february", "march", "april", "may", "june", "july", "august", "september", "october", "november", "december"];
+    let foundMonths = [];
+    months.forEach((m, idx) => {
+      if (normalized.includes(m) || normalized.includes(monthFullNames[idx])) {
+        foundMonths.push(idx);
+      }
+    });
+
+    const yearMatch = normalized.match(/\b(20\d{2})\b/);
+    const year = yearMatch ? parseInt(yearMatch[1]) : 2026;
+
+    if (foundMonths.length > 0) {
+      const dayMatches = normalized.match(/\b([1-9]|[12]\d|3[01])\b/g);
+      let startDay = 1;
+      let endDay = 28;
+      if (dayMatches && dayMatches.length >= 2) {
+        startDay = parseInt(dayMatches[0]);
+        endDay = parseInt(dayMatches[1]);
+      } else if (dayMatches && dayMatches.length === 1) {
+        startDay = 1;
+        endDay = parseInt(dayMatches[0]);
+      } else {
+        startDay = 1;
+        endDay = new Date(year, foundMonths[foundMonths.length - 1] + 1, 0).getDate();
+      }
+
+      const startMonth = foundMonths[0];
+      const endMonth = foundMonths[foundMonths.length - 1];
+
+      const minDate = new Date(year, startMonth, startDay);
+      const maxDate = new Date(year, endMonth, endDay);
+      dateFilter = { dateCol, min: minDate, max: maxDate };
+    }
+  }
+
+  // Category filter matching
+  const categoryFilters = [];
+  const categoricalCols = currentDatasetContext.categoricalColumns;
+  categoricalCols.forEach(catColKey => {
+    const stats = currentDatasetContext.columnStatistics[catColKey];
+    if (stats && stats.uniqueValues) {
+      stats.uniqueValues.forEach(val => {
+        const lowerVal = String(val).toLowerCase();
+        const valRegex = new RegExp(`\\b${escapeRegExp(lowerVal)}\\b`, 'i');
+        if (valRegex.test(normalized)) {
+          const excludeRegex = new RegExp(`(excl|exclude|except|not|don't want)\\s+(?:\\w+\\s+){0,2}${escapeRegExp(lowerVal)}`, 'i');
+          const isExclude = excludeRegex.test(normalized);
+          categoryFilters.push({
+            colKey: catColKey,
+            op: isExclude ? 'neq' : 'eq',
+            value: val
+          });
+        }
+      });
+    }
+  });
+
+  return { colKey, op, dateFilter, categoryFilters };
+}
+
+function mergeConversationalMemory(prompt, lastPlan) {
+  const params = extractPromptParameters(prompt);
+  if (!lastPlan) return null;
+
+  const mergedPlan = JSON.parse(JSON.stringify(lastPlan));
+  
+  if (params.colKey) {
+    mergedPlan.colKey = params.colKey;
+  }
+  if (params.op) {
+    mergedPlan.op = params.op;
+  }
+  if (params.dateFilter) {
+    mergedPlan.dateFilter = params.dateFilter;
+  }
+  
+  if (params.categoryFilters && params.categoryFilters.length > 0) {
+    if (!mergedPlan.categoryFilters) {
+      mergedPlan.categoryFilters = [];
+    }
+    params.categoryFilters.forEach(newFilter => {
+      mergedPlan.categoryFilters = mergedPlan.categoryFilters.filter(f => f.colKey !== newFilter.colKey);
+      mergedPlan.categoryFilters.push(newFilter);
+    });
+  }
+  
+  return mergedPlan;
+}
+
+function getSuggestionsForIntent(intent, plan) {
+  const suggestions = [];
+  
+  if (intent === "Metric Query" || (plan && plan.type === "aggregation")) {
+    suggestions.push("Show trend over time");
+    suggestions.push("Create a KPI card");
+    if (currentDatasetContext.categoricalColumns && currentDatasetContext.categoricalColumns.length > 0) {
+      const catCol = currentDatasetContext.categoricalColumns[0];
+      const name = headerNames[catCol] || catCol;
+      suggestions.push(`Breakdown by ${name}`);
+    }
+  } else if (intent === "Comparison Query" || (plan && plan.type === "comparison")) {
+    suggestions.push("Show distribution statistics");
+    suggestions.push("Create a comparison chart");
+  } else if (intent === "Visualization Request" || (plan && plan.type === "chart_command")) {
+    suggestions.push("Resize chart to 12 columns");
+    suggestions.push("Change chart to pie");
+    suggestions.push("Add average KPI card");
+  } else if (intent === "Insight Request" || (plan && plan.type === "explain")) {
+    suggestions.push("Generate executive summary");
+    suggestions.push("Show dataset schema");
+  } else if (intent === "Report Request" || (plan && plan.type === "report")) {
+    suggestions.push("Export PDF report");
+    suggestions.push("Export PPTX slides");
+    suggestions.push("Show profit trend");
+  } else {
+    suggestions.push("What are key findings?");
+    suggestions.push("Generate dashboard");
+    suggestions.push("Show columns list");
+  }
+  
+  return suggestions.slice(0, 3);
 }
 
 // 4. Intent Parser Classifier
@@ -10612,15 +11267,84 @@ function parseUserPrompt(prompt) {
   const cols = currentDatasetContext.columns;
   
   const matchedCols = [];
+  const aliases = {
+    "rev": ["revenue", "sales", "turnover"],
+    "revenue": ["revenue", "sales", "turnover"],
+    "sales": ["sales", "revenue"],
+    "prof": ["profit", "income", "earnings", "margin"],
+    "profit": ["profit", "income", "margin"],
+    "cust": ["customer", "client", "buyer"],
+    "customer": ["customer", "client"],
+    "cat": ["category", "type", "group", "genre"],
+    "category": ["category", "type", "group"],
+    "qty": ["quantity", "volume", "units", "count"],
+    "quantity": ["quantity", "volume", "units"]
+  };
+
   cols.forEach(colKey => {
     const colName = (headerNames[colKey] || colKey).toLowerCase();
+    // Direct matches
     if (normalized.includes(colName) || normalized.includes(colKey.toLowerCase())) {
       matchedCols.push({ colKey, name: colName, length: colName.length });
+    } else {
+      // Alias/Abbreviation semantic match
+      Object.entries(aliases).forEach(([aliasKey, searchTerms]) => {
+        if (normalized.split(/\s+/).some(word => word.startsWith(aliasKey))) {
+          if (searchTerms.some(term => colName.includes(term))) {
+            matchedCols.push({ colKey, name: colName, length: aliasKey.length });
+          }
+        }
+      });
     }
   });
+
   matchedCols.sort((a, b) => b.length - a.length);
 
   const getCol = () => matchedCols[0] ? matchedCols[0].colKey : null;
+
+  // Executive Summary/Report Commands
+  if (normalized.includes("executive summary") || normalized.includes("generate report") || normalized.includes("create report") || normalized.includes("findings summary")) {
+    return { type: "report" };
+  }
+
+  // Modify Chart Commands
+  if (normalized.includes("change") || normalized.includes("make") || normalized.includes("resize") || normalized.includes("convert") || normalized.includes("swap") || normalized.includes("update") || normalized.includes("width to") || normalized.includes("size to")) {
+    let newType = null;
+    if (normalized.includes("line")) newType = "line";
+    else if (normalized.includes("bar")) newType = "bar";
+    else if (normalized.includes("pie")) newType = "pie";
+    else if (normalized.includes("donut")) newType = "donut";
+    else if (normalized.includes("area")) newType = "area";
+    else if (normalized.includes("scatter")) newType = "scatter";
+    else if (normalized.includes("heatmap")) newType = "heatmap";
+    else if (normalized.includes("table")) newType = "table";
+
+    let newWidth = null;
+    const widthMatch = normalized.match(/\b(width|size|columns|col)\b\s*(?:to\s*)?(\d+)/) || normalized.match(/\b(\d+)\s*(?:columns|col|width)\b/);
+    if (widthMatch) {
+      newWidth = parseInt(widthMatch[2] || widthMatch[1]);
+      if (newWidth > 12) newWidth = 12;
+      if (newWidth < 3) newWidth = 3;
+    }
+
+    if (newType || newWidth) {
+      return {
+        type: "modify_chart_command",
+        chartType: newType,
+        width: newWidth,
+        xCol: getCol()
+      };
+    }
+  }
+
+  // Export/Reporting Commands
+  if (normalized.includes("export") || normalized.includes("report") || normalized.includes("powerpoint") || normalized.includes("word") || normalized.includes("pdf") || normalized.includes("pptx") || normalized.includes("docx") || normalized.includes("download")) {
+    if (normalized.includes("pdf")) return { type: "export_command", format: "pdf" };
+    if (normalized.includes("powerpoint") || normalized.includes("pptx") || normalized.includes("presentation") || normalized.includes("slide")) return { type: "export_command", format: "pptx" };
+    if (normalized.includes("word") || normalized.includes("docx") || normalized.includes("doc")) return { type: "export_command", format: "docx" };
+    if (normalized.includes("dashboard") || normalized.includes("layout") || normalized.includes("json")) return { type: "export_command", format: "json" };
+    if (normalized.includes("csv") || normalized.includes("excel") || normalized.includes("data") || normalized.includes("sheet")) return { type: "export_command", format: "csv" };
+  }
 
   // 1. Spreadsheet Commands
   if (normalized.includes("duplicate")) {
@@ -10666,15 +11390,21 @@ function parseUserPrompt(prompt) {
   }
 
   // 3. Chart creation commands
-  if (normalized.includes("chart") || normalized.includes("plot") || normalized.includes("visual")) {
+  if (normalized.includes("chart") || normalized.includes("plot") || normalized.includes("visual") || normalized.includes("graph") || normalized.includes("histogram") || normalized.includes("scatter") || normalized.includes("bar") || normalized.includes("line") || normalized.includes("pie") || normalized.includes("donut") || normalized.includes("trend")) {
     let chartType = "bar";
-    if (normalized.includes("line")) chartType = "line";
-    else if (normalized.includes("pie")) chartType = "pie";
-    else if (normalized.includes("donut")) chartType = "donut";
-    else if (normalized.includes("area")) chartType = "area";
-    else if (normalized.includes("scatter")) chartType = "scatter";
-    else if (normalized.includes("heatmap")) chartType = "heatmap";
-    else if (normalized.includes("table")) chartType = "table";
+    if (normalized.includes("line") || normalized.includes("trend") || normalized.includes("over time") || normalized.includes("time series")) {
+      chartType = "line";
+    } else if (normalized.includes("pie") || normalized.includes("donut") || normalized.includes("market share") || normalized.includes("proportion")) {
+      chartType = "pie";
+    } else if (normalized.includes("scatter") || normalized.includes("correlation") || normalized.includes("relationship")) {
+      chartType = "scatter";
+    } else if (normalized.includes("horizontal") || normalized.includes("ranking") || normalized.includes("top")) {
+      chartType = "horizontalBar";
+    } else if (normalized.includes("distribution") || normalized.includes("histogram")) {
+      chartType = "bar";
+    } else if (normalized.includes("table")) {
+      chartType = "table";
+    }
 
     const numericCols = currentDatasetContext.numericColumns;
     const catCols = currentDatasetContext.categoricalColumns;
@@ -10687,8 +11417,17 @@ function parseUserPrompt(prompt) {
     if (!yCol) yCol = numericCols[0] || cols[0];
 
     let agg = "sum";
-    if (normalized.includes("average") || normalized.includes("avg")) agg = "avg";
+    if (normalized.includes("average") || normalized.includes("avg") || normalized.includes("mean")) agg = "avg";
     else if (normalized.includes("count")) agg = "count";
+
+    // Auto-detect chart type based on context if not explicitly mentioned
+    if (chartType === "bar" && !normalized.includes("bar") && !normalized.includes("histogram")) {
+      if (dateCols.includes(xCol)) {
+        chartType = "line";
+      } else if (normalized.includes("ranking") || normalized.includes("top")) {
+        chartType = "horizontalBar";
+      }
+    }
 
     return { type: "chart_command", chartType, xCol, yCol, agg };
   }
@@ -10707,7 +11446,7 @@ function parseUserPrompt(prompt) {
   }
 
   // 6. Ranking Queries
-  if (normalized.includes("top") || normalized.includes("bottom") || normalized.includes("best") || normalized.includes("worst")) {
+  if (normalized.includes("top") || normalized.includes("bottom") || normalized.includes("best") || normalized.includes("worst") || normalized.includes("breakdown") || normalized.includes("by ")) {
     const direction = (normalized.includes("bottom") || normalized.includes("worst")) ? "bottom" : "top";
     const numMatch = normalized.match(/\d+/);
     const count = numMatch ? parseInt(numMatch[0]) : 5;
@@ -10811,6 +11550,37 @@ function executeAiCalculation(plan) {
   const totalRows = gridData.length;
   if (totalRows === 0) return { error: "Dataset is empty." };
 
+  // Helper to check category filters on a row
+  function rowPassesCategoryFilters(row) {
+    if (plan.categoryFilters && plan.categoryFilters.length > 0) {
+      for (const f of plan.categoryFilters) {
+        const catIdx = headers.indexOf(f.colKey);
+        if (catIdx !== -1) {
+          const rowVal = String(row[catIdx]).trim().toLowerCase();
+          const filterVal = String(f.value).trim().toLowerCase();
+          if (f.op === 'eq' && rowVal !== filterVal) {
+            return false;
+          }
+          if (f.op === 'neq' && rowVal === filterVal) {
+            return false;
+          }
+        }
+      }
+    }
+    return true;
+  }
+
+  // Construct label detailing active category filters
+  let categoryRangeStr = "";
+  if (plan.categoryFilters && plan.categoryFilters.length > 0) {
+    categoryRangeStr = " for " + plan.categoryFilters.map(f => `${f.op === 'neq' ? 'not ' : ''}${f.value}`).join(', ');
+  }
+
+  let filterDetails = "";
+  if (plan.categoryFilters && plan.categoryFilters.length > 0) {
+    filterDetails = `\nFilters: ${plan.categoryFilters.map(f => `${headerNames[f.colKey] || f.colKey} ${f.op === 'neq' ? '!=' : '='} ${f.value}`).join(' AND ')}`;
+  }
+
   if (plan.type === "aggregation") {
     const colIdx = headers.indexOf(plan.colKey);
     const op = plan.op;
@@ -10830,6 +11600,8 @@ function executeAiCalculation(plan) {
           }
         }
       }
+
+      if (!rowPassesCategoryFilters(row)) continue;
 
       filteredCount++;
       if (colIdx !== -1) {
@@ -10889,10 +11661,38 @@ function executeAiCalculation(plan) {
       dateRangeStr = ` filtered from ${plan.dateFilter.min.toLocaleDateString()} to ${plan.dateFilter.max.toLocaleDateString()}`;
     }
 
+    const formattedVal = formatKpiValue(resultValue, plan.colKey, op);
+    let findings = [];
+    let recommendations = [];
+    
+    if (op === "sum") {
+      findings.push(`The calculated total sum of ${colLabel} is ${formattedVal}.`);
+      findings.push(`This sum reflects the combined total volume across all active transactions.`);
+      recommendations.push(`Use this total value for periodic budget and strategic forecasting.`);
+      recommendations.push(`Verify against operational records to check for transaction leaks.`);
+    } else if (op === "avg") {
+      findings.push(`The arithmetic average of ${colLabel} is ${formattedVal}.`);
+      findings.push(`This is the baseline transactional performance for each recorded segment.`);
+      recommendations.push(`Target raising this average through focused upsell campaigns.`);
+      recommendations.push(`Monitor transaction size deviation to verify standard pricing consistency.`);
+    } else if (op === "count") {
+      findings.push(`The active database contains ${formattedVal} matching rows.`);
+      findings.push(`This volume reflects the active filtered record depth.`);
+      recommendations.push(`Audit row counts regularly to verify dataset completeness.`);
+    } else {
+      findings.push(`The ${op.toUpperCase()} calculated for ${colLabel} is ${formattedVal}.`);
+      recommendations.push(`Use this baseline benchmark for capacity and threshold plans.`);
+    }
+
     return {
-      title: `${op.toUpperCase()} of ${colLabel}${dateRangeStr}`,
-      answer: formatKpiValue(resultValue, plan.colKey, op),
-      calcDetails: `${calcString}\nRows Used: ${filteredCount.toLocaleString()} / ${totalRows.toLocaleString()}`,
+      title: `${op.toUpperCase()} of ${colLabel}${categoryRangeStr}${dateRangeStr}`,
+      answer: formattedVal,
+      method: calcString,
+      rowsUsed: filteredCount,
+      findings,
+      recommendations,
+      confidence: currentDatasetContext.dataQualityScore >= 80 ? "High" : "Medium",
+      calcDetails: `${calcString}\nRows Used: ${filteredCount.toLocaleString()} / ${totalRows.toLocaleString()}${filterDetails}`,
       op,
       colKey: plan.colKey,
       rawAnswer: resultValue
@@ -10907,9 +11707,13 @@ function executeAiCalculation(plan) {
       return { error: "Unable to calculate ranking: columns not found." };
     }
 
+    let filteredCount = 0;
     const groups = {};
     for (let r = 0; r < totalRows; r++) {
       const row = gridData[r];
+      if (!rowPassesCategoryFilters(row)) continue;
+      filteredCount++;
+
       const g = String(row[xIdx] || "Unknown").trim();
       const v = getCleanNumericValue(row[yIdx]);
       if (!isNaN(v)) {
@@ -10932,11 +11736,26 @@ function executeAiCalculation(plan) {
     const xLabel = headerNames[plan.xCol] || plan.xCol;
     const yLabel = headerNames[plan.yCol] || plan.yCol;
 
+    let findings = [
+      `The top performer is "${list[0]?.label || 'N/A'}" with a total of ${list[0]?.value || '0'}.`,
+      `This top category dominates the active layout rankings.`
+    ];
+    let recommendations = [
+      `Promote high-margin products within "${list[0]?.label || 'N/A'}" to capture more yield.`,
+      `Implement seasonal campaigns targeting growth in lower rankings to distribute concentration risk.`
+    ];
+
     return {
-      title: `${plan.direction.toUpperCase()} ${plan.count} ${xLabel} by ${yLabel}`,
+      title: `${plan.direction.toUpperCase()} ${plan.count} ${xLabel} by ${yLabel}${categoryRangeStr}`,
       type: "table",
       items: list,
-      calcDetails: `GROUP BY(${xLabel}), SUM(${yLabel}), SORT(${plan.direction === "top" ? "DESC" : "ASC"}), LIMIT(${plan.count})\nRows Used: ${totalRows.toLocaleString()}`,
+      answer: `Top item is "${list[0]?.label || 'N/A'}" with a value of ${list[0]?.value || '0'}.`,
+      method: `GROUP BY(${xLabel}), SUM(${yLabel})`,
+      rowsUsed: filteredCount,
+      findings,
+      recommendations,
+      confidence: "High",
+      calcDetails: `GROUP BY(${xLabel}), SUM(${yLabel}), SORT(${plan.direction === "top" ? "DESC" : "ASC"}), LIMIT(${plan.count})\nRows Used: ${filteredCount.toLocaleString()} / ${totalRows.toLocaleString()}${filterDetails}`,
       xCol: plan.xCol,
       yCol: plan.yCol
     };
@@ -10946,7 +11765,16 @@ function executeAiCalculation(plan) {
     const yIdx = headers.indexOf(plan.yCol);
     if (yIdx === -1) return { error: "Target column for comparison not found." };
 
-    const numericVals = gridData.map(r => getCleanNumericValue(r[yIdx])).filter(v => !isNaN(v)).sort((a, b) => a - b);
+    let filteredCount = 0;
+    const filteredRows = [];
+    for (let r = 0; r < totalRows; r++) {
+      const row = gridData[r];
+      if (!rowPassesCategoryFilters(row)) continue;
+      filteredCount++;
+      filteredRows.push(row);
+    }
+
+    const numericVals = filteredRows.map(r => getCleanNumericValue(r[yIdx])).filter(v => !isNaN(v)).sort((a, b) => a - b);
     if (numericVals.length === 0) return { error: "No numeric values found to compare." };
 
     let comparisonHTML = "";
@@ -10964,8 +11792,8 @@ function executeAiCalculation(plan) {
       let sumA = 0, countA = 0;
       let sumB = 0, countB = 0;
 
-      for (let r = 0; r < totalRows; r++) {
-        const row = gridData[r];
+      for (let r = 0; r < filteredRows.length; r++) {
+        const row = filteredRows[r];
         const rowCat = String(row[catIdx] || "").trim().toLowerCase();
         const v = getCleanNumericValue(row[yIdx]);
         if (!isNaN(v)) {
@@ -10995,11 +11823,22 @@ function executeAiCalculation(plan) {
           </div>
         `;
         return {
-          title: `Comparison: ${labelA} vs ${labelB} on ${yLabel}`,
+          title: `Comparison: ${labelA} vs ${labelB} on ${yLabel}${categoryRangeStr}`,
           type: "comparison",
           answer,
           comparisonHTML,
-          calcDetails: `SUM(${yLabel}) GROUP BY(${headerNames[catCol] || catCol}) FILTER(${labelA}, ${labelB})`,
+          method: `SUM(${yLabel}) GROUP BY(${catCol}) FILTER(${labelA}, ${labelB})`,
+          rowsUsed: filteredCount,
+          findings: [
+            `"${winner}" has the higher total contribution compared to the other segment.`,
+            `The absolute variance is ${formatKpiValue(Math.abs(diff), plan.yCol, "sum")} (${Math.abs(pctDiff).toFixed(1)}% variance).`
+          ],
+          recommendations: [
+            `Leverage the success of "${winner}" for targeted campaigns in low-yield periods.`,
+            `Perform a root-cause study on the lower segment to find improvements.`
+          ],
+          confidence: "High",
+          calcDetails: `SUM(${yLabel}) GROUP BY(${headerNames[catCol] || catCol}) FILTER(${labelA}, ${labelB})\nRows Used: ${filteredCount.toLocaleString()} / ${totalRows.toLocaleString()}${filterDetails}`,
           rawAnswer: diff
         };
       }
@@ -11008,19 +11847,37 @@ function executeAiCalculation(plan) {
     const sum = numericVals.reduce((a, b) => a + b, 0);
     const mean = sum / numericVals.length;
     const median = numericVals[Math.floor(numericVals.length / 2)];
+    const minVal = numericVals[0];
+    const maxVal = numericVals[numericVals.length - 1];
+    const variance = numericVals.reduce((acc, v) => acc + Math.pow(v - mean, 2), 0) / numericVals.length;
+    const stdDev = Math.sqrt(variance);
     
     return {
-      title: `Distribution statistics for ${yLabel}`,
+      title: `Distribution statistics for ${yLabel}${categoryRangeStr}`,
       type: "comparison",
       answer: `Mean: ${formatKpiValue(mean, plan.yCol, "avg")}`,
       comparisonHTML: `
         <div style="font-size:11.5px; line-height:1.5; color: var(--text-secondary);">
           <strong>Average (Mean):</strong> ${formatKpiValue(mean, plan.yCol, "avg")}<br/>
           <strong>Median:</strong> ${formatKpiValue(median, plan.yCol, "median")}<br/>
-          <strong>Range:</strong> ${formatKpiValue(numericVals[0], plan.yCol, "min")} to ${formatKpiValue(numericVals[numericVals.length - 1], plan.yCol, "max")}
+          <strong>Std Dev:</strong> ${formatKpiValue(stdDev, plan.yCol, "avg")}<br/>
+          <strong>Range:</strong> ${formatKpiValue(minVal, plan.yCol, "min")} to ${formatKpiValue(maxVal, plan.yCol, "max")}
         </div>
       `,
-      calcDetails: `MEAN(${yLabel}), MEDIAN(${yLabel}), MIN/MAX\nRows Used: ${totalRows.toLocaleString()}`
+      method: `MEAN(${yLabel}), MEDIAN(${yLabel}), STDEV(${yLabel}), MIN(${yLabel}), MAX(${yLabel})`,
+      rowsUsed: filteredCount,
+      findings: [
+        `The mean of ${yLabel} is ${formatKpiValue(mean, plan.yCol, "avg")}, with a median of ${formatKpiValue(median, plan.yCol, "median")}.`,
+        `Standard deviation is ${formatKpiValue(stdDev, plan.yCol, "avg")}, indicating ${stdDev / mean > 0.5 ? 'high' : 'moderate'} spread across the dataset.`,
+        `Value range spans from ${formatKpiValue(minVal, plan.yCol, "min")} to ${formatKpiValue(maxVal, plan.yCol, "max")}.`
+      ],
+      recommendations: [
+        `${stdDev / mean > 0.5 ? 'High variance detected — investigate outlier rows for data quality issues.' : 'Distribution is fairly tight — suitable for trend projection.'}`,
+        `Focus resources on segments driving values toward the upper range to maximise yield.`
+      ],
+      confidence: currentDatasetContext.dataQualityScore >= 80 ? "High" : "Medium",
+      calcDetails: `MEAN(${yLabel}), MEDIAN(${yLabel}), STDEV, MIN/MAX\nRows Used: ${filteredCount.toLocaleString()} / ${totalRows.toLocaleString()}${filterDetails}`,
+      yCol: plan.yCol
     };
   }
 
@@ -11032,9 +11889,13 @@ function executeAiCalculation(plan) {
       return { error: "Unable to calculate trend: columns not found." };
     }
 
+    let filteredCount = 0;
     const monthly = {};
     for (let r = 0; r < totalRows; r++) {
       const row = gridData[r];
+      if (!rowPassesCategoryFilters(row)) continue;
+      filteredCount++;
+
       const dStr = String(row[dateIdx]).trim();
       const date = new Date(dStr);
       if (!isNaN(date.getTime())) {
@@ -11059,18 +11920,44 @@ function executeAiCalculation(plan) {
     const yLabel = headerNames[plan.colKey] || plan.colKey;
     const xLabel = headerNames[plan.dateCol] || plan.dateCol;
 
+    const peakMonth = sortedMonths.reduce((a, b) => b[1] > a[1] ? b : a, sortedMonths[0]);
+    const troughMonth = sortedMonths.reduce((a, b) => b[1] < a[1] ? b : a, sortedMonths[0]);
+    const trendLabel = pct >= 0 ? 'Upward' : 'Downward';
+
     return {
-      title: `${yLabel} Trend analysis over time`,
+      title: `${yLabel} Trend analysis over time${categoryRangeStr}`,
       type: "trend",
-      answer: `${pct >= 0 ? 'Upward' : 'Downward'} trend of ${Math.abs(pct).toFixed(1)}%`,
+      answer: `${trendLabel} trend of ${Math.abs(pct).toFixed(1)}%`,
       comparisonHTML: `
         <div style="font-size:11.5px; line-height:1.5; color: var(--text-secondary);">
           <strong>Start Period (${start[0]}):</strong> ${formatKpiValue(start[1], plan.colKey, "sum")}<br/>
           <strong>End Period (${end[0]}):</strong> ${formatKpiValue(end[1], plan.colKey, "sum")}<br/>
-          <strong>Net Change:</strong> ${pct >= 0 ? '+' : ''}${Math.abs(pct).toFixed(1)}% MoM change
+          <strong>Peak Month:</strong> ${peakMonth[0]} — ${formatKpiValue(peakMonth[1], plan.colKey, "sum")}<br/>
+          <strong>Net Change:</strong> ${pct >= 0 ? '+' : ''}${Math.abs(pct).toFixed(1)}% total change
         </div>
       `,
-      calcDetails: `AGGREGATE(${yLabel}) GROUP BY(Month of ${xLabel})`,
+      method: `AGGREGATE(${yLabel}) GROUP BY(Month of ${xLabel}), SORT(ASC)`,
+      rowsUsed: filteredCount,
+      findings: [
+        `${yLabel} shows a ${trendLabel.toLowerCase()} trend of ${Math.abs(pct).toFixed(1)}% from ${start[0]} to ${end[0]}.`,
+        `Peak performance was in ${peakMonth[0]} at ${formatKpiValue(peakMonth[1], plan.colKey, "sum")}.`,
+        `Trough was in ${troughMonth[0]} at ${formatKpiValue(troughMonth[1], plan.colKey, "sum")}.`,
+        `Trend spans ${sortedMonths.length} time periods.`
+      ],
+      recommendations: [
+        `${pct >= 0 ? 'Positive trajectory — sustain current strategies to maintain momentum.' : 'Declining trend detected — investigate root causes in lower performing periods.'}`,
+        `Plan targeted campaigns around the ${peakMonth[0]} period to capitalise on historically high performance.`
+      ],
+      confidence: currentDatasetContext.dataQualityScore >= 80 ? "High" : "Medium",
+      calcDetails: `AGGREGATE(${yLabel}) GROUP BY(Month of ${xLabel})\nRows Used: ${filteredCount.toLocaleString()} / ${totalRows.toLocaleString()}${filterDetails}`,
+      chartConfig: {
+        type: 'line',
+        labels: sortedMonths.map(m => m[0]),
+        data: sortedMonths.map(m => m[1]),
+        label: yLabel,
+        xCol: plan.dateCol,
+        yCol: plan.colKey
+      },
       xCol: plan.dateCol,
       yCol: plan.colKey
     };
@@ -11083,105 +11970,281 @@ function executeAiCalculation(plan) {
     const primary = stats.findings[0] || "Leading category contribution is high.";
     const secondary = stats.opportunities[0] || "Positive volume momentum in recent cycles.";
     const riskItem = stats.risks[0] || "Category concentration limits diversity.";
+    const qualityScore = currentDatasetContext.dataQualityScore || 85;
     
     return {
-      title: `Root-Cause Diagnostic for ${colLabel}`,
+      title: `Root-Cause Diagnostic for ${colLabel}${categoryRangeStr}`,
       type: "explain",
+      answer: primary,
       primary,
       secondary,
       riskItem,
-      confidence: 85
+      method: `STATISTICAL_PROFILE(${colLabel})`,
+      rowsUsed: totalRows,
+      findings: [
+        primary,
+        secondary,
+        ...(stats.findings.slice(1, 3) || [])
+      ].filter(Boolean),
+      recommendations: [
+        ...(stats.recommendations || []).slice(0, 2),
+        `Address risk: ${riskItem}`
+      ].filter(Boolean),
+      confidence: qualityScore >= 80 ? "High" : qualityScore >= 60 ? "Medium" : "Low",
+      calcDetails: `STATISTICAL_PROFILE(${colLabel})\nRows Used: ${totalRows.toLocaleString()}`
     };
   }
 
   return { error: "Unable to calculate from current dataset." };
 }
 
-// 6. Response Generators
+// 6. Response Generators — Premium Analyst Report Card
 function generateHtmlResponse(result) {
+  const confColor = result.confidence === 'High' ? '#10b981' : result.confidence === 'Medium' ? '#f59e0b' : '#ef4444';
+
+  const renderList = (items, clr) => {
+    if (!items || items.length === 0) return '';
+    return items.map(f => `<li style="margin-bottom:4px;color:${clr || 'var(--text-secondary)'};line-height:1.55;">${f}</li>`).join('');
+  };
+
+  const findingsSection = (result.findings && result.findings.length > 0) ? `
+    <div class="ai-report-section">
+      <div class="ai-report-section-title">&#x1F4A1; Key Findings</div>
+      <ul class="ai-report-list">${renderList(result.findings)}</ul>
+    </div>` : '';
+
+  const recsSection = (result.recommendations && result.recommendations.length > 0) ? `
+    <div class="ai-report-section">
+      <div class="ai-report-section-title">&#x1F3AF; Recommendations</div>
+      <ul class="ai-report-list">${renderList(result.recommendations, 'var(--text-primary)')}</ul>
+    </div>` : '';
+
+  const metaFooter = `
+    <div class="ai-report-meta-row">
+      ${result.method ? `<div class="ai-report-meta-pill"><span class="ai-report-meta-lbl">METHOD</span><code class="ai-report-method">${result.method}</code></div>` : ''}
+      ${result.rowsUsed != null ? `<div class="ai-report-meta-pill"><span class="ai-report-meta-lbl">ROWS</span><span class="ai-report-meta-val">${result.rowsUsed.toLocaleString()}</span></div>` : ''}
+      ${result.confidence ? `<div class="ai-report-conf-badge" style="background:${confColor}22;border:1px solid ${confColor}55;"><span style="width:6px;height:6px;border-radius:50%;background:${confColor};display:inline-block;flex-shrink:0;"></span><span style="color:${confColor};font-weight:700;font-size:10px;">${result.confidence} Confidence</span></div>` : ''}
+    </div>`;
+
+  // Ranking table
   if (result.type === "table") {
-    const rowsHtml = result.items.map(item => `
-      <tr style="border-bottom:1px solid rgba(255,255,255,0.03);">
-        <td style="padding: 6px 4px; font-weight:700; color:var(--text-muted);">${item.rank}</td>
-        <td style="padding: 6px 4px; color:var(--text-primary);">${item.label}</td>
-        <td style="padding: 6px 4px; text-align:right; font-weight:700; color:var(--text-primary);">${item.value}</td>
-      </tr>
-    `).join('');
-
-    return `
-      <div class="ai-msg-response-card" style="background: rgba(255,255,255,0.01); border:1px solid var(--border-color); border-radius: 8px; padding: 14px; width: 100%;">
-        <div style="font-weight: 700; font-size:12px; color:var(--primary); margin-bottom:10px;">📊 ${result.title}</div>
-        <table class="ai-response-table" style="width:100%; border-collapse:collapse; font-size:11.5px; color:var(--text-secondary); margin-bottom:12px;">
-          <thead>
-            <tr style="border-bottom: 1px solid var(--border-color); text-align:left;">
-              <th style="padding: 6px 4px; font-size:9.5px; text-transform:uppercase; color:var(--text-muted);">Rank</th>
-              <th style="padding: 6px 4px; font-size:9.5px; text-transform:uppercase; color:var(--text-muted);">Item</th>
-              <th style="padding: 6px 4px; text-align:right; font-size:9.5px; text-transform:uppercase; color:var(--text-muted);">Sum Value</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${rowsHtml}
-          </tbody>
-        </table>
-        <div style="border-top:1px solid rgba(255,255,255,0.03); padding-top:8px; font-size:9.5px; color:var(--text-muted); font-family:var(--font-mono); line-height:1.4; margin-bottom: 12px;">
-          ${result.calcDetails.replace('\n', '<br/>')}
-        </div>
-        <div style="display:flex; gap:6px;">
-          <button class="ai-response-action-btn" onclick="injectTableChart('${result.xCol}', '${result.yCol}')">📊 Create Chart</button>
-          <button class="ai-response-action-btn" onclick="exportCSVSnapshot()">📅 Export CSV</button>
-        </div>
-      </div>
-    `;
+    const rowsHtml = result.items.map(item => `<tr class="ai-rank-row"><td class="ai-rank-num">${item.rank}</td><td class="ai-rank-label">${item.label}</td><td class="ai-rank-value">${item.value}</td></tr>`).join('');
+    return `<div class="ai-analyst-report-card">
+      <div class="ai-report-header"><span class="ai-report-type-badge">&#x1F4CA; Ranking</span><div class="ai-report-title">${result.title}</div></div>
+      <div class="ai-report-answer-block"><div class="ai-report-answer-label">TOP RESULT</div><div class="ai-report-answer-value">${result.answer || '&mdash;'}</div></div>
+      <table class="ai-report-rank-table"><thead><tr><th>#</th><th>Item</th><th>Value</th></tr></thead><tbody>${rowsHtml}</tbody></table>
+      ${findingsSection}${recsSection}${metaFooter}
+      <div class="ai-report-actions">
+        <button class="ai-response-action-btn" onclick="renderChatChart({type:'horizontalBar',xCol:'${result.xCol}',yCol:'${result.yCol}'})">&#x1F4CA; View Chart in Chat</button>
+        <button class="ai-response-action-btn" onclick="injectTableChart('${result.xCol}','${result.yCol}')">&#x1F4CC; Add to Dashboard</button>
+        <button class="ai-response-action-btn" onclick="exportCSVSnapshot()">&#x1F4C5; Export CSV</button>
+      </div></div>`;
   }
 
-  if (result.type === "comparison" || result.type === "trend") {
-    const isTrend = result.type === "trend";
-    const chartAction = isTrend 
-      ? `<button class="ai-response-action-btn" onclick="injectTrendChart('${result.xCol}', '${result.yCol}')">📈 Add Trend Chart</button>`
-      : ``;
-
-    return `
-      <div class="ai-msg-response-card" style="background: rgba(255,255,255,0.01); border:1px solid var(--border-color); border-radius: 8px; padding: 14px; width: 100%;">
-        <div style="font-weight: 700; font-size:12px; color:var(--primary); margin-bottom:4px;">📊 ${result.title}</div>
-        <div style="font-weight: 800; font-size:18px; color:var(--text-primary); margin-bottom:10px;">${result.answer}</div>
-        <div style="margin-bottom:12px;">${result.comparisonHTML}</div>
-        <div style="border-top:1px solid rgba(255,255,255,0.03); padding-top:8px; font-size:9.5px; color:var(--text-muted); font-family:var(--font-mono); line-height:1.4; margin-bottom: 12px;">
-          ${result.calcDetails.replace('\n', '<br/>')}
-        </div>
-        ${chartAction ? `<div style="display:flex; gap:6px;">${chartAction}</div>` : ''}
-      </div>
-    `;
+  // Trend
+  if (result.type === "trend") {
+    const isUp = (result.answer || '').startsWith('Upward');
+    const trendIcon = isUp ? '&#x1F4C8;' : '&#x1F4C9;';
+    const trendColor = isUp ? '#10b981' : '#ef4444';
+    const chartCfgJson = result.chartConfig ? JSON.stringify(result.chartConfig) : null;
+    return `<div class="ai-analyst-report-card">
+      <div class="ai-report-header"><span class="ai-report-type-badge">${trendIcon} Trend</span><div class="ai-report-title">${result.title}</div></div>
+      <div class="ai-report-answer-block"><div class="ai-report-answer-label">TREND DIRECTION</div><div class="ai-report-answer-value" style="color:${trendColor};">${result.answer || '&mdash;'}</div></div>
+      ${result.comparisonHTML ? `<div class="ai-report-comparison-body">${result.comparisonHTML}</div>` : ''}
+      ${findingsSection}${recsSection}${metaFooter}
+      <div class="ai-report-actions">
+        ${chartCfgJson ? `<button class="ai-response-action-btn" id="btn-chat-chart-${Date.now()}" onclick='renderChatChart(${chartCfgJson.replace(/\\/g,"\\\\").replace(/'/g,"&apos;")})'>${trendIcon} View Trend Chart</button>` : ''}
+        <button class="ai-response-action-btn" onclick="injectTrendChart('${result.xCol}','${result.yCol}')">&#x1F4CC; Add to Dashboard</button>
+      </div></div>`;
   }
 
+  // Comparison / Distribution
+  if (result.type === "comparison") {
+    return `<div class="ai-analyst-report-card">
+      <div class="ai-report-header"><span class="ai-report-type-badge">&#x1F52C; Comparison</span><div class="ai-report-title">${result.title}</div></div>
+      <div class="ai-report-answer-block"><div class="ai-report-answer-label">RESULT</div><div class="ai-report-answer-value">${result.answer || '&mdash;'}</div></div>
+      ${result.comparisonHTML ? `<div class="ai-report-comparison-body">${result.comparisonHTML}</div>` : ''}
+      ${findingsSection}${recsSection}${metaFooter}
+      ${result.xCol ? `<div class="ai-report-actions"><button class="ai-response-action-btn" onclick="renderChatChart({type:'bar',xCol:'${result.xCol}',yCol:'${result.yCol}'})">&#x1F4CA; View Chart in Chat</button></div>` : ''}
+    </div>`;
+  }
+
+  // Root-cause Explain
   if (result.type === "explain") {
-    return `
-      <div class="ai-msg-response-card" style="background: rgba(255,255,255,0.01); border:1px solid var(--border-color); border-radius: 8px; padding: 14px; width: 100%;">
-        <div style="font-weight: 700; font-size:12px; color:var(--primary); margin-bottom:8px;">🔎 ${result.title}</div>
-        <div style="display:flex; flex-direction:column; gap:8px; font-size:11.5px; color:var(--text-secondary); line-height:1.5;">
-          <div><strong>Summary Finding:</strong> ${result.primary}</div>
-          <div><strong>Secondary Cause:</strong> ${result.secondary}</div>
-          <div><strong>Risks & Anomaly Warnings:</strong> <span style="color:var(--warning);">${result.riskItem}</span></div>
-          <div><strong>Confidence Score:</strong> <span style="color:var(--success); font-weight:700;">${result.confidence}%</span></div>
-        </div>
+    return `<div class="ai-analyst-report-card">
+      <div class="ai-report-header"><span class="ai-report-type-badge">&#x1F50E; Diagnostic</span><div class="ai-report-title">${result.title}</div></div>
+      <div class="ai-report-answer-block"><div class="ai-report-answer-label">PRIMARY FINDING</div><div class="ai-report-answer-value" style="font-size:13px;">${result.primary || result.answer || '&mdash;'}</div></div>
+      <div class="ai-report-explain-block">
+        ${result.secondary ? `<div class="ai-report-explain-row"><span class="ai-report-explain-tag secondary">Secondary Cause</span><span>${result.secondary}</span></div>` : ''}
+        ${result.riskItem ? `<div class="ai-report-explain-row"><span class="ai-report-explain-tag risk">Risk</span><span style="color:#f59e0b;">${result.riskItem}</span></div>` : ''}
       </div>
-    `;
+      ${findingsSection}${recsSection}${metaFooter}
+    </div>`;
   }
 
-  // Standard aggregation
-  return `
-    <div class="ai-msg-response-card" style="background: rgba(255,255,255,0.01); border:1px solid var(--border-color); border-radius: 8px; padding: 14px; width: 100%;">
-      <div style="font-weight: 700; font-size:12px; color:var(--primary); margin-bottom:4px;">📊 ${result.title}</div>
-      <div style="font-weight: 800; font-size:24px; color:var(--text-primary); margin-bottom:12px;">${result.answer}</div>
-      <div style="border-top:1px solid rgba(255,255,255,0.03); padding-top:8px; font-size:9.5px; color:var(--text-muted); font-family:var(--font-mono); line-height:1.4; margin-bottom:12px;">
-        ${result.calcDetails.replace('\n', '<br/>')}
-      </div>
-      <div style="display:flex; gap:6px;">
-        <button class="ai-response-action-btn" onclick="injectKpiCard('${result.colKey}', '${result.op}')">🔢 Add KPI Card</button>
-      </div>
-    </div>
-  `;
+  // Standard Aggregation (default)
+  return `<div class="ai-analyst-report-card">
+    <div class="ai-report-header"><span class="ai-report-type-badge">&#x1F522; Calculation</span><div class="ai-report-title">${result.title}</div></div>
+    <div class="ai-report-answer-block"><div class="ai-report-answer-label">RESULT</div><div class="ai-report-answer-value">${result.answer || '&mdash;'}</div></div>
+    ${findingsSection}${recsSection}${metaFooter}
+    ${result.colKey && result.colKey !== 'null' ? `<div class="ai-report-actions"><button class="ai-response-action-btn" onclick="injectKpiCard('${result.colKey}','${result.op||'sum'}')">&#x1F522; Add KPI Card</button></div>` : ''}
+  </div>`;
 }
 
+/* ════ TASK 5 & 6: In-Chat Chart Rendering & Action Utilities ════ */
+
+// Registry for active Chart.js instances keyed by canvas id
+if (typeof window.chatChartInstances === 'undefined') window.chatChartInstances = {};
+
+// Build Chart.js data from gridData for the given xCol/yCol
+function buildChatChartData(xCol, yCol, chartType) {
+  const xIdx = headers.indexOf(xCol);
+  const yIdx = headers.indexOf(yCol);
+  if (xIdx === -1 && yIdx === -1) return null;
+
+  if (chartType === 'scatter') {
+    const pts = [];
+    gridData.forEach(row => {
+      const x = getCleanNumericValue(row[xIdx]);
+      const y = getCleanNumericValue(row[yIdx]);
+      if (!isNaN(x) && !isNaN(y)) pts.push({ x, y });
+    });
+    return { labels: null, datasets: [{ label: `${headerNames[yCol]||yCol} vs ${headerNames[xCol]||xCol}`, data: pts, backgroundColor: 'rgba(99,102,241,0.6)' }] };
+  }
+
+  const groups = {};
+  gridData.forEach(row => {
+    const key = String(row[xIdx] !== undefined ? row[xIdx] : 'Unknown').trim();
+    const v = getCleanNumericValue(row[yIdx]);
+    if (!isNaN(v)) groups[key] = (groups[key] || 0) + v;
+  });
+
+  let entries = Object.entries(groups);
+  if (entries.length > 20) entries = entries.sort((a,b) => b[1]-a[1]).slice(0, 20);
+
+  const labels = entries.map(e => e[0]);
+  const data = entries.map(e => e[1]);
+
+  const palette = ['rgba(99,102,241,0.75)','rgba(139,92,246,0.75)','rgba(16,185,129,0.75)','rgba(245,158,11,0.75)','rgba(239,68,68,0.75)','rgba(59,130,246,0.75)','rgba(234,179,8,0.75)','rgba(236,72,153,0.75)'];
+  const colors = labels.map((_, i) => palette[i % palette.length]);
+
+  return { labels, datasets: [{ label: headerNames[yCol] || yCol, data, backgroundColor: colors, borderColor: colors.map(c => c.replace('0.75','1')), borderWidth: 1.5 }] };
+}
+
+// Build Chart.js data from pre-computed labels/data arrays (for trend results)
+function buildChatChartDataFromConfig(cfg) {
+  const palette = ['rgba(99,102,241,0.85)','rgba(139,92,246,0.85)'];
+  return {
+    labels: cfg.labels,
+    datasets: [{
+      label: cfg.label || 'Value',
+      data: cfg.data,
+      backgroundColor: cfg.type === 'line' ? 'rgba(99,102,241,0.1)' : palette,
+      borderColor: 'rgba(99,102,241,1)',
+      borderWidth: 2,
+      fill: cfg.type === 'line',
+      tension: 0.4,
+      pointRadius: 3,
+      pointHoverRadius: 5
+    }]
+  };
+}
+
+// Called from action buttons inside analyst cards: renders a chart directly into the chat feed
+window.renderChatChart = function(cfg) {
+  if (!cfg || !cfg.type) return;
+  const chartId = 'chat-chart-' + Date.now();
+  const label = cfg.label || `${headerNames[cfg.yCol]||cfg.yCol||''} by ${headerNames[cfg.xCol]||cfg.xCol||''}`.trim();
+
+  // Build chart.js compatible type
+  const isHBar = cfg.type === 'horizontalBar';
+  const chartjsType = isHBar ? 'bar' : (cfg.type || 'bar');
+  const indexAxis = isHBar ? 'y' : 'x';
+
+  // Compose chartData
+  let chartData;
+  if (cfg.labels && cfg.data) {
+    // Pre-computed data (trend config)
+    chartData = buildChatChartDataFromConfig(cfg);
+  } else if (cfg.xCol && cfg.yCol) {
+    chartData = buildChatChartData(cfg.xCol, cfg.yCol, cfg.type);
+  }
+
+  if (!chartData) {
+    showToast('Not enough data to render chart.', 'warning');
+    return;
+  }
+
+  // Push a chart message into chat history
+  const chartMsgId = 'chart-msg-' + Date.now();
+  aiActiveChatHistory.push({
+    sender: 'assistant',
+    msgId: chartMsgId,
+    text: label,
+    chartConfig: { chartjsType, indexAxis, label, chartData, xCol: cfg.xCol, yCol: cfg.yCol }
+  });
+  saveChatHistoryToWorkspace();
+  renderAiChatHistory();
+  showToast('Chart rendered in chat!', 'success');
+};
+
+// Download chart canvas as PNG
+window.downloadChatChartPng = function(chartId) {
+  const inst = window.chatChartInstances[chartId];
+  if (!inst) return;
+  const a = document.createElement('a');
+  a.href = inst.canvas.toDataURL('image/png');
+  a.download = 'oneclick_chart.png';
+  a.click();
+};
+
+// Download chart as SVG (PNG wrapped in SVG)
+window.downloadChatChartSvg = function(chartId) {
+  const inst = window.chatChartInstances[chartId];
+  if (!inst) return;
+  const png = inst.canvas.toDataURL('image/png');
+  const w = inst.canvas.width, h = inst.canvas.height;
+  const svgContent = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}"><image href="${png}" width="${w}" height="${h}"/></svg>`;
+  const blob = new Blob([svgContent], { type: 'image/svg+xml' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'oneclick_chart.svg';
+  a.click();
+};
+
+// Download chart as PDF via print window
+window.downloadChatChartPdf = function(chartId) {
+  const inst = window.chatChartInstances[chartId];
+  if (!inst) return;
+  const png = inst.canvas.toDataURL('image/png');
+  const win = window.open('', '_blank');
+  win.document.write(`<!DOCTYPE html><html><head><style>body{margin:0;display:flex;align-items:center;justify-content:center;height:100vh;}img{max-width:100%;}</style></head><body><img src="${png}"/></body></html>`);
+  win.document.close();
+  setTimeout(() => { win.print(); win.close(); }, 500);
+};
+
+// Copy chart insight summary to clipboard
+window.copyChatChartInsight = function(chartId) {
+  const inst = window.chatChartInstances[chartId];
+  if (!inst) return;
+  const ds = inst.data.datasets[0];
+  const labels = inst.data.labels || [];
+  const data = ds ? ds.data : [];
+  const rows = labels.map((l, i) => `${l}: ${Array.isArray(data[i]) ? JSON.stringify(data[i]) : data[i]}`);
+  const text = `OneClick Insight: ${ds ? ds.label : ''}\n${rows.join('\n')}`;
+  navigator.clipboard.writeText(text).then(() => showToast('Insight copied to clipboard!', 'success'));
+};
+
+// Add a chat chart to the dashboard as a widget
+window.addChatChartToDashboard = function(chartId, xCol, yCol, chartType) {
+  const newId = 'ai-chat-' + Date.now();
+  const title = `${headerNames[yCol]||yCol||''} by ${headerNames[xCol]||xCol||''}`.trim() || 'Chart';
+  const widget = { id: newId, title, type: chartType === 'horizontalBar' ? 'bar' : chartType, xCol: xCol||'', yCol: yCol||'', yCol2: '', agg: 'sum', w: 6 };
+  dashboardWidgets.push(widget);
+  renderDashboardCanvas();
+  showToast('Chart added to dashboard!', 'success');
+  logActivity('Create Chart', `Added ${chartType} chart via in-chat action.`, 'Success');
+};
 // 7. Automated Widget Injection Commands
 window.injectKpiCard = function(colKey, agg) {
   const newId = 'ai-kpi-' + Date.now();
@@ -11249,39 +12312,12 @@ window.injectTrendChart = function(xCol, yCol) {
   logActivity("Create Chart", `Added Trend Line chart widget for ${title} via AI Analyst.`, "Success");
 };
 
+// Task 7: Chart commands now render directly in chat; dashboard addition is user-initiated
 function executeChartCommand(plan) {
-  const newId = 'ai-chart-' + Date.now();
-  const title = `${headerNames[plan.yCol] || plan.yCol} by ${headerNames[plan.xCol] || plan.xCol}`;
-  let finalW = plan.chartType === 'table' ? 12 : 6;
-
-  const widget = {
-    id: newId,
-    title: title,
-    type: plan.chartType,
-    xCol: plan.xCol,
-    yCol: plan.yCol,
-    yCol2: '',
-    agg: plan.agg,
-    w: finalW
-  };
-
-  dashboardWidgets.push(widget);
-  renderDashboardCanvas();
-
-  aiActiveChatHistory.push({
-    sender: 'assistant',
-    text: `Successfully created ${plan.chartType} chart for ${title} and added it to your dashboard.`,
-    contentHtml: `
-      <div style="font-size:12px; color:var(--text-primary);">
-        ✨ <strong>Visual Created:</strong> Added <strong>${plan.chartType.toUpperCase()}</strong> chart for ${title} to dashboard layout.
-      </div>
-    `
-  });
-  saveChatHistoryToWorkspace();
-  renderAiChatHistory();
-  showToast("Chart created and added!", "success");
-  
-  logActivity("Create Chart", `Added ${plan.chartType} widget via AI Analyst commands.`, "Success");
+  const title = ${headerNames[plan.yCol] || plan.yCol || ''} by .trim();
+  const cfg = { type: plan.chartType, xCol: plan.xCol, yCol: plan.yCol, label: title };
+  window.renderChatChart(cfg);
+  logActivity('Create Chart', Rendered  chart in chat for ., 'Success');
 }
 
 function executeKpiCommand(plan) {
@@ -11317,6 +12353,167 @@ function executeKpiCommand(plan) {
   
   logActivity("Create KPI", `Added KPI widget via AI Analyst commands.`, "Success");
 }
+
+function executeModifyChartCommand(plan) {
+  if (dashboardWidgets.length === 0) {
+    aiActiveChatHistory.push({
+      sender: 'assistant',
+      text: "No charts found on the dashboard to modify.",
+      contentHtml: `<p style="font-size: 12px; color: var(--text-secondary); margin: 0;">⚠️ No charts found on the dashboard to modify.</p>`
+    });
+    saveChatHistoryToWorkspace();
+    renderAiChatHistory();
+    return;
+  }
+
+  let widgetToModify = null;
+  
+  if (plan.xCol) {
+    widgetToModify = dashboardWidgets.slice().reverse().find(w => w.xCol === plan.xCol || w.yCol === plan.xCol);
+  }
+  
+  if (!widgetToModify) {
+    widgetToModify = dashboardWidgets.slice().reverse().find(w => w.type !== 'kpi');
+  }
+
+  if (!widgetToModify) {
+    aiActiveChatHistory.push({
+      sender: 'assistant',
+      text: "No chart widget found to modify.",
+      contentHtml: `<p style="font-size: 12px; color: var(--text-secondary); margin: 0;">⚠️ No chart widget found to modify.</p>`
+    });
+    saveChatHistoryToWorkspace();
+    renderAiChatHistory();
+    return;
+  }
+
+  let changesText = [];
+  if (plan.chartType) {
+    widgetToModify.type = plan.chartType;
+    changesText.push(`type to <strong>${plan.chartType.toUpperCase()}</strong>`);
+  }
+  if (plan.width) {
+    widgetToModify.w = plan.width;
+    changesText.push(`width to <strong>${plan.width} cols</strong>`);
+  }
+
+  renderDashboardCanvas();
+
+  aiActiveChatHistory.push({
+    sender: 'assistant',
+    text: `Updated dashboard widget ${widgetToModify.title}.`,
+    contentHtml: `
+      <div style="font-size:12px; color:var(--text-primary);">
+        🔧 <strong>Widget Updated:</strong> Modified <strong>${widgetToModify.title}</strong> (${changesText.join(' and ')}).
+      </div>
+    `,
+    suggestions: ["Resize chart to 12 columns", "Change chart to pie", "Export PDF report"]
+  });
+  saveChatHistoryToWorkspace();
+  renderAiChatHistory();
+  showToast("Widget updated!", "success");
+
+  logActivity("Modify Chart", `Modified widget ${widgetToModify.id} settings.`, "Success");
+}
+
+function executeReportGeneration(plan) {
+  const stats = runStatisticalInsights();
+  const datasetNameEl = document.getElementById('ws-dataset-name');
+  const datasetName = datasetNameEl ? datasetNameEl.innerText.trim() : "Dataset";
+  
+  const totalRows = gridData.length;
+  const colCount = headers.length;
+  
+  let totalNumVal = 0;
+  const numCol = currentDatasetContext.numericColumns[0];
+  if (numCol) {
+    const colIdx = headers.indexOf(numCol);
+    gridData.forEach(row => {
+      const v = getCleanNumericValue(row[colIdx]);
+      if (!isNaN(v)) totalNumVal += v;
+    });
+  }
+  
+  const numColLabel = numCol ? (headerNames[numCol] || numCol) : "Records";
+  const formattedTotal = numCol ? formatKpiValue(totalNumVal, numCol, "sum") : totalRows.toLocaleString();
+
+  const findingsList = stats.findings.map(f => `<li>🔍 ${f}</li>`).join('') || "<li>🔍 No major anomalies detected.</li>";
+  const risksList = stats.risks.map(r => `<li>⚠️ ${r}</li>`).join('') || "<li>✅ No significant concentration risks identified.</li>";
+  const recommendationsList = stats.recommendations.map(rec => `<li>🎯 ${rec}</li>`).join('') || "<li>🎯 Continue regular metrics monitoring.</li>";
+
+  const contentHtml = `
+    <div class="ai-msg-response-card report-card" style="background: rgba(255,255,255,0.015); border:1px solid var(--border-color); border-radius: 10px; padding: 16px; width: 100%;">
+      <div style="font-weight: 700; font-size:13.5px; color:var(--primary); margin-bottom:12px; border-bottom:1px solid rgba(255,255,255,0.06); padding-bottom:6px; display:flex; align-items:center; gap:8px;">
+        📝 Executive Analyst Summary: ${datasetName}
+      </div>
+      
+      <div style="margin-bottom:12px;">
+        <h4 style="font-size:11.5px; margin:0 0 6px 0; color:var(--text-primary); font-weight: 700;">📊 Dataset Overview</h4>
+        <div style="display:flex; gap:16px; background:rgba(0,0,0,0.15); padding:8px 12px; border-radius:6px; font-size:11px;">
+          <div><span style="color:var(--text-muted);">Rows:</span> <strong>${totalRows.toLocaleString()}</strong></div>
+          <div><span style="color:var(--text-muted);">Columns:</span> <strong>${colCount}</strong></div>
+          <div><span style="color:var(--text-muted);">Total ${numColLabel}:</span> <strong>${formattedTotal}</strong></div>
+        </div>
+      </div>
+
+      <div style="margin-bottom:12px;">
+        <h4 style="font-size:11.5px; margin:0 0 6px 0; color:var(--text-primary); font-weight: 700;">💡 Key Findings</h4>
+        <ul style="margin:0; padding-left:16px; font-size:11.5px; color:var(--text-secondary); line-height:1.5;">
+          ${findingsList}
+        </ul>
+      </div>
+
+      <div style="margin-bottom:12px;">
+        <h4 style="font-size:11.5px; margin:0 0 6px 0; color:var(--text-primary); font-weight: 700;">⚠️ Identified Risks</h4>
+        <ul style="margin:0; padding-left:16px; font-size:11.5px; color:var(--text-secondary); line-height:1.5;">
+          ${risksList}
+        </ul>
+      </div>
+
+      <div style="margin-bottom:14px;">
+        <h4 style="font-size:11.5px; margin:0 0 6px 0; color:var(--text-primary); font-weight: 700;">🎯 Strategic Recommendations</h4>
+        <ul style="margin:0; padding-left:16px; font-size:11.5px; color:var(--text-secondary); line-height:1.5;">
+          ${recommendationsList}
+        </ul>
+      </div>
+
+      <div style="border-top:1px solid rgba(255,255,255,0.06); padding-top:10px; display:flex; flex-wrap:wrap; gap:6px;">
+        <button class="ai-response-action-btn" onclick="executeExportCommand({type:'export_command', format:'pdf'})">📥 Export PDF</button>
+        <button class="ai-response-action-btn" onclick="executeExportCommand({type:'export_command', format:'pptx'})">📊 PPTX Slides</button>
+        <button class="ai-response-action-btn" onclick="executeExportCommand({type:'export_command', format:'docx'})">📄 Word Doc</button>
+        <button class="ai-response-action-btn" onclick="window.saveReportToWorkspaceStorage()">💾 Save to Storage</button>
+      </div>
+    </div>
+  `;
+
+  aiActiveChatHistory.push({
+    sender: 'assistant',
+    text: `Executive summary generated for ${datasetName}.`,
+    contentHtml: contentHtml,
+    suggestions: ["Show profit trend", "Top 5 products by revenue", "Show dataset schema"]
+  });
+  saveChatHistoryToWorkspace();
+  renderAiChatHistory();
+  showToast("Executive summary report compiled!", "success");
+  
+  logActivity("Generate Report", `Compiled executive summary for ${datasetName}.`, "Success");
+}
+
+window.saveReportToWorkspaceStorage = function() {
+  const datasetNameEl = document.getElementById('ws-dataset-name');
+  const datasetName = datasetNameEl ? datasetNameEl.innerText.trim() : "raw_dataset";
+  const reportName = `AI_Summary_${datasetName.replace(/[^a-zA-Z0-9]/g, '_')}`;
+  
+  try {
+    const key = saveDashboardToStorage(reportName);
+    showToast(`Saved report: ${reportName} to storage!`, "success");
+    if (typeof loadAndRenderReportsList === 'function') {
+      loadAndRenderReportsList();
+    }
+  } catch (err) {
+    showToast("Failed to save report: " + err.message, "error");
+  }
+};
 
 // 8. Safe Preprocessing Spreadsheet Actions Confirmation & Resolvers
 function showAiSpreadsheetConfirmation(plan) {
@@ -11566,6 +12763,513 @@ window.initHistoryView = function() {
   `).join('');
 
   container.innerHTML = html;
+};
+
+/* ==================== ONECLICK FLOATING AI ANALYST V2 LOGIC ==================== */
+
+function getCopilotPositionClass() {
+  const pos = localStorage.getItem('oneclick_copilot_position') || 'Right';
+  return pos.toLowerCase() === 'left' ? 'fab-bottom-left' : 'fab-bottom-right';
+}
+
+window.toggleAiCopilot = function(forceOpen) {
+  const drawer = document.getElementById('ai-copilot-drawer');
+  const fab = document.getElementById('ai-copilot-fab');
+  if (!drawer || !fab) return;
+
+  const isOpen = drawer.classList.contains('open');
+  const shouldOpen = typeof forceOpen === 'boolean' ? forceOpen : !isOpen;
+  const posClass = getCopilotPositionClass();
+
+  if (shouldOpen) {
+    drawer.className = `ai-copilot-panel ${posClass} open`;
+    fab.className = `ai-copilot-fab ${posClass} state-listening`;
+    
+    // Auto focus
+    const input = document.getElementById('ai-prompt-input');
+    if (input) {
+      setTimeout(() => {
+        input.focus();
+      }, 200);
+    }
+    
+    updateCopilotHeaderDetails();
+    
+    // Hide notifications badge
+    const badge = document.getElementById('ai-copilot-badge');
+    if (badge) badge.style.display = 'none';
+  } else {
+    drawer.className = `ai-copilot-panel ${posClass}`;
+    fab.className = `ai-copilot-fab ${posClass} state-idle`;
+  }
+};
+
+window.toggleCopilotSide = function() {
+  const currentPos = localStorage.getItem('oneclick_copilot_position') || 'Right';
+  const newPos = currentPos.toLowerCase() === 'right' ? 'Left' : 'Right';
+  localStorage.setItem('oneclick_copilot_position', newPos);
+  
+  // Update UI Elements
+  const posClass = newPos.toLowerCase() === 'left' ? 'fab-bottom-left' : 'fab-bottom-right';
+  const oldPosClass = newPos.toLowerCase() === 'left' ? 'fab-bottom-right' : 'fab-bottom-left';
+  
+  const fab = document.getElementById('ai-copilot-fab');
+  const drawer = document.getElementById('ai-copilot-drawer');
+  
+  if (fab) {
+    fab.classList.remove(oldPosClass);
+    fab.classList.add(posClass);
+  }
+  if (drawer) {
+    drawer.classList.remove(oldPosClass);
+    drawer.classList.add(posClass);
+  }
+  
+  // Sync the settings select dropdown if present
+  const select = document.getElementById('settings-copilot-position');
+  if (select) {
+    select.value = newPos;
+  }
+  
+  showToast(`Copilot panel moved to the ${newPos.toLowerCase()} side!`, "success");
+};
+
+function updateCopilotHeaderDetails() {
+  const nameLabel = document.getElementById('ai-dataset-name-label');
+  const rowsLabel = document.getElementById('ai-dataset-rows-label');
+  const colsLabel = document.getElementById('ai-dataset-cols-label');
+  
+  const datasetNameEl = document.getElementById('ws-dataset-name');
+  const datasetName = datasetNameEl ? datasetNameEl.innerText.trim() : "";
+  
+  if (nameLabel) {
+    nameLabel.innerText = datasetName || (gridData && gridData.length > 0 ? "Active Dataset" : "No active dataset");
+  }
+  if (rowsLabel) {
+    rowsLabel.innerText = gridData && gridData.length > 0 ? `${gridData.length.toLocaleString()} rows` : "0 rows";
+  }
+  if (colsLabel) {
+    colsLabel.innerText = headers && headers.length > 0 ? `${headers.length} cols` : "0 cols";
+  }
+}
+
+function executeExportCommand(plan) {
+  let formatName = "";
+  try {
+    if (plan.format === "pdf") {
+      formatName = "PDF Report";
+      if (typeof exportToPDF === 'function') exportToPDF();
+      else throw new Error("PDF exporter not available.");
+    } else if (plan.format === "pptx") {
+      formatName = "PowerPoint Report";
+      if (typeof exportToPPTX === 'function') exportToPPTX();
+      else throw new Error("PPTX exporter not available.");
+    } else if (plan.format === "docx") {
+      formatName = "Word Document";
+      if (typeof exportToWord === 'function') exportToWord();
+      else throw new Error("Word exporter not available.");
+    } else if (plan.format === "json") {
+      formatName = "Dashboard JSON Layout";
+      if (typeof exportDashboardJSON === 'function') exportDashboardJSON();
+      else throw new Error("Dashboard JSON exporter not available.");
+    } else {
+      formatName = "CSV Spreadsheet";
+      if (typeof exportCSVSnapshot === 'function') exportCSVSnapshot();
+      else throw new Error("CSV exporter not available.");
+    }
+    
+    aiActiveChatHistory.push({
+      sender: 'assistant',
+      text: `Triggered export for ${formatName}.`,
+      contentHtml: `
+        <div style="font-size:12px; color:var(--text-primary);">
+          📤 <strong>Export Triggered:</strong> Successfully started generating and exporting your <strong>${formatName}</strong>. Check your downloads!
+        </div>
+      `
+    });
+  } catch (err) {
+    aiActiveChatHistory.push({
+      sender: 'assistant',
+      text: `Failed to export: ${err.message}`,
+      contentHtml: `
+        <div style="font-size:12px; color:var(--error);">
+          ❌ <strong>Export Failed:</strong> ${err.message}
+        </div>
+      `
+    });
+  }
+  saveChatHistoryToWorkspace();
+  renderAiChatHistory();
+}
+
+
+
+// Generate Dataset Snapshot welcome card
+function generateDatasetSnapshotHtml() {
+  const datasetNameEl = document.getElementById('ws-dataset-name');
+  const datasetName = datasetNameEl ? datasetNameEl.innerText.trim() : "raw_dataset";
+  
+  if (!gridData || gridData.length === 0) {
+    return `
+      <div class="ai-message assistant" style="display: flex; gap: 12px; max-width: 85%;">
+        <div class="ai-msg-avatar" style="width: 28px; height: 28px; border-radius: 50%; background: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0;">🤖</div>
+        <div class="ai-msg-body" style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-color); border-radius: 0 12px 12px 12px; padding: 12px 16px;">
+          <h3 style="font-size: 13.5px; font-weight: 700; margin: 0 0 6px 0; color: var(--text-primary);">Welcome to OneClick Copilot</h3>
+          <p style="font-size: 12px; color: var(--text-secondary); margin: 0; line-height: 1.5;">
+            Please load a dataset workspace to start analyzing. I can perform metrics calculations, visualization edits, data cleansing, and report exports.
+          </p>
+        </div>
+      </div>
+    `;
+  }
+  
+  // Profile the columns
+  const profile = profileColumns();
+  
+  // Calculate duplicates & missing values
+  let missing = 0;
+  gridData.forEach(row => {
+    row.forEach(cell => {
+      if (cell === undefined || cell === null || String(cell).trim() === "") missing++;
+    });
+  });
+  const totalCells = gridData.length * headers.length;
+  const missingPct = totalCells > 0 ? ((missing / totalCells) * 100).toFixed(1) : 0;
+  
+  // Duplicates
+  let duplicates = 0;
+  const seenRows = new Set();
+  gridData.forEach(row => {
+    const str = JSON.stringify(row);
+    if (seenRows.has(str)) {
+      duplicates++;
+    } else {
+      seenRows.add(str);
+    }
+  });
+  
+  // Data Quality Score
+  const missingPenalty = totalCells > 0 ? (missing / totalCells) * 100 : 0;
+  const duplicatePenalty = gridData.length > 0 ? (duplicates / gridData.length) * 100 : 0;
+  const qualityScore = Math.max(0, Math.round(100 - missingPenalty - duplicatePenalty));
+  const qualityColor = qualityScore >= 80 ? 'var(--success, #10b981)' : qualityScore >= 50 ? 'var(--warning, #f59e0b)' : 'var(--error, #ef4444)';
+
+  // Column details
+  const numColNames = profile.numCols.map(c => headerNames[c] || c).join(', ');
+  const dimColNames = [...profile.catCols, ...profile.dateCols, ...profile.textCols].map(c => headerNames[c] || c).join(', ');
+  
+  // Find top category
+  let topCategoryInfo = "N/A";
+  const catCol = profile.catCols[0];
+  const numCol = profile.numCols[0];
+  if (catCol && numCol) {
+    const catIdx = headers.indexOf(catCol);
+    const numIdx = headers.indexOf(numCol);
+    if (catIdx !== -1 && numIdx !== -1) {
+      const catSums = {};
+      gridData.forEach(row => {
+        const c = String(row[catIdx] || "Unknown").trim();
+        const v = getCleanNumericValue(row[numIdx]);
+        if (!isNaN(v)) {
+          catSums[c] = (catSums[c] || 0) + v;
+        }
+      });
+      const sorted = Object.entries(catSums).sort((a,b) => b[1] - a[1]);
+      if (sorted.length > 0) {
+        topCategoryInfo = `${sorted[0][0]} (${formatKpiValue(sorted[0][1], numCol, 'sum')})`;
+      }
+    }
+  }
+
+  return `
+    <div class="ai-message assistant" style="display: flex; gap: 12px; max-width: 90%;">
+      <div class="ai-msg-avatar" style="width: 28px; height: 28px; border-radius: 50%; background: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0;">🤖</div>
+      <div class="ai-msg-body" style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-color); border-radius: 12px; padding: 16px; width: 100%;">
+        <div style="font-weight: 700; font-size: 13.5px; color: var(--primary); margin-bottom: 12px; display: flex; align-items: center; gap: 6px;">
+          📊 Dataset Snapshot: <span style="color: #ffffff;">${datasetName}</span>
+        </div>
+        
+        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 14px; background: rgba(0, 0, 0, 0.2); padding: 10px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.04);">
+          <div style="font-size: 11px;"><span style="color: var(--text-muted);">Rows:</span> <strong style="color: #ffffff;">${gridData.length.toLocaleString()}</strong></div>
+          <div style="font-size: 11px;"><span style="color: var(--text-muted);">Columns:</span> <strong style="color: #ffffff;">${headers.length}</strong></div>
+          <div style="font-size: 11px;"><span style="color: var(--text-muted);">Missing:</span> <strong style="color: #ffffff;">${missing.toLocaleString()} (${missingPct}%)</strong></div>
+          <div style="font-size: 11px;"><span style="color: var(--text-muted);">Duplicates:</span> <strong style="color: #ffffff;">${duplicates.toLocaleString()}</strong></div>
+          <div style="font-size: 11px; grid-column: span 2;"><span style="color: var(--text-muted);">Quality Score:</span> <strong style="color: ${qualityColor};">${qualityScore}%</strong></div>
+        </div>
+
+        <div style="font-size: 11.5px; color: var(--text-secondary); display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; border-top: 1px solid rgba(255, 255, 255, 0.04); padding-top: 8px; text-align: left;">
+          <div><strong>Metrics:</strong> <span style="font-size: 10.5px; color: var(--text-muted);">${numColNames || 'None'}</span></div>
+          <div><strong>Dimensions:</strong> <span style="font-size: 10.5px; color: var(--text-muted);">${dimColNames || 'None'}</span></div>
+          <div><strong>Top Category:</strong> <span style="font-size: 11px; color: #ffffff;">${topCategoryInfo}</span></div>
+        </div>
+
+        <div style="display: flex; flex-wrap: wrap; gap: 6px; border-top: 1px solid rgba(255, 255, 255, 0.04); padding-top: 10px;">
+          <button class="ai-response-action-btn" onclick="setAiPrompt('build dashboard')" style="font-size: 10px; padding: 5px 8px;">📊 Generate Dashboard</button>
+          <button class="ai-response-action-btn" onclick="setAiPrompt('What are key findings?')" style="font-size: 10px; padding: 5px 8px;">💡 Find Insights</button>
+          <button class="ai-response-action-btn" onclick="setAiPrompt('show columns')" style="font-size: 10px; padding: 5px 8px;">📋 Show Columns</button>
+          <button class="ai-response-action-btn" onclick="setAiPrompt('generate executive summary')" style="font-size: 10px; padding: 5px 8px;">📝 Executive Summary</button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+window.renderAiChatHistory = function() {
+  const feed = document.getElementById('ai-chat-feed');
+  if (!feed) return;
+
+  let html = generateDatasetSnapshotHtml();
+
+  if (aiActiveChatHistory.length === 0) {
+    html += `
+      <div class="ai-drawer-suggestions-wrapper" style="margin-top: 12px;">
+        <div class="ai-drawer-suggestions-title">Suggested Prompts</div>
+        <div class="ai-drawer-suggestions-grid">
+          <button class="ai-drawer-suggest-btn" onclick="setAiPrompt('What is total revenue?')">What is total revenue?</button>
+          <button class="ai-drawer-suggest-btn" onclick="setAiPrompt('Top 10 products')">Top 10 products</button>
+          <button class="ai-drawer-suggest-btn" onclick="setAiPrompt('Show revenue by category chart')">Revenue by category chart</button>
+          <button class="ai-drawer-suggest-btn" onclick="setAiPrompt('Show profit trend')">Show profit trend</button>
+          <button class="ai-drawer-suggest-btn" onclick="setAiPrompt('Why are sales declining?')">Why are sales declining?</button>
+          <button class="ai-drawer-suggest-btn" onclick="setAiPrompt('Generate executive summary')">Generate executive summary</button>
+          <button class="ai-drawer-suggest-btn" onclick="setAiPrompt('Find anomalies')">Find anomalies</button>
+          <button class="ai-drawer-suggest-btn" onclick="setAiPrompt('Average order value')">Average order value</button>
+        </div>
+      </div>
+    `;
+  } else {
+    aiActiveChatHistory.forEach((msg, msgIdx) => {
+      const isUser = msg.sender === 'user';
+      const avatar = isUser ? '👤' : '🤖';
+      const msgClass = isUser ? 'user' : 'assistant';
+
+      if (!isUser && msg.chartConfig) {
+        // ── In-chat chart bubble ──
+        const chartId = msg.msgId || ('chart-' + msgIdx);
+        const { chartjsType, indexAxis, label, xCol, yCol } = msg.chartConfig;
+        html += `
+          <div class="ai-message assistant" style="display:flex;gap:12px;max-width:95%;margin-top:10px;">
+            <div class="ai-msg-avatar" style="width:28px;height:28px;border-radius:50%;background:var(--primary);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;">🤖</div>
+            <div class="ai-chart-wrapper-card">
+              <div class="ai-chart-card-title">${label || 'Chart'}</div>
+              <div class="ai-chart-canvas-wrap">
+                <canvas id="${chartId}" class="ai-chat-canvas"></canvas>
+              </div>
+              <div class="ai-chart-action-bar">
+                <button class="ai-chart-action-btn" onclick="downloadChatChartPng('${chartId}')">⬇ PNG</button>
+                <button class="ai-chart-action-btn" onclick="downloadChatChartSvg('${chartId}')">⬇ SVG</button>
+                <button class="ai-chart-action-btn" onclick="downloadChatChartPdf('${chartId}')">⬇ PDF</button>
+                <button class="ai-chart-action-btn" onclick="addChatChartToDashboard('${chartId}','${xCol||''}','${yCol||''}','${chartjsType}')">📌 Add to Dashboard</button>
+                <button class="ai-chart-action-btn" onclick="copyChatChartInsight('${chartId}')">📋 Copy Insight</button>
+              </div>
+            </div>
+          </div>`;
+      } else {
+        html += `
+          <div class="ai-message ${msgClass}" style="display: flex; gap: 12px; max-width: 92%; margin-top: 10px;">
+            <div class="ai-msg-avatar" style="width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0;">${avatar}</div>
+            <div class="ai-msg-body" style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-color); padding: 12px 16px; border-radius: ${isUser ? '12px 0 12px 12px' : '0 12px 12px 12px'}; flex:1; min-width:0;">
+              ${msg.contentHtml || `<p style="font-size: 12px; color: var(--text-secondary); margin: 0; line-height: 1.5;">${msg.text}</p>`}
+            </div>
+          </div>`;
+      }
+    });
+
+    // Follow-up suggestions
+    const lastMsg = aiActiveChatHistory[aiActiveChatHistory.length - 1];
+    if (lastMsg && lastMsg.sender === 'assistant' && lastMsg.suggestions && lastMsg.suggestions.length > 0) {
+      html += `
+        <div class="ai-drawer-suggestions-wrapper" style="margin-top: 12px; padding: 0 12px 12px 12px; animation: slideUp 0.3s ease-out;">
+          <div class="ai-drawer-suggestions-title" style="font-size: 10px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 6px;">Follow-up Actions</div>
+          <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+            ${lastMsg.suggestions.map(s => `<button class="ai-response-action-btn" onclick="setAiPrompt('${s}')" style="font-size: 10.5px; padding: 5px 8px; border-radius: 16px;">${s}</button>`).join('')}
+          </div>
+        </div>`;
+    }
+  }
+
+  feed.innerHTML = html;
+  feed.scrollTop = feed.scrollHeight;
+
+  // ── Task 5: Paint Chart.js instances for chart messages ──
+  if (typeof Chart !== 'undefined') {
+    aiActiveChatHistory.forEach((msg, msgIdx) => {
+      if (msg.sender !== 'assistant' || !msg.chartConfig) return;
+      const chartId = msg.msgId || ('chart-' + msgIdx);
+      const canvas = document.getElementById(chartId);
+      if (!canvas) return;
+
+      // Destroy previous instance if exists
+      if (window.chatChartInstances && window.chatChartInstances[chartId]) {
+        try { window.chatChartInstances[chartId].destroy(); } catch(e) {}
+      }
+
+      const { chartjsType, indexAxis, label, chartData } = msg.chartConfig;
+      try {
+        const instance = new Chart(canvas, {
+          type: chartjsType || 'bar',
+          data: chartData,
+          options: {
+            indexAxis: indexAxis || 'x',
+            responsive: true,
+            maintainAspectRatio: false,
+            animation: { duration: 600, easing: 'easeOutQuart' },
+            plugins: {
+              legend: { display: true, position: 'top', labels: { color: '#94a3b8', font: { size: 11 }, boxWidth: 12 } },
+              tooltip: { mode: 'index', intersect: false, backgroundColor: 'rgba(15,23,42,0.92)', titleColor: '#e2e8f0', bodyColor: '#94a3b8', borderColor: 'rgba(255,255,255,0.1)', borderWidth: 1 }
+            },
+            scales: chartjsType === 'pie' || chartjsType === 'doughnut' ? {} : {
+              x: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#64748b', font: { size: 10 }, maxRotation: 45 } },
+              y: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#64748b', font: { size: 10 } } }
+            }
+          }
+        });
+        if (!window.chatChartInstances) window.chatChartInstances = {};
+        window.chatChartInstances[chartId] = instance;
+      } catch(e) { console.warn('Chart.js render error:', e); }
+    });
+  }
+};
+
+window.initFloatingCopilot = function() {
+  const fab = document.getElementById('ai-copilot-fab');
+  const closeBtn = document.getElementById('btn-ai-close-drawer');
+  const posToggleBtn = document.getElementById('btn-ai-toggle-position');
+  const promptInput = document.getElementById('ai-prompt-input');
+  const btnSend = document.getElementById('btn-ai-send');
+  const btnClear = document.getElementById('btn-ai-clear-chat');
+  const btnPdf = document.getElementById('btn-ai-quick-pdf');
+  const btnCsv = document.getElementById('btn-ai-quick-csv');
+  const btnAttach = document.getElementById('btn-ai-attach');
+  const btnRemoveAttach = document.getElementById('btn-remove-attachment');
+  const attachBar = document.getElementById('ai-attachment-bar');
+  const attachedFileName = document.getElementById('attached-file-name');
+
+  // Initialize position class on load
+  const initialSide = localStorage.getItem('oneclick_copilot_position') || 'Right';
+  const posClass = initialSide.toLowerCase() === 'left' ? 'fab-bottom-left' : 'fab-bottom-right';
+  
+  if (fab) {
+    fab.className = `ai-copilot-fab ${posClass} state-idle`;
+    fab.onclick = () => window.toggleAiCopilot();
+  }
+  
+  const drawer = document.getElementById('ai-copilot-drawer');
+  if (drawer) {
+    drawer.className = `ai-copilot-panel ${posClass}`;
+  }
+
+  if (closeBtn) {
+    closeBtn.onclick = () => window.toggleAiCopilot(false);
+  }
+
+  if (posToggleBtn) {
+    posToggleBtn.onclick = () => window.toggleCopilotSide();
+  }
+
+  // Textarea listeners
+  if (promptInput) {
+    promptInput.onkeydown = (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        handleAiPromptSubmit();
+      }
+    };
+    
+    // Auto-grow textarea height
+    promptInput.addEventListener('input', () => {
+      promptInput.style.height = 'auto';
+      promptInput.style.height = promptInput.scrollHeight + 'px';
+    });
+  }
+
+  if (btnSend) btnSend.onclick = handleAiPromptSubmit;
+
+  if (btnClear) {
+    btnClear.onclick = () => {
+      aiActiveChatHistory = [];
+      saveChatHistoryToWorkspace();
+      renderAiChatHistory();
+    };
+  }
+
+  // Quick Action Buttons
+  if (btnPdf) {
+    btnPdf.onclick = () => executeExportCommand({ type: "export_command", format: "pdf" });
+  }
+  if (btnCsv) {
+    btnCsv.onclick = () => executeExportCommand({ type: "export_command", format: "csv" });
+  }
+
+  // Attachment Button
+  if (btnAttach) {
+    btnAttach.onclick = () => {
+      if (attachBar) {
+        const datasetNameEl = document.getElementById('ws-dataset-name');
+        const filename = datasetNameEl ? datasetNameEl.innerText.trim() : "";
+        if (filename && gridData && gridData.length > 0) {
+          attachedFileName.innerText = filename;
+          attachBar.style.display = 'flex';
+          showToast("Dataset file attached as grounding context!", "success");
+        } else {
+          showToast("Please load a dataset workspace first.", "warning");
+        }
+      }
+    };
+  }
+
+  if (btnRemoveAttach) {
+    btnRemoveAttach.onclick = () => {
+      if (attachBar) attachBar.style.display = 'none';
+    };
+  }
+
+  // Settings dropdown preferences sync
+  const settingsSelect = document.getElementById('settings-copilot-position');
+  if (settingsSelect) {
+    settingsSelect.value = initialSide;
+    settingsSelect.onchange = (e) => {
+      const chosenSide = e.target.value;
+      localStorage.setItem('oneclick_copilot_position', chosenSide);
+      
+      const newPosClass = chosenSide.toLowerCase() === 'left' ? 'fab-bottom-left' : 'fab-bottom-right';
+      const oldPosClass = chosenSide.toLowerCase() === 'left' ? 'fab-bottom-right' : 'fab-bottom-left';
+      
+      if (fab) {
+        fab.classList.remove(oldPosClass);
+        fab.classList.add(newPosClass);
+      }
+      if (drawer) {
+        drawer.classList.remove(oldPosClass);
+        drawer.classList.add(newPosClass);
+      }
+      
+      showToast(`AI Copilot position updated to the ${chosenSide.toLowerCase()}`, "success");
+    };
+  }
+
+  // Confirmation binds inside panel
+  const btnYes = document.getElementById('btn-ai-confirm-yes');
+  if (btnYes) btnYes.onclick = () => resolveAiSpreadsheetCommand(true);
+
+  const btnNo = document.getElementById('btn-ai-confirm-no');
+  if (btnNo) btnNo.onclick = () => resolveAiSpreadsheetCommand(false);
+
+  // Initial render of chat history and context snapshot
+  updateCopilotHeaderDetails();
+  renderAiChatHistory();
+};
+
+window.setAiPrompt = function(promptText) {
+  const input = document.getElementById('ai-prompt-input');
+  if (input) {
+    input.value = promptText;
+    input.focus();
+    // Auto-grow textarea
+    input.style.height = 'auto';
+    input.style.height = input.scrollHeight + 'px';
+    // Submit
+    handleAiPromptSubmit();
+  }
 };
 
 
