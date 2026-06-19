@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>OneClick — Premium Analytics Platform</title>
-  <meta name="description" content="OneClick is a premium AI-powered data analytics platform that transforms raw data into beautiful, actionable insights." />
+  <meta name="description" content="OneClick is a premium data analytics platform that transforms raw data into beautiful, actionable insights." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
@@ -584,18 +584,6 @@
               </div>
             </div>
 
-            <!-- AI Copilot Settings -->
-            <div class="db-settings-card">
-              <h3>AI Copilot Preferences</h3>
-              <div class="settings-field">
-                <label>Assistant Screen Position</label>
-                <select class="settings-select" id="settings-copilot-position">
-                  <option value="Right" selected>Bottom Right (Default)</option>
-                  <option value="Left">Bottom Left</option>
-                </select>
-              </div>
-            </div>
-
             <!-- Firebase Cloud Sync Card -->
             <div class="db-settings-card" id="firebase-settings-card" style="grid-column: span 2;">
               <h3 style="display: flex; align-items: center; gap: 8px;">
@@ -1131,7 +1119,7 @@
             <div class="ws-sidebar-inner" id="ws-sidebar-visualization" style="display: none; flex-direction: column; height: 100%; overflow-y: auto; padding: 0; gap: 0;">
               <!-- Panel Header Bar -->
               <div class="panel-header-bar">
-                <span class="panel-header-title">Analytics Assistant</span>
+                <span class="panel-header-title">Analytics Panel</span>
                 <div class="panel-header-controls">
                   <button class="panel-ctrl-btn" id="btn-dashbuilder-collapse" title="Collapse to rail">
                     <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
@@ -1784,7 +1772,7 @@
   </div>
 
   <!-- Floating AI Copilot Assistant -->
-  <button id="ai-copilot-fab" class="ai-copilot-fab fab-bottom-right state-idle" aria-label="Ask OneClick">
+  <button id="oneclick-copilot-fab" class="ai-copilot-fab fab-bottom-right state-idle" aria-label="Ask OneClick">
     <span class="fab-icon-container">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="fab-main-icon">
         <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
@@ -1795,13 +1783,13 @@
     <span class="fab-badge" id="ai-copilot-badge" style="display: none;"></span>
   </button>
 
-  <div id="ai-copilot-drawer" class="ai-copilot-panel">
+  <div id="oneclick-copilot-panel" class="ai-copilot-panel">
     <!-- Header -->
     <div class="ai-panel-header">
       <div class="ai-header-left">
         <span class="ai-header-logo">🤖</span>
         <div class="ai-header-title-area">
-          <h3 class="ai-panel-title">OneClick Copilot</h3>
+          <h3 class="ai-panel-title">OneClick Copilot v3</h3>
           <div class="ai-dataset-details">
             <span id="ai-dataset-name-label" class="ai-dataset-name">No active dataset</span>
             <span class="ai-badge-separator">•</span>

@@ -1,5 +1,25 @@
 // OneClick Dashboard & Dataset Workspace Interactive Logic
 
+// Clean up any remaining AI/Copilot-related local/session storage keys
+try {
+  localStorage.removeItem('oneclick_copilot_position');
+  localStorage.removeItem('aiHistory');
+  localStorage.removeItem('chatHistory');
+  localStorage.removeItem('copilotHistory');
+  localStorage.removeItem('promptCache');
+  localStorage.removeItem('conversationCache');
+  localStorage.removeItem('assistantMemory');
+
+  sessionStorage.removeItem('aiHistory');
+  sessionStorage.removeItem('chatHistory');
+  sessionStorage.removeItem('copilotHistory');
+  sessionStorage.removeItem('promptCache');
+  sessionStorage.removeItem('conversationCache');
+  sessionStorage.removeItem('assistantMemory');
+} catch (e) {
+  console.warn("Storage cleanup failed:", e);
+}
+
 // ═══════════════════════════ THEME MANAGEMENT ═══════════════════════════
 const themeBtn = document.getElementById('theme-btn');
 const themeIcon = themeBtn.querySelector('svg');
@@ -43,7 +63,7 @@ themeBtn.addEventListener('click', () => {
   }
 });
 
-// ═══════════════════════════ NAVIGATION CONTROL ═══════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• NAVIGATION CONTROL â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 window.setActive = function(element) {
   const navItems = document.querySelectorAll('.nav-item');
   navItems.forEach(item => item.classList.remove('active'));
@@ -113,7 +133,7 @@ window.setActive = function(element) {
   }
 };
 
-// ═══════════════════════════ LEFT SIDEBAR COLLAPSE LOGIC ═══════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• LEFT SIDEBAR COLLAPSE LOGIC â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 const sidebar = document.getElementById('sidebar');
 const sidebarCollapseBtn = document.getElementById('sidebar-collapse-btn');
 const sidebarToggleIcon = sidebarCollapseBtn.querySelector('.sidebar-toggle-icon');
@@ -149,7 +169,7 @@ if (savedSidebarState === 'true') {
   setSidebarState(true);
 }
 
-// ═══════════════════════════ TIME RANGE & CHARTS ═══════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• TIME RANGE & CHARTS â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 window.setTimeRange = function(btn) {
   const timeBtns = document.querySelectorAll('.time-btn');
   timeBtns.forEach(b => b.classList.remove('active'));
@@ -300,7 +320,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 
-// ═══════════════════════════ UPLOAD FLOW & WORKSPACE ═══════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• UPLOAD FLOW & WORKSPACE â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
 const getStartedBtn = document.getElementById('btn-get-started');
 const viewDemoBtn = document.getElementById('btn-view-demo');
@@ -427,7 +447,7 @@ function processUploadedFile(file) {
   }, 100);
 }
 
-// ═══════════════════════════ SPREADSHEET ENGINE STATE ═══════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• SPREADSHEET ENGINE STATE â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 let gridData = [];           // Full unmodified current 2D dataset values
 let originalGridData = [];   // Initial pristine backup of gridData
 let headers = [];            // Column keys A..Z..AA..
@@ -691,7 +711,7 @@ function getColumnLetter(index) {
   return letter;
 }
 
-// ═══════════════════════════ DEMO DATASETS GENERATION ═══════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• DEMO DATASETS GENERATION â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 const demoButtons = document.querySelectorAll('.demo-btn');
 demoButtons.forEach(btn => {
   btn.addEventListener('click', () => {
@@ -794,7 +814,7 @@ function getDefaultHeaderName(c) {
 }
 
 
-// ═══════════════════════════ SPREADSHEET LAYOUT INTERACTION ═══════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• SPREADSHEET LAYOUT INTERACTION â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
 // Exit Workspace and return to dashboard/workspaces page
 // Exit Workspace and return to dashboard/projects page
@@ -896,7 +916,7 @@ document.getElementById('ws-btn-redo').addEventListener('click', () => {
   }
 });
 
-// ═══════════════════════════ SPREADSHEET VIRTUALIZATION ENGINE ═══════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• SPREADSHEET VIRTUALIZATION ENGINE â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
 const viewport = document.getElementById('spreadsheet-viewport');
 
@@ -961,12 +981,12 @@ function detectColumnType(colKey) {
 
 function getColTypeEmoji(type) {
   switch (type) {
-    case 'text': return '🔤';
-    case 'number': return '🔢';
-    case 'currency': return '💰';
-    case 'date': return '📅';
-    case 'percentage': return '📊';
-    default: return '🔤';
+    case 'text': return 'ðŸ”¤';
+    case 'number': return 'ðŸ”¢';
+    case 'currency': return 'ðŸ’°';
+    case 'date': return 'ðŸ“…';
+    case 'percentage': return 'ðŸ“Š';
+    default: return 'ðŸ”¤';
   }
 }
 
@@ -1095,7 +1115,7 @@ function appendHeaderRow(table) {
     if (activeFilters[hdr]) {
       const activeDot = document.createElement('span');
       activeDot.className = 'sort-indicator';
-      activeDot.innerHTML = '⚡';
+      activeDot.innerHTML = 'âš¡';
       activeDot.title = 'Filter active on this column';
       hDiv.appendChild(activeDot);
     }
@@ -1104,16 +1124,16 @@ function appendHeaderRow(table) {
     if (activeSort && activeSort.colKey === hdr) {
       const sortDot = document.createElement('span');
       sortDot.className = 'sort-indicator';
-      sortDot.innerHTML = activeSort.direction === 'asc' ? '▲' : '▼';
+      sortDot.innerHTML = activeSort.direction === 'asc' ? 'â–²' : 'â–¼';
       hDiv.appendChild(sortDot);
     }
 
     th.appendChild(hDiv);
 
-    // Dropdown column menu trigger button (vertical ellipsis ⋮)
+    // Dropdown column menu trigger button (vertical ellipsis â‹®)
     const menuBtn = document.createElement('div');
     menuBtn.className = 'col-hdr-menu-btn';
-    menuBtn.innerHTML = '⋮';
+    menuBtn.innerHTML = 'â‹®';
     menuBtn.title = 'Column Menu';
     menuBtn.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -1441,7 +1461,7 @@ function makeCellEditable(td, r, c) {
   });
 }
 
-// ═══════════════════════════ DATA LAYOUT PROCESSORS (SEARCH/SORT/FILTER) ═══════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• DATA LAYOUT PROCESSORS (SEARCH/SORT/FILTER) â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
 // Reset sort and filters back to base state
 function resetSortAndFilters() {
@@ -1672,7 +1692,7 @@ function updateMetadata() {
   }
 }
 
-// ═══════════════════════════ COLUMN STATISTICS CALCULATOR ═══════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• COLUMN STATISTICS CALCULATOR â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
 const datasetInfoPanel = document.getElementById('ws-sidebar-dataset-info');
 const columnStatsPanel = document.getElementById('ws-sidebar-column-stats');
@@ -1694,13 +1714,13 @@ function updateColumnStats(colKey) {
 
   const type = detectColumnType(colKey);
   const typeLabels = {
-    text: "Text 🔤",
-    number: "Number 🔢",
-    currency: "Currency 💰",
-    date: "Date 📅",
-    percentage: "Percentage 📊"
+    text: "Text ðŸ”¤",
+    number: "Number ðŸ”¢",
+    currency: "Currency ðŸ’°",
+    date: "Date ðŸ“…",
+    percentage: "Percentage ðŸ“Š"
   };
-  document.getElementById('ws-stats-type').innerText = typeLabels[type] || "Text 🔤";
+  document.getElementById('ws-stats-type').innerText = typeLabels[type] || "Text ðŸ”¤";
 
   // Counts calculations
   const totalCount = viewIndices.length;
@@ -1855,7 +1875,7 @@ resetStatsBtn.addEventListener('click', () => {
 });
 
 
-// ═══════════════════════════ COLUMN DROPDOWN MENU INTERACTION ═══════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• COLUMN DROPDOWN MENU INTERACTION â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
 const columnMenu = document.getElementById('column-menu');
 const filterTypeSelect = document.getElementById('ccm-filter-type');
@@ -2112,7 +2132,7 @@ filterClearBtn.addEventListener('click', (e) => {
 });
 
 
-// ═══════════════════════════ GRID TOOLBAR ACTIONS ═══════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• GRID TOOLBAR ACTIONS â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
 // Add Row below selection or at bottom
 document.getElementById('tb-row-add').addEventListener('click', () => {
@@ -2279,7 +2299,7 @@ document.getElementById('ws-search-input').addEventListener('input', (e) => {
 });
 
 
-// ═══════════════════════════ CONTEXT MENU LOGIC ═══════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• CONTEXT MENU LOGIC â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
 const contextMenu = document.getElementById('grid-context-menu');
 
@@ -2497,7 +2517,7 @@ function autoFitColumnWidth(colKey) {
   renderGridTable();
 }
 
-// ═══════════════════════════ DATA QUALITY & PREPROCESSING SYSTEM ═══════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• DATA QUALITY & PREPROCESSING SYSTEM â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
 // Global preprocessing state
 let cellsToFlash = new Set();
@@ -3192,7 +3212,7 @@ function renderMissingTab() {
       if (filterStatus === 'pending') {
         const ignoreBtn = document.createElement('span');
         ignoreBtn.className = 'card-action-link ignore-link';
-        ignoreBtn.innerHTML = '🚫 Ignore Issue';
+        ignoreBtn.innerHTML = 'ðŸš« Ignore Issue';
         ignoreBtn.onclick = () => {
           issueStates[key] = 'ignored';
           clearHighlightsForIssue('missing', colKey);
@@ -3204,7 +3224,7 @@ function renderMissingTab() {
       } else if (filterStatus === 'ignored') {
         const restoreBtn = document.createElement('span');
         restoreBtn.className = 'card-action-link';
-        restoreBtn.innerHTML = '🔄 Restore to Pending';
+        restoreBtn.innerHTML = 'ðŸ”„ Restore to Pending';
         restoreBtn.onclick = () => {
           issueStates[key] = 'pending';
           updateQualityScoreBadge();
@@ -3468,7 +3488,7 @@ function renderDuplicatesTab() {
     if (filterStatus === 'pending') {
       const ignoreBtn = document.createElement('span');
       ignoreBtn.className = 'card-action-link ignore-link';
-      ignoreBtn.innerHTML = '🚫 Ignore Issue';
+      ignoreBtn.innerHTML = 'ðŸš« Ignore Issue';
       ignoreBtn.onclick = () => {
         issueStates[key] = 'ignored';
         updateQualityScoreBadge();
@@ -3478,7 +3498,7 @@ function renderDuplicatesTab() {
     } else if (filterStatus === 'ignored') {
       const restoreBtn = document.createElement('span');
       restoreBtn.className = 'card-action-link';
-      restoreBtn.innerHTML = '🔄 Restore to Pending';
+      restoreBtn.innerHTML = 'ðŸ”„ Restore to Pending';
       restoreBtn.onclick = () => {
         issueStates[key] = 'pending';
         updateQualityScoreBadge();
@@ -3524,7 +3544,7 @@ function renderTypesTab() {
       meta.className = 'quality-card-meta';
       meta.innerHTML = `Detected: <strong>${typeStat.detectedType}</strong> (${typeStat.confidence}% confidence)`;
       if (typeStat.issues.length > 0 && filterStatus !== 'resolved') {
-        meta.innerHTML += `<br/><span style="color: var(--warning); font-size: 11px;">⚠️ ${typeStat.issues.length} invalid values format issues</span>`;
+        meta.innerHTML += `<br/><span style="color: var(--warning); font-size: 11px;">âš ï¸ ${typeStat.issues.length} invalid values format issues</span>`;
       }
       card.appendChild(meta);
 
@@ -3539,16 +3559,16 @@ function renderTypesTab() {
         select.className = 'quality-select';
         select.innerHTML = `
           <option value="">Convert column type...</option>
-          <option value="Text">Text 🔤</option>
-          <option value="Integer">Integer 🔢</option>
-          <option value="Decimal">Decimal 🔢</option>
-          <option value="Currency">Currency 💰</option>
-          <option value="Percentage">Percentage 📊</option>
-          <option value="Date">Date 📅</option>
-          <option value="Boolean">Boolean 🔀</option>
-          <option value="Email">Email 📧</option>
-          <option value="Phone">Phone 📞</option>
-          <option value="URL">URL 🔗</option>
+          <option value="Text">Text ðŸ”¤</option>
+          <option value="Integer">Integer ðŸ”¢</option>
+          <option value="Decimal">Decimal ðŸ”¢</option>
+          <option value="Currency">Currency ðŸ’°</option>
+          <option value="Percentage">Percentage ðŸ“Š</option>
+          <option value="Date">Date ðŸ“…</option>
+          <option value="Boolean">Boolean ðŸ”€</option>
+          <option value="Email">Email ðŸ“§</option>
+          <option value="Phone">Phone ðŸ“ž</option>
+          <option value="URL">URL ðŸ”—</option>
         `;
 
         const applyBtn = document.createElement('button');
@@ -3572,7 +3592,7 @@ function renderTypesTab() {
       if (filterStatus === 'pending') {
         const ignoreBtn = document.createElement('span');
         ignoreBtn.className = 'card-action-link ignore-link';
-        ignoreBtn.innerHTML = '🚫 Ignore Issue';
+        ignoreBtn.innerHTML = 'ðŸš« Ignore Issue';
         ignoreBtn.onclick = () => {
           issueStates[key] = 'ignored';
           clearHighlightsForIssue('types', colKey);
@@ -3584,7 +3604,7 @@ function renderTypesTab() {
       } else if (filterStatus === 'ignored') {
         const restoreBtn = document.createElement('span');
         restoreBtn.className = 'card-action-link';
-        restoreBtn.innerHTML = '🔄 Restore to Pending';
+        restoreBtn.innerHTML = 'ðŸ”„ Restore to Pending';
         restoreBtn.onclick = () => {
           issueStates[key] = 'pending';
           updateQualityScoreBadge();
@@ -3669,7 +3689,7 @@ function renderOutliersTab() {
       if (filterStatus === 'pending') {
         const ignoreBtn = document.createElement('span');
         ignoreBtn.className = 'card-action-link ignore-link';
-        ignoreBtn.innerHTML = '🚫 Ignore Issue';
+        ignoreBtn.innerHTML = 'ðŸš« Ignore Issue';
         ignoreBtn.onclick = () => {
           issueStates[key] = 'ignored';
           clearHighlightsForIssue('outliers', colKey);
@@ -3681,7 +3701,7 @@ function renderOutliersTab() {
       } else if (filterStatus === 'ignored') {
         const restoreBtn = document.createElement('span');
         restoreBtn.className = 'card-action-link';
-        restoreBtn.innerHTML = '🔄 Restore to Pending';
+        restoreBtn.innerHTML = 'ðŸ”„ Restore to Pending';
         restoreBtn.onclick = () => {
           issueStates[key] = 'pending';
           updateQualityScoreBadge();
@@ -3897,7 +3917,7 @@ function createEmptyStateDiv(text) {
   div.style.color = 'var(--text-muted)';
   div.style.padding = '24px';
   div.style.fontSize = '12.5px';
-  div.innerHTML = `✨ ${text}`;
+  div.innerHTML = `âœ¨ ${text}`;
   return div;
 }
 
@@ -3910,7 +3930,7 @@ function renderHistoryTab() {
   if (preprocessingHistory.length === 0) {
     container.innerHTML = `
       <div style="text-align: center; color: var(--text-muted); padding: 24px; font-size: 12.5px;">
-        📜 No preprocessing steps applied yet.
+        ðŸ“œ No preprocessing steps applied yet.
       </div>
     `;
     return;
@@ -4310,7 +4330,7 @@ function applyOutlierAction(colKey, action) {
   }
 }
 
-// ═══════════════════════════ NAVIGATION & HIGH-VOLUME HIGHLIGHTS ENGINE ═══════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• NAVIGATION & HIGH-VOLUME HIGHLIGHTS ENGINE â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
 function getIssueRowIndices(category, colKey) {
   if (!qualityScanResults) return [];
@@ -4551,10 +4571,10 @@ function createIssueNavigatorBlock(category, colKey) {
       <span class="navigator-clear-hl" title="Clear highlights for this issue">Clear Highlights</span>
     </div>
     <div class="navigator-controls">
-      <button class="nav-control-btn btn-first" title="Jump to First">⏮</button>
-      <button class="nav-control-btn btn-prev" title="Previous">◀</button>
-      <button class="nav-control-btn btn-next" title="Next">▶</button>
-      <button class="nav-control-btn btn-last" title="Jump to Last">⏭</button>
+      <button class="nav-control-btn btn-first" title="Jump to First">â®</button>
+      <button class="nav-control-btn btn-prev" title="Previous">â—€</button>
+      <button class="nav-control-btn btn-next" title="Next">â–¶</button>
+      <button class="nav-control-btn btn-last" title="Jump to Last">â­</button>
     </div>
     <div class="navigator-options">
       <button class="nav-option-btn btn-hl-cell" title="Highlight Cells">Highlight Cell</button>
@@ -4617,7 +4637,7 @@ if (bannerCloseBtn) {
   });
 }
 
-// ═══════════════════════════ ONECLICK VISUALIZATION LOGIC ═══════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• ONECLICK VISUALIZATION LOGIC â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
 // Global visualization state
 let dashboardWidgets = [];
@@ -4769,7 +4789,7 @@ function generateDefaultDashboardDraft() {
   const catCol2 = profile.catCols[1] || findColInList(/segment|channel|brand/i, headers);
   const regionCol = findColInList(/region|country|state|city/i, headers) || profile.catCols[1] || null;
 
-  // ─── ROW 1: KPI Cards (4 × span-3) ───────────────────────────────────────
+  // â”€â”€â”€ ROW 1: KPI Cards (4 Ã— span-3) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   // KPI 1: Total Revenue/Sales
   if (revCol) {
@@ -4819,7 +4839,7 @@ function generateDefaultDashboardDraft() {
     w: 3
   });
 
-  // ─── ROW 2: Hero Trend Chart (span-12) ───────────────────────────────────
+  // â”€â”€â”€ ROW 2: Hero Trend Chart (span-12) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   if (dateCol && revCol) {
     dashboardWidgets.push({
@@ -4844,7 +4864,7 @@ function generateDefaultDashboardDraft() {
     });
   }
 
-  // ─── ROW 3: Category breakdown (span-6 + span-6) ─────────────────────────
+  // â”€â”€â”€ ROW 3: Category breakdown (span-6 + span-6) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   if (catCol && revCol) {
     dashboardWidgets.push({
@@ -4892,7 +4912,7 @@ function generateDefaultDashboardDraft() {
     });
   }
 
-  // ─── ROW 4: Full-width Report Table (span-12) ─────────────────────────────
+  // â”€â”€â”€ ROW 4: Full-width Report Table (span-12) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   dashboardWidgets.push({
     id: 'widget-report-table',
@@ -5233,10 +5253,10 @@ function renderDashboardCanvas() {
   if (dashboardWidgets.length === 0) {
     canvas.innerHTML = `
       <div style="grid-column: span 12; text-align: center; padding: 80px 40px; color: var(--text-muted);">
-        <div style="font-size: 48px; margin-bottom: 16px;">📊</div>
+        <div style="font-size: 48px; margin-bottom: 16px;">ðŸ“Š</div>
         <div style="font-size: 16px; font-weight: 700; color: var(--text-primary); margin-bottom: 8px;">Your dashboard is empty</div>
         <div style="font-size: 13px; margin-bottom: 24px;">Create widgets or use Auto-Draft to generate a smart layout from your data.</div>
-        <button class="ccm-btn ccm-btn-primary" id="btn-empty-canvas-add" style="margin: 0 auto;">➕ Add Widget</button>
+        <button class="ccm-btn ccm-btn-primary" id="btn-empty-canvas-add" style="margin: 0 auto;">âž• Add Widget</button>
       </div>
     `;
     const addEmptyBtn = document.getElementById('btn-empty-canvas-add');
@@ -5279,8 +5299,8 @@ function renderDashboardCanvas() {
       <div class="viz-widget-header">
         <span class="viz-widget-title" title="${widget.title}">${widget.title}</span>
         <div class="viz-widget-actions">
-          <button class="viz-widget-btn btn-widget-edit" title="Edit Widget">⚙️</button>
-          <button class="viz-widget-btn delete btn-widget-delete" title="Delete Widget">🗑️</button>
+          <button class="viz-widget-btn btn-widget-edit" title="Edit Widget">âš™ï¸</button>
+          <button class="viz-widget-btn delete btn-widget-delete" title="Delete Widget">ðŸ—‘ï¸</button>
         </div>
       </div>
       <div class="viz-widget-body" id="body-${widget.id}">
@@ -5323,26 +5343,26 @@ function renderDashboardCanvas() {
         if (sumFirst > 0) {
           const change = ((sumSecond - sumFirst) / sumFirst) * 100;
           if (change >= 0) {
-            trendHtml = `<span class="viz-kpi-trend up">↑ ${change.toFixed(1)}%</span>`;
+            trendHtml = `<span class="viz-kpi-trend up">â†‘ ${change.toFixed(1)}%</span>`;
           } else {
-            trendHtml = `<span class="viz-kpi-trend down">↓ ${Math.abs(change).toFixed(1)}%</span>`;
+            trendHtml = `<span class="viz-kpi-trend down">â†“ ${Math.abs(change).toFixed(1)}%</span>`;
           }
         }
       }
 
       // Pick a contextual icon for this KPI
       const kpiIconMap = [
-        [/revenue|sales|income|amount|spend/i, '💰'],
-        [/profit|margin/i, '📈'],
-        [/unit|quantity|volume/i, '📦'],
-        [/order|transaction/i, '🧾'],
-        [/customer|client|user/i, '👤'],
-        [/category|product|brand|segment/i, '🏷️'],
-        [/region|country|city|state/i, '🌍'],
-        [/count|total|records/i, '🔢'],
-        [/avg|average|mean/i, '⚖️'],
+        [/revenue|sales|income|amount|spend/i, 'ðŸ’°'],
+        [/profit|margin/i, 'ðŸ“ˆ'],
+        [/unit|quantity|volume/i, 'ðŸ“¦'],
+        [/order|transaction/i, 'ðŸ§¾'],
+        [/customer|client|user/i, 'ðŸ‘¤'],
+        [/category|product|brand|segment/i, 'ðŸ·ï¸'],
+        [/region|country|city|state/i, 'ðŸŒ'],
+        [/count|total|records/i, 'ðŸ”¢'],
+        [/avg|average|mean/i, 'âš–ï¸'],
       ];
-      let kpiIcon = '📊';
+      let kpiIcon = 'ðŸ“Š';
       const titleLower = widget.title.toLowerCase();
       for (const [pattern, icon] of kpiIconMap) {
         if (pattern.test(titleLower) || (widget.yCol && pattern.test((headerNames[widget.yCol] || widget.yCol).toLowerCase()))) {
@@ -5354,7 +5374,7 @@ function renderDashboardCanvas() {
       bodyContainer.innerHTML = `
         <div class="viz-kpi-content">
           <div class="viz-kpi-icon">${kpiIcon}</div>
-          <span class="viz-kpi-label">${aggLabel} · ${colLabel}</span>
+          <span class="viz-kpi-label">${aggLabel} Â· ${colLabel}</span>
           <div class="viz-kpi-value">${valStr}</div>
           ${trendHtml}
         </div>
@@ -5534,26 +5554,26 @@ function renderStructureTab() {
     }
 
     const typeIcons = {
-      kpi: '🔢',
-      line: '📈',
-      bar: '📊',
-      pie: '🍕',
-      donut: '🍩',
-      table: '📋'
+      kpi: 'ðŸ”¢',
+      line: 'ðŸ“ˆ',
+      bar: 'ðŸ“Š',
+      pie: 'ðŸ•',
+      donut: 'ðŸ©',
+      table: 'ðŸ“‹'
     };
 
     item.innerHTML = `
       <div class="viz-widget-info">
         <span class="viz-widget-list-title">${widget.title}</span>
         <div class="viz-widget-list-meta">
-          <span>${typeIcons[widget.type] || '📊'} ${widget.type.toUpperCase()}</span>
+          <span>${typeIcons[widget.type] || 'ðŸ“Š'} ${widget.type.toUpperCase()}</span>
           <span class="viz-widget-list-badge">w:${widget.w}/12</span>
         </div>
       </div>
       <div class="viz-widget-list-actions">
-        <button class="history-step-btn btn-swap-up" title="Move Up" ${idx === 0 ? 'disabled style="opacity:0.3;"' : ''}>▲</button>
-        <button class="history-step-btn btn-swap-down" title="Move Down" ${idx === dashboardWidgets.length - 1 ? 'disabled style="opacity:0.3;"' : ''}>▼</button>
-        <button class="history-step-btn btn-list-del" title="Delete" style="color: var(--error); border-color: rgba(239, 68, 68, 0.2);">🗑️</button>
+        <button class="history-step-btn btn-swap-up" title="Move Up" ${idx === 0 ? 'disabled style="opacity:0.3;"' : ''}>â–²</button>
+        <button class="history-step-btn btn-swap-down" title="Move Down" ${idx === dashboardWidgets.length - 1 ? 'disabled style="opacity:0.3;"' : ''}>â–¼</button>
+        <button class="history-step-btn btn-list-del" title="Delete" style="color: var(--error); border-color: rgba(239, 68, 68, 0.2);">ðŸ—‘ï¸</button>
       </div>
     `;
 
@@ -5724,7 +5744,7 @@ function renderRecommendationsTab() {
         yCol: numCol,
         agg: 'sum',
         w: 8,
-        icon: '📈'
+        icon: 'ðŸ“ˆ'
       });
     }
   }
@@ -5742,7 +5762,7 @@ function renderRecommendationsTab() {
         yCol: valCol,
         agg: valCol ? 'sum' : 'count',
         w: 4,
-        icon: '🍩'
+        icon: 'ðŸ©'
       });
     }
   }
@@ -5760,7 +5780,7 @@ function renderRecommendationsTab() {
         yCol: valCol,
         agg: valCol ? 'sum' : 'count',
         w: 6,
-        icon: '📊'
+        icon: 'ðŸ“Š'
       });
     }
   }
@@ -5775,7 +5795,7 @@ function renderRecommendationsTab() {
       yCol: null,
       agg: null,
       w: 12,
-      icon: '📋'
+      icon: 'ðŸ“‹'
     });
   }
 
@@ -5975,16 +5995,16 @@ function renderInsightsTab() {
     const pTypes = document.getElementById('q-stat-types') ? parseInt(document.getElementById('q-stat-types').innerText) || 0 : 0;
     
     if (pMiss > 0) {
-      html += `<div style="font-size: 10px; padding: 4px 6px; background: rgba(245, 158, 11, 0.08); border: 1px solid rgba(245, 158, 11, 0.2); border-radius: var(--radius-sm); color: var(--warning); margin-bottom: 4px;">⚠️ ${pMiss} missing data cells need cleaning.</div>`;
+      html += `<div style="font-size: 10px; padding: 4px 6px; background: rgba(245, 158, 11, 0.08); border: 1px solid rgba(245, 158, 11, 0.2); border-radius: var(--radius-sm); color: var(--warning); margin-bottom: 4px;">âš ï¸ ${pMiss} missing data cells need cleaning.</div>`;
     }
     if (pDups > 0) {
-      html += `<div style="font-size: 10px; padding: 4px 6px; background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.2); border-radius: var(--radius-sm); color: var(--error); margin-bottom: 4px;">⚠️ ${pDups} duplicate records detected.</div>`;
+      html += `<div style="font-size: 10px; padding: 4px 6px; background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.2); border-radius: var(--radius-sm); color: var(--error); margin-bottom: 4px;">âš ï¸ ${pDups} duplicate records detected.</div>`;
     }
     if (pTypes > 0) {
-      html += `<div style="font-size: 10px; padding: 4px 6px; background: rgba(245, 158, 11, 0.08); border: 1px solid rgba(245, 158, 11, 0.2); border-radius: var(--radius-sm); color: var(--warning); margin-bottom: 4px;">⚠️ ${pTypes} format mismatch column values.</div>`;
+      html += `<div style="font-size: 10px; padding: 4px 6px; background: rgba(245, 158, 11, 0.08); border: 1px solid rgba(245, 158, 11, 0.2); border-radius: var(--radius-sm); color: var(--warning); margin-bottom: 4px;">âš ï¸ ${pTypes} format mismatch column values.</div>`;
     }
     if (html === "") {
-      html = `<div style="font-size: 10.5px; color: var(--success); padding: 4px 0;">✅ Preprocessing checks show 100% clean dataset.</div>`;
+      html = `<div style="font-size: 10.5px; color: var(--success); padding: 4px 0;">âœ… Preprocessing checks show 100% clean dataset.</div>`;
     }
     warningContainer.innerHTML = html;
   }
@@ -6194,11 +6214,11 @@ function renderDashboardHealth() {
     checks.push({ status: 'warning', title: 'Drill Path Active', desc: `${dCount} widgets are currently in a drilled-down state.` });
   }
 
-  const icons = { success: '✅', warning: '⚠️', error: '❌', info: 'ℹ️' };
+  const icons = { success: 'âœ…', warning: 'âš ï¸', error: 'âŒ', info: 'â„¹ï¸' };
 
   container.innerHTML = checks.map(c => `
     <div class="health-item">
-      <span class="health-icon">${icons[c.status] || 'ℹ️'}</span>
+      <span class="health-icon">${icons[c.status] || 'â„¹ï¸'}</span>
       <div class="health-text">
         <span class="health-title">${c.title}</span>
         <span class="health-desc">${c.desc}</span>
@@ -6279,10 +6299,10 @@ function switchToDashboardView() {
     header.innerHTML = `
       <div>
         <div class="dashboard-header-title">
-          <span class="dash-icon">📊</span>
+          <span class="dash-icon">ðŸ“Š</span>
           <div>
             <div>${datasetName} Dashboard</div>
-            <div class="dashboard-header-meta">${rowCount} rows · ${colCount} columns · Last generated ${now}</div>
+            <div class="dashboard-header-meta">${rowCount} rows Â· ${colCount} columns Â· Last generated ${now}</div>
           </div>
         </div>
       </div>
@@ -6351,7 +6371,7 @@ function switchToSheetView() {
   // Hide dashboard canvas
   if (dashboardCanvasViewport) dashboardCanvasViewport.style.display = 'none';
 
-  // Panel visibility managed by PanelManager — just restore dataset info visibility
+  // Panel visibility managed by PanelManager â€” just restore dataset info visibility
   if (datasetInfoPanel) datasetInfoPanel.style.display = 'flex';
 
   // Re-render spreadsheet
@@ -6400,7 +6420,7 @@ window.addEventListener('resize', () => {
 // --------------------------- PHASE 2: ANALYTICS LAYER ---------------------------
 // Calculated Fields, Drill Down, Smart Insights, Statistical Analysis, Save/Load
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• PHASE 2: CALCULATED FIELDS UI â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â PHASE 2: CALCULATED FIELDS UI Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â
 
 function renderCalcFieldsList() {
   var container = document.getElementById('viz-calc-fields-list');
@@ -6417,7 +6437,7 @@ function renderCalcFieldsList() {
         '<div style="font-size:11.5px; font-weight:700; color:var(--primary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">' + f.title + '</div>' +
         '<div style="font-size:10px; color:var(--text-muted); font-family:monospace; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">' + f.formula + '</div>' +
       '</div>' +
-      '<button class="history-step-btn" style="color:var(--error); border-color:rgba(239,68,68,0.2);" onclick="deleteCalculatedField(\'' + id + '\')">ðŸ—‘ï¸</button>' +
+      '<button class="history-step-btn" style="color:var(--error); border-color:rgba(239,68,68,0.2);" onclick="deleteCalculatedField(\'' + id + '\')">Ã°Å¸â€”â€˜Ã¯Â¸Â</button>' +
     '</div>';
   }).join('');
 }
@@ -6504,10 +6524,10 @@ function previewCalcField() {
   if (sampleOutput) sampleOutput.innerText = outputs.join('\n');
 
   if (hasError) {
-    if (validMsg) { validMsg.innerText = 'âš ï¸  Formula has errors or unknown columns.'; validMsg.style.color = 'var(--warning)'; }
+    if (validMsg) { validMsg.innerText = 'Ã¢Å¡Â Ã¯Â¸  Formula has errors or unknown columns.'; validMsg.style.color = 'var(--warning)'; }
     if (saveBtn) saveBtn.disabled = true;
   } else {
-    if (validMsg) { validMsg.innerText = 'âœ… Formula is valid.'; validMsg.style.color = 'var(--success)'; }
+    if (validMsg) { validMsg.innerText = 'Ã¢Å“â€¦ Formula is valid.'; validMsg.style.color = 'var(--success)'; }
     if (saveBtn) saveBtn.disabled = false;
   }
 }
@@ -6545,7 +6565,7 @@ if (btnCalcSave) {
 }
 
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• PHASE 2: DRILL DOWN LOGIC â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â PHASE 2: DRILL DOWN LOGIC Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â
 
 function renderDrillHierarchiesList() {
   var container = document.getElementById('viz-drill-list');
@@ -6555,13 +6575,13 @@ function renderDrillHierarchiesList() {
     return;
   }
   container.innerHTML = drillHierarchies.map(function(h) {
-    var colNames = h.columns.map(function(c) { return headerNames[c] || c; }).join(' â†’ ');
+    var colNames = h.columns.map(function(c) { return headerNames[c] || c; }).join(' Ã¢â€ â€™ ');
     return '<div style="display:flex; align-items:center; gap:6px; padding:8px; background:var(--bg-secondary); border-radius:var(--radius-sm); border:1px solid var(--border-color);">' +
       '<div style="flex:1; overflow:hidden;">' +
         '<div style="font-size:11.5px; font-weight:700; color:var(--primary);">' + h.name + '</div>' +
         '<div style="font-size:10px; color:var(--text-muted);">' + colNames + '</div>' +
       '</div>' +
-      '<button class="history-step-btn" style="color:var(--error); border-color:rgba(239,68,68,0.2);" onclick="deleteDrillHierarchy(\'' + h.id + '\')">ðŸ—‘ï¸</button>' +
+      '<button class="history-step-btn" style="color:var(--error); border-color:rgba(239,68,68,0.2);" onclick="deleteDrillHierarchy(\'' + h.id + '\')">Ã°Å¸â€”â€˜Ã¯Â¸Â</button>' +
     '</div>';
   }).join('');
 }
@@ -6660,7 +6680,7 @@ function updateDrillStatus() {
     var val = entry[1];
     return '<span style="opacity:0.7;">' + (headerNames[colKey] || colKey) + ':</span> <strong>' + val + '</strong>';
   });
-  pathEl.innerHTML = pathParts.join(' <span style="opacity:0.4;">â†’</span> ');
+  pathEl.innerHTML = pathParts.join(' <span style="opacity:0.4;">Ã¢â€ â€™</span> ');
 }
 
 var btnDrillUp = document.getElementById('btn-drill-up');
@@ -6724,7 +6744,7 @@ window.getAggregatedData = function(widget) {
 };
 
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• PHASE 2: SMART INSIGHTS ENGINE â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â PHASE 2: SMART INSIGHTS ENGINE Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â
 
 function generateInsights() {
   if (!gridData || gridData.length === 0) return [];
@@ -6732,7 +6752,7 @@ function generateInsights() {
   var insights = [];
 
   // 1. Dataset overview
-  insights.push({ type: 'info', icon: 'ðŸ“Š', title: 'Dataset Overview',
+  insights.push({ type: 'info', icon: 'Ã°Å¸â€œÅ ', title: 'Dataset Overview',
     text: 'Dataset contains ' + gridData.length.toLocaleString() + ' records across ' + headers.length + ' columns.'
   });
 
@@ -6752,8 +6772,8 @@ function generateInsights() {
       if (colType === 'currency') return '$' + v.toLocaleString(undefined, { maximumFractionDigits: 0 });
       return v.toLocaleString(undefined, { maximumFractionDigits: 1 });
     };
-    insights.push({ type: 'metric', icon: 'ðŸ“ˆ', title: colName + ' Summary',
-      text: 'Total: ' + fmt(total) + ' Â· Avg: ' + fmt(avg) + ' Â· Max: ' + fmt(mx) + ' Â· Min: ' + fmt(mn)
+    insights.push({ type: 'metric', icon: 'Ã°Å¸â€œË†', title: colName + ' Summary',
+      text: 'Total: ' + fmt(total) + ' Ã‚Â· Avg: ' + fmt(avg) + ' Ã‚Â· Max: ' + fmt(mx) + ' Ã‚Â· Min: ' + fmt(mn)
     });
 
     // Half-period trend
@@ -6764,9 +6784,9 @@ function generateInsights() {
       var changePct = ((sumSecond - sumFirst) / sumFirst) * 100;
       insights.push({
         type: changePct >= 0 ? 'success' : 'error',
-        icon: changePct >= 0 ? 'ðŸ“ˆ' : 'ðŸ“‰',
+        icon: changePct >= 0 ? 'Ã°Å¸â€œË†' : 'Ã°Å¸â€œâ€°',
         title: colName + ' Half-Period Trend',
-        text: colName + ' is ' + (changePct >= 0 ? 'â†‘ up' : 'â†“ down') + ' ' + Math.abs(changePct).toFixed(1) + '% comparing the first half to the second half of records.'
+        text: colName + ' is ' + (changePct >= 0 ? 'Ã¢â€ â€˜ up' : 'Ã¢â€ â€œ down') + ' ' + Math.abs(changePct).toFixed(1) + '% comparing the first half to the second half of records.'
       });
     }
   }
@@ -6786,11 +6806,11 @@ function generateInsights() {
       var topCount = sorted[0][1];
       var pct = ((topCount / gridData.length) * 100).toFixed(1);
       var catName = headerNames[cat] || cat;
-      insights.push({ type: 'info', icon: 'ðŸ†', title: 'Top ' + catName,
+      insights.push({ type: 'info', icon: 'Ã°Å¸Ââ€ ', title: 'Top ' + catName,
         text: '"' + topVal + '" is the most frequent ' + catName + ' (' + topCount.toLocaleString() + ' records, ' + pct + '% of dataset).'
       });
       if (sorted.length > 1) {
-        insights.push({ type: 'info', icon: 'ðŸ¥ˆ', title: 'Runner-up ' + catName,
+        insights.push({ type: 'info', icon: 'Ã°Å¸Â¥Ë†', title: 'Runner-up ' + catName,
           text: '"' + sorted[1][0] + '" is second most frequent with ' + sorted[1][1].toLocaleString() + ' records.'
         });
       }
@@ -6807,19 +6827,19 @@ function generateInsights() {
   });
   if (totalMissing > 0) {
     var missingPct = ((totalMissing / (gridData.length * headers.length)) * 100).toFixed(1);
-    insights.push({ type: 'warning', icon: 'âš ï¸', title: 'Missing Values Detected',
+    insights.push({ type: 'warning', icon: 'Ã¢Å¡Â Ã¯Â¸Â', title: 'Missing Values Detected',
       text: totalMissing.toLocaleString() + ' missing cells detected (' + missingPct + '% of all data).'
     });
   } else {
-    insights.push({ type: 'success', icon: 'âœ…', title: 'No Missing Values',
-      text: 'All columns are fully populated â€” clean dataset.'
+    insights.push({ type: 'success', icon: 'Ã¢Å“â€¦', title: 'No Missing Values',
+      text: 'All columns are fully populated Ã¢â‚¬â€ clean dataset.'
     });
   }
 
   // 5. Active filters notice
   var filterCount = Object.values(globalVizFilters).filter(function(v) { return v !== ''; }).length;
   if (filterCount > 0) {
-    insights.push({ type: 'info', icon: 'ðŸ”', title: 'Active Dashboard Filters',
+    insights.push({ type: 'info', icon: 'Ã°Å¸â€Â', title: 'Active Dashboard Filters',
       text: filterCount + ' active filter' + (filterCount > 1 ? 's' : '') + ' applied. Widgets show a filtered subset.'
     });
   }
@@ -6863,7 +6883,7 @@ function renderInsightsTab() {
 }
 
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• PHASE 2: STATISTICAL ANALYSIS â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â PHASE 2: STATISTICAL ANALYSIS Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â
 
 function pearsonCorr(xs, ys) {
   var n = xs.length;
@@ -6964,7 +6984,7 @@ function renderTrendAnalysis() {
     return '<div style="padding:10px; background:var(--bg-secondary); border-radius:var(--radius-sm); border:1px solid var(--border-color); margin-bottom:6px;">' +
       '<div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px;">' +
         '<span style="font-size:11px; font-weight:700; color:var(--text-primary);">' + (headerNames[col] || col) + '</span>' +
-        '<span style="font-size:10.5px; font-weight:700; color:' + color + ';">' + (isUp ? 'â†‘' : 'â†“') + ' ' + Math.abs(changePct).toFixed(1) + '%</span>' +
+        '<span style="font-size:10.5px; font-weight:700; color:' + color + ';">' + (isUp ? 'Ã¢â€ â€˜' : 'Ã¢â€ â€œ') + ' ' + Math.abs(changePct).toFixed(1) + '%</span>' +
       '</div>' +
       '<div style="display:flex; align-items:flex-end; gap:3px; height:32px;">' + miniBars + '</div>' +
       '<div style="font-size:9.5px; color:var(--text-muted); margin-top:4px;">Quintile segment averages across dataset</div>' +
@@ -7002,18 +7022,18 @@ function renderAnomalyAnalysis() {
   });
 
   if (allAnomalies.length === 0) {
-    container.innerHTML = '<div style="font-size:11px; color:var(--success); padding:8px;">âœ… No statistical anomalies detected using IQR method.</div>';
+    container.innerHTML = '<div style="font-size:11px; color:var(--success); padding:8px;">Ã¢Å“â€¦ No statistical anomalies detected using IQR method.</div>';
     return;
   }
 
   container.innerHTML = allAnomalies.map(function(a) {
     return '<div style="padding:8px; background:rgba(244,63,94,0.06); border-radius:var(--radius-sm); border:1px solid rgba(244,63,94,0.2); margin-bottom:4px;">' +
       '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">' +
-        '<span style="font-size:11px; font-weight:700; color:var(--error);">âš  ' + a.colName + '</span>' +
+        '<span style="font-size:11px; font-weight:700; color:var(--error);">Ã¢Å¡Â  ' + a.colName + '</span>' +
         '<span style="font-size:10px; color:var(--text-muted);">' + a.count + ' outliers</span>' +
       '</div>' +
-      '<div style="font-size:10.5px; color:var(--text-secondary);">Normal range: [' + a.lo + ' â€“ ' + a.hi + ']</div>' +
-      '<div style="font-size:10px; color:var(--text-muted); margin-top:2px;">Dataset Min: ' + a.min + ' Â· Max: ' + a.max + '</div>' +
+      '<div style="font-size:10.5px; color:var(--text-secondary);">Normal range: [' + a.lo + ' Ã¢â‚¬â€œ ' + a.hi + ']</div>' +
+      '<div style="font-size:10px; color:var(--text-muted); margin-top:2px;">Dataset Min: ' + a.min + ' Ã‚Â· Max: ' + a.max + '</div>' +
     '</div>';
   }).join('');
 }
@@ -7149,7 +7169,7 @@ document.querySelectorAll('.analysis-subtab-btn').forEach(function(btn) {
 switchAnalysisSubtab('correlation');
 
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• PHASE 2: SAVE / LOAD STATE â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â PHASE 2: SAVE / LOAD STATE Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â
 
 function getDashboardState() {
   return {
@@ -7235,7 +7255,7 @@ function injectSaveLoadButtons() {
 }
 
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• PHASE 2: PATCH switchVizTab â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â PHASE 2: PATCH switchVizTab Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â
 
 window.switchVizTab = switchVizTab;
 
@@ -7245,7 +7265,7 @@ document.querySelectorAll('.viz-tab-btn').forEach(function(btn) {
 });
 
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• PHASE 2: LIFECYCLE HOOKS â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â PHASE 2: LIFECYCLE HOOKS Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â
 
 var _origSwitchToDashboardView = switchToDashboardView;
 window.switchToDashboardView = function() {
@@ -7256,7 +7276,7 @@ window.switchToDashboardView = function() {
 if (typeof wsBtnVisualize !== 'undefined' && wsBtnVisualize) wsBtnVisualize.onclick = window.switchToDashboardView;
 if (typeof btnSwitchDash !== 'undefined' && btnSwitchDash) btnSwitchDash.onclick = window.switchToDashboardView;
 
-// ═══════════════════════════ COLLAPSIBLE PANELS ═══════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• COLLAPSIBLE PANELS â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
 function initCollapsiblePanel(headerId, bodyId, toggleIconId, storageKey) {
   var header = document.getElementById(headerId);
@@ -7278,11 +7298,11 @@ function initCollapsiblePanel(headerId, bodyId, toggleIconId, storageKey) {
   });
 }
 
-// Initialise both panels (they may not be visible yet — safe to init early)
+// Initialise both panels (they may not be visible yet â€” safe to init early)
 initCollapsiblePanel('preprocessing-panel-header', 'preprocessing-panel-body', 'preprocessing-toggle-icon', 'panel-preprocessing-collapsed');
 initCollapsiblePanel('dashbuilder-panel-header',   'dashbuilder-panel-body',   'dashbuilder-toggle-icon',   'panel-dashbuilder-collapsed');
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• PANEL MANAGER â€” 3-STATE SYSTEM â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â PANEL MANAGER Ã¢â‚¬â€ 3-STATE SYSTEM Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â
 // States: 'open' | 'rail' | 'closed'
 // Manages: Data Preprocessing + Dashboard Builder panels
 // Single container rule: only one panel content visible at a time.
@@ -7296,7 +7316,7 @@ initCollapsiblePanel('dashbuilder-panel-header',   'dashbuilder-panel-body',   '
   // Panel sidebar element
   var sidebar = document.getElementById('ws-sidebar');
 
-  // â”€â”€ State helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // Ã¢â€â‚¬Ã¢â€â‚¬ State helpers Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
   function getPanelState() {
     try { return JSON.parse(sessionStorage.getItem(STORAGE_KEY)) || {}; } catch(e) { return {}; }
   }
@@ -7305,7 +7325,7 @@ initCollapsiblePanel('dashbuilder-panel-header',   'dashbuilder-panel-body',   '
     try { sessionStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e) {}
   }
 
-  // â”€â”€ Apply sidebar width state â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // Ã¢â€â‚¬Ã¢â€â‚¬ Apply sidebar width state Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
   function applySidebarState(widthState) {
     // widthState: 'open' | 'rail' | 'closed'
     sidebar.classList.remove('collapsed', 'panel-rail', 'panel-closed');
@@ -7340,7 +7360,7 @@ initCollapsiblePanel('dashbuilder-panel-header',   'dashbuilder-panel-body',   '
     }
   }
 
-  // â”€â”€ Show a panel's inner content (without changing width state) â”€â”€â”€â”€
+  // Ã¢â€â‚¬Ã¢â€â‚¬ Show a panel's inner content (without changing width state) Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
   function showPanelContent(panelId) {
     var allInnerPanels = ['ws-sidebar-dataset-info', 'ws-sidebar-column-stats', 'ws-sidebar-data-quality', 'ws-sidebar-visualization'];
     allInnerPanels.forEach(function(id) {
@@ -7353,7 +7373,7 @@ initCollapsiblePanel('dashbuilder-panel-header',   'dashbuilder-panel-body',   '
     }
   }
 
-  // â”€â”€ Main public API â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // Ã¢â€â‚¬Ã¢â€â‚¬ Main public API Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
   // Open a panel. Respects "user manually closed" rule.
   window.PanelManager = {
 
@@ -7362,7 +7382,7 @@ initCollapsiblePanel('dashbuilder-panel-header',   'dashbuilder-panel-body',   '
     open: function(type, forceOpen) {
       var state = getPanelState();
       if (!forceOpen && state.userClosed === type) {
-        // User explicitly closed this panel â€” don't reopen automatically
+        // User explicitly closed this panel Ã¢â‚¬â€ don't reopen automatically
         return;
       }
       activePanelContent = type;
@@ -7417,7 +7437,7 @@ initCollapsiblePanel('dashbuilder-panel-header',   'dashbuilder-panel-body',   '
     }
   };
 
-  // â”€â”€ Wire Collapse / Close buttons â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // Ã¢â€â‚¬Ã¢â€â‚¬ Wire Collapse / Close buttons Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
   function wireButton(id, fn) {
     var btn = document.getElementById(id);
     if (btn) btn.addEventListener('click', function(e) { e.stopPropagation(); fn(); });
@@ -7428,7 +7448,7 @@ initCollapsiblePanel('dashbuilder-panel-header',   'dashbuilder-panel-body',   '
   wireButton('btn-dashbuilder-collapse',   function() { window.PanelManager.collapse(); });
   wireButton('btn-dashbuilder-close',      function() { window.PanelManager.close(); });
 
-  // â”€â”€ Wire Rail icon buttons (click to restore) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // Ã¢â€â‚¬Ã¢â€â‚¬ Wire Rail icon buttons (click to restore) Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
   var railPre = document.getElementById('rail-btn-preprocessing');
   if (railPre) {
     railPre.addEventListener('click', function() {
@@ -7447,7 +7467,7 @@ initCollapsiblePanel('dashbuilder-panel-header',   'dashbuilder-panel-body',   '
     });
   }
 
-  // â”€â”€ Wire Reopen tab (click to restore) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // Ã¢â€â‚¬Ã¢â€â‚¬ Wire Reopen tab (click to restore) Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
   var reopenTab = document.getElementById('ws-panel-reopen-tab');
   if (reopenTab) {
     reopenTab.addEventListener('click', function() {
@@ -7455,7 +7475,7 @@ initCollapsiblePanel('dashbuilder-panel-header',   'dashbuilder-panel-body',   '
     });
   }
 
-  // â”€â”€ Patch existing sidebar toggle button (was old collapse) â”€â”€â”€â”€â”€â”€â”€
+  // Ã¢â€â‚¬Ã¢â€â‚¬ Patch existing sidebar toggle button (was old collapse) Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
   // Keep it working: it now toggles between open and rail
   var sidebarToggleBtn = document.getElementById('ws-sidebar-toggle');
   if (sidebarToggleBtn) {
@@ -7472,7 +7492,7 @@ initCollapsiblePanel('dashbuilder-panel-header',   'dashbuilder-panel-body',   '
     });
   }
 
-  // â”€â”€ Patch the Analyze Dataset button â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // Ã¢â€â‚¬Ã¢â€â‚¬ Patch the Analyze Dataset button Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
   var analyzeBtn = document.getElementById('ws-btn-analyze');
   if (analyzeBtn) {
     var origAnalyzeHandler = analyzeBtn.onclick;
@@ -7483,7 +7503,7 @@ initCollapsiblePanel('dashbuilder-panel-header',   'dashbuilder-panel-body',   '
     newAnalyzeBtn.addEventListener('click', function() {
       // Switch content
       if (typeof qualityPanel !== 'undefined' && qualityPanel) {
-        // Toggle: if already open â†’ collapse
+        // Toggle: if already open Ã¢â€ â€™ collapse
         if (activePanelContent === 'preprocessing' && window.PanelManager.getWidthState() === 'open') {
           window.PanelManager.collapse();
           return;
@@ -7495,7 +7515,7 @@ initCollapsiblePanel('dashbuilder-panel-header',   'dashbuilder-panel-body',   '
     });
   }
 
-  // â”€â”€ Patch switchToDashboardView for Dashboard Builder â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // Ã¢â€â‚¬Ã¢â€â‚¬ Patch switchToDashboardView for Dashboard Builder Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
   // The existing code calls wsSidebarVisualization.style.display = 'block'
   // We intercept by hooking into PanelManager instead.
   var _pmOrigSwitch = window.switchToDashboardView;
@@ -7507,7 +7527,7 @@ initCollapsiblePanel('dashbuilder-panel-header',   'dashbuilder-panel-body',   '
     // Don't force open if user explicitly closed it
     var state = getPanelState();
     if (state.userClosed === 'visualization') {
-      // User closed it â€” hide the viz panel that original may have shown
+      // User closed it Ã¢â‚¬â€ hide the viz panel that original may have shown
       var vizPanel = document.getElementById('ws-sidebar-visualization');
       if (vizPanel) vizPanel.style.display = 'none';
       applySidebarState('closed');
@@ -7517,7 +7537,7 @@ initCollapsiblePanel('dashbuilder-panel-header',   'dashbuilder-panel-body',   '
     }
   };
 
-  // â”€â”€ Patch switchToSheetView to restore correct panel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // Ã¢â€â‚¬Ã¢â€â‚¬ Patch switchToSheetView to restore correct panel Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
   var _pmOrigSheetSwitch = window.switchToSheetView;
   window.switchToSheetView = function() {
     if (_pmOrigSheetSwitch) _pmOrigSheetSwitch();
@@ -7525,14 +7545,14 @@ initCollapsiblePanel('dashbuilder-panel-header',   'dashbuilder-panel-body',   '
     var state = getPanelState();
     // If user hasn't closed it, show dataset info
     if (state.userClosed !== 'preprocessing') {
-      // Just restore the sidebar to correct state â€” inner panels managed by existing code
+      // Just restore the sidebar to correct state Ã¢â‚¬â€ inner panels managed by existing code
       applySidebarState(state.widthState || 'open');
     } else {
       applySidebarState('closed');
     }
   };
 
-  // â”€â”€ Restore session state on page load â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // Ã¢â€â‚¬Ã¢â€â‚¬ Restore session state on page load Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
   var initState = getPanelState();
   if (initState.widthState) {
     applySidebarState(initState.widthState);
@@ -7541,12 +7561,12 @@ initCollapsiblePanel('dashbuilder-panel-header',   'dashbuilder-panel-body',   '
     activePanelContent = initState.activePanelContent;
   }
 
-  // â”€â”€ Remove the old broken initCollapsiblePanel calls â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  // (They ran on DOMContentLoaded â€” no-op since elements exist but do nothing now)
+  // Ã¢â€â‚¬Ã¢â€â‚¬ Remove the old broken initCollapsiblePanel calls Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+  // (They ran on DOMContentLoaded Ã¢â‚¬â€ no-op since elements exist but do nothing now)
 
 })();
 
-// ═══════════════════════════ WORKSPACES ENGINE ═══════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• WORKSPACES ENGINE â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
 let currentWorkspaceId = null;
 window.isRestoringWorkspace = false;
@@ -8029,8 +8049,9 @@ function restoreDatasetWorkspace(wsState) {
   calculatedFields = wsState.calculatedFields || {};
   drillHierarchies = wsState.drillHierarchies || [];
   aiActiveChatHistory = wsState.aiHistory || [];
-  lastResolvedPlan = null;
-  if (typeof renderAiChatHistory === 'function') renderAiChatHistory();
+  if (typeof renderAiChatHistory === 'function') {
+    renderAiChatHistory();
+  }
   
   const titleEl = document.getElementById('ws-dataset-name');
   if (titleEl) {
@@ -8356,7 +8377,7 @@ window.deleteWorkspace = function(event, workspaceId) {
   }
 };
 
-/* ═══════════════════════════ NEW VIEW RENDERING CONTROLLERS ═══════════════════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• NEW VIEW RENDERING CONTROLLERS â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 
 window.loadAndRenderDashboard = function() {
   getAllWorkspacesFromDB().then(workspaces => {
@@ -8718,7 +8739,7 @@ function wireGlobalUploadButtons() {
   });
 }
 
-/* ═══════════════════════════ INITIALIZATION & INTERACTIVE EVENTS ═══════════════════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• INITIALIZATION & INTERACTIVE EVENTS â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 
 document.addEventListener('DOMContentLoaded', () => {
   // Initialize Firebase Cloud Engine
@@ -9221,7 +9242,7 @@ function renderWizardStep() {
     html = `
       <div class="wizard-preview-box">
         <div style="font-size: 24px; margin-bottom: 6px;">
-          ${wizardState.chartType === 'kpi' || wizardState.chartType === 'metric_comparison' ? '🔢' : wizardState.chartType === 'table' ? '📋' : '📊'}
+          ${wizardState.chartType === 'kpi' || wizardState.chartType === 'metric_comparison' ? 'ðŸ”¢' : wizardState.chartType === 'table' ? 'ðŸ“‹' : 'ðŸ“Š'}
         </div>
         <div style="font-weight: 700; font-size: 11px; margin-bottom: 4px;">Preview Summary</div>
         <div style="font-size: 10.5px; color: var(--text-secondary); line-height: 1.4;">${previewSummaryText}</div>
@@ -9232,7 +9253,7 @@ function renderWizardStep() {
     titleLabel.innerText = "Add to Dashboard";
     html = `
       <div style="text-align: center; padding: 12px 0;">
-        <div style="font-size: 32px; margin-bottom: 12px;">✨</div>
+        <div style="font-size: 32px; margin-bottom: 12px;">âœ¨</div>
         <div style="font-size: 11px; font-weight: 600; color: var(--text-primary); margin-bottom: 8px;">Ready to create!</div>
         <div style="font-size: 10.5px; color: var(--text-secondary); margin-bottom: 12px;">Click "Add Visual" to insert this visual into your canvas.</div>
       </div>
@@ -9366,30 +9387,30 @@ function renderStructureTab() {
     }
 
     const typeIcons = {
-      kpi: '🔢',
-      line: '📈',
-      bar: '📊',
-      pie: '🍕',
-      donut: '🍩',
-      table: '📋'
+      kpi: 'ðŸ”¢',
+      line: 'ðŸ“ˆ',
+      bar: 'ðŸ“Š',
+      pie: 'ðŸ•',
+      donut: 'ðŸ©',
+      table: 'ðŸ“‹'
     };
 
     item.innerHTML = `
       <div class="viz-widget-info">
         <span class="viz-widget-list-title">${widget.title}</span>
         <div class="viz-widget-list-meta">
-          <span>${typeIcons[widget.type] || '📊'} ${widget.type.toUpperCase()}</span>
+          <span>${typeIcons[widget.type] || 'ðŸ“Š'} ${widget.type.toUpperCase()}</span>
           <span class="viz-widget-list-badge">w:${widget.w}/12</span>
         </div>
       </div>
       <div class="more-actions-menu-container">
-        <button class="history-step-btn btn-more-actions" style="font-size:12px; font-weight:bold; height:24px; padding:0 8px;" title="More Actions">⋮</button>
+        <button class="history-step-btn btn-more-actions" style="font-size:12px; font-weight:bold; height:24px; padding:0 8px;" title="More Actions">â‹®</button>
         <div class="more-actions-menu" id="menu-${widget.id}">
-          <button class="more-actions-item btn-menu-edit">⚙️ Edit</button>
-          <button class="more-actions-item btn-menu-dup">👥 Duplicate</button>
-          <button class="more-actions-item btn-menu-up" ${idx === 0 ? 'disabled style="opacity:0.3; cursor:not-allowed;"' : ''}>▲ Move Up</button>
-          <button class="more-actions-item btn-menu-down" ${idx === dashboardWidgets.length - 1 ? 'disabled style="opacity:0.3; cursor:not-allowed;"' : ''}>▼ Move Down</button>
-          <button class="more-actions-item delete btn-menu-del">🗑️ Delete</button>
+          <button class="more-actions-item btn-menu-edit">âš™ï¸ Edit</button>
+          <button class="more-actions-item btn-menu-dup">ðŸ‘¥ Duplicate</button>
+          <button class="more-actions-item btn-menu-up" ${idx === 0 ? 'disabled style="opacity:0.3; cursor:not-allowed;"' : ''}>â–² Move Up</button>
+          <button class="more-actions-item btn-menu-down" ${idx === dashboardWidgets.length - 1 ? 'disabled style="opacity:0.3; cursor:not-allowed;"' : ''}>â–¼ Move Down</button>
+          <button class="more-actions-item delete btn-menu-del">ðŸ—‘ï¸ Delete</button>
         </div>
       </div>
     `;
@@ -10108,8 +10129,8 @@ function exportToPDF() {
   doc.write('<div>');
   doc.write('<div style="font-weight:600; font-size:14px; margin-bottom:10px;">Risks & Actions</div>');
   doc.write('<ul class="list">');
-  risks.forEach(r => doc.write(`<li class="list-item" style="color:#b91c1c;">⚠️ ${r}</li>`));
-  recommendations.forEach(rec => doc.write(`<li class="list-item" style="color:#15803d;">→ ${rec}</li>`));
+  risks.forEach(r => doc.write(`<li class="list-item" style="color:#b91c1c;">âš ï¸ ${r}</li>`));
+  recommendations.forEach(rec => doc.write(`<li class="list-item" style="color:#15803d;">â†’ ${rec}</li>`));
   doc.write('</ul>');
   doc.write('</div>');
 
@@ -10195,11 +10216,11 @@ function exportToWord() {
   html += `</ul>`;
   
   html += `<h3>Risks & Anomalies</h3><ul>`;
-  risks.forEach(r => { html += `<li>⚠️ ${r}</li>`; });
+  risks.forEach(r => { html += `<li>âš ï¸ ${r}</li>`; });
   html += `</ul>`;
   
   html += `<h3>Strategic Recommendations</h3><ul>`;
-  recommendations.forEach(rec => { html += `<li>→ ${rec}</li>`; });
+  recommendations.forEach(rec => { html += `<li>â†’ ${rec}</li>`; });
   html += `</ul>`;
   
   html += `<h2>Key Metrics Summary</h2>`;
@@ -10387,7 +10408,7 @@ function renderDashboardTab() {
   if (checklistContainer) {
     checklistContainer.innerHTML = checklist.map(item => {
       const cls = item.passed ? 'passed' : 'warning';
-      const indicator = item.passed ? '✓' : '⚠';
+      const indicator = item.passed ? '✓' : '⚠️';
       return `
         <div class="checklist-item ${cls}">
           <span>${indicator}</span>
@@ -10449,7 +10470,7 @@ renderInsightsTab = function() {
 
   containerRisks.innerHTML = risks.map(r => `
     <div class="viz-insight-card" style="border-left: 3px solid var(--error);">
-      <div class="viz-insight-title" style="color:var(--error);">⚠ Risk Detected</div>
+      <div class="viz-insight-title" style="color:var(--error);">⚠️ Risk Detected</div>
       <div style="font-size:11px; color:var(--text-secondary); line-height:1.4;">${r}</div>
     </div>
   `).join('');
@@ -10551,15 +10572,6 @@ document.querySelectorAll('.viz-tab-btn').forEach(function(btn) {
   btn.onclick = function() { window.switchVizTab(btn.dataset.tab); };
 });
 
-/* ==================== ONECLICK AI ANALYST V1 LOGIC ==================== */
-
-// Global state variables for AI module
-let aiActiveChatHistory = [];
-let lastResolvedPlan = null;
-let aiPendingAction = null; // Stores parsed spreadsheet actions awaiting confirmation
-let sessionAuditLogs = [];  // Actions timeline for the History View
-
-// 1. Dataset Context Engine
 let currentDatasetContext = {
   columns: [],
   columnTypes: {},
@@ -10749,103 +10761,2129 @@ function renderDatasetContextSnapshot() {
   `;
 }
 
-// 2. Chat UI & Controllers
-window.setAiPrompt = function(promptText) {
-  const input = document.getElementById('ai-prompt-input');
-  if (input) {
-    input.value = promptText;
-    input.focus();
-  }
+/* ==================== ONECLICK UNIVERSAL DATA INTELLIGENCE LAYER (DIL) ==================== */
+
+// Global State Variables for DIL Engine
+let aiActiveChatHistory = [];
+let lastResolvedPlan = null;
+let aiPendingAction = null; 
+let sessionAuditLogs = [];  
+
+// DIL Core State Objects (Layers 1-3)
+let currentDatasetOntology = { entities: [], metrics: [], dimensions: [], dates: [] };
+let currentDatasetDomain = { name: "Custom Domain", confidence: 1.0 };
+let currentDatasetGraph = { nodes: [], edges: [], cardinality: {} };
+let currentDatasetSynonyms = {}; // Dynamic Synonym Engine mappings
+
+// Chained Conversational Memory (Layer 9 & 14)
+let conversationContext = {
+  currentMetric: null,
+  currentDimension: null,
+  currentFilters: [],
+  currentDateRange: null,
+  currentEntity: null,
+  currentVisualization: null,
+  currentAnalysisType: null
 };
 
-window.initAiAnalystView = function() {
-  const datasetNameEl = document.getElementById('ws-dataset-name');
-  const datasetName = datasetNameEl ? datasetNameEl.innerText : "";
-  const label = document.getElementById('ai-active-dataset-label');
+// Base vocabulary of business terms (Layer 4)
+const BASE_SYNONYM_VOCABULARY = {
+  financial_metric: ["revenue", "sales", "turnover", "profit", "income", "salary", "wages", "pay", "cost", "expense", "spent", "expenditure", "bill", "invoice"],
+  quantitative_metric: ["quantity", "qty", "volume", "units", "count", "amount", "score", "clicks", "impressions"],
+  geographic_dimension: ["location", "region", "state", "city", "country", "branch", "site", "address"],
+  temporal_dimension: ["date", "time", "year", "month", "quarter", "timestamp", "period"],
+  customer_entity: ["customer", "client", "buyer", "consumer", "patron", "patient"],
+  product_entity: ["product", "item", "sku", "goods", "merchandise"],
+  employee_entity: ["employee", "staff", "associate", "worker", "member"]
+};
 
-  if (label) {
-    if (gridData && gridData.length > 0) {
-      label.innerText = `Active Dataset: ${datasetName} (${gridData.length.toLocaleString()} Rows)`;
+// Layer 1: Semantic Understanding - profile individual columns
+function profileColumnSemantics(colKey) {
+  const name = (headerNames[colKey] || colKey).toLowerCase().trim();
+  const colIdx = headers.indexOf(colKey);
+  const totalRows = gridData.length;
+
+  let type = "text";
+  let semanticRole = "categorical_dimension";
+  let possibleMeanings = [];
+  let confidence = 0.5;
+
+  // Basic typing based on standard rules
+  const detectedType = detectColumnType(colKey);
+  
+  // Scans values for numeric concentration
+  let uniqueVals = new Set();
+  let numericCount = 0;
+  let emptyCount = 0;
+  
+  for (let r = 0; r < Math.min(totalRows, 100); r++) {
+    const val = String(gridData[r][colIdx]).trim();
+    if (val === "") {
+      emptyCount++;
     } else {
-      label.innerText = "Active Dataset: None (Please load data)";
+      uniqueVals.add(val);
+      if (!isNaN(parseFloat(val))) numericCount++;
     }
   }
 
-  updateCurrentDatasetContext();
-  renderAiChatHistory();
-  renderPastConversationsList();
+  const validCount = Math.min(totalRows, 100) - emptyCount;
+  const uniqueRatio = validCount > 0 ? (uniqueVals.size / validCount) : 0;
+  const isNumeric = validCount > 0 && (numericCount / validCount) > 0.8;
 
-  // Bind prompt inputs
-  const btnSend = document.getElementById('btn-ai-send');
-  if (btnSend) {
-    btnSend.onclick = handleAiPromptSubmit;
+  // Semantic Role Assignment & Confidence Calculation
+  if (detectedType === 'date' || name.includes('date') || name.includes('time') || name.includes('timestamp')) {
+    type = "temporal";
+    semanticRole = "temporal_dimension";
+    possibleMeanings = ["Date", "Timestamp", "Time Period"];
+    confidence = name.includes('date') || name.includes('time') ? 0.99 : 0.85;
+  } else if (name.includes('id') || name.includes('num') || name.includes('code') || name.includes('key')) {
+    type = "identifier";
+    semanticRole = "entity_identifier";
+    confidence = 0.95;
+    if (name.includes('cust')) {
+      possibleMeanings = ["Customer ID", "Buyer Key"];
+      semanticRole = "entity_identifier_customer";
+    } else if (name.includes('emp')) {
+      possibleMeanings = ["Employee ID", "Staff Key"];
+      semanticRole = "entity_identifier_employee";
+    } else if (name.includes('prod')) {
+      possibleMeanings = ["Product ID", "Item SKU"];
+      semanticRole = "entity_identifier_product";
+    } else if (name.includes('pat')) {
+      possibleMeanings = ["Patient ID", "Medical ID"];
+      semanticRole = "entity_identifier_patient";
+    } else {
+      possibleMeanings = ["Record Identifier"];
+    }
+  } else if (isNumeric || detectedType === 'currency' || detectedType === 'percentage') {
+    type = "numeric";
+    confidence = 0.8;
+    
+    // Check keyword meanings
+    if (name.includes('revenue') || name.includes('sales') || name.includes('turnover') || name.includes('amount') || name.includes('payout')) {
+      semanticRole = "financial_metric";
+      possibleMeanings = ["Revenue", "Gross Sales Amount"];
+      confidence = 0.98;
+    } else if (name.includes('salary') || name.includes('wages') || name.includes('pay') || name.includes('compensation')) {
+      semanticRole = "financial_metric";
+      possibleMeanings = ["Salary", "Wages"];
+      confidence = 0.99;
+    } else if (name.includes('cost') || name.includes('expense') || name.includes('spent') || name.includes('payout')) {
+      semanticRole = "financial_metric";
+      possibleMeanings = ["Cost", "Expenses Spent"];
+      confidence = 0.97;
+    } else if (name.includes('qty') || name.includes('quantity') || name.includes('volume') || name.includes('units') || name.includes('count')) {
+      semanticRole = "quantitative_metric";
+      possibleMeanings = ["Quantity", "Transactional Volume"];
+      confidence = 0.95;
+    } else {
+      semanticRole = "financial_metric";
+      possibleMeanings = ["Numeric Metric"];
+    }
+  } else if (name.includes('city') || name.includes('state') || name.includes('country') || name.includes('region') || name.includes('branch') || name.includes('location')) {
+    type = "geographic";
+    semanticRole = "geographic_dimension";
+    possibleMeanings = ["Location", "Region", "Branch Site"];
+    confidence = 0.98;
+  } else {
+    type = "text";
+    if (uniqueRatio < 0.3) {
+      semanticRole = "categorical_dimension";
+      possibleMeanings = ["Category Dimension", "Logical Segment"];
+      confidence = 0.75;
+    } else {
+      semanticRole = "text_comment";
+      possibleMeanings = ["Text Description"];
+      confidence = 0.6;
+    }
   }
 
-  const promptInput = document.getElementById('ai-prompt-input');
-  if (promptInput) {
-    promptInput.onkeydown = (e) => {
-      if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        handleAiPromptSubmit();
+  return { colKey, name: headerNames[colKey] || colKey, type, semantic_role: semanticRole, possible_meanings: possibleMeanings, confidence };
+}
+
+// Layer 2: Pragmatic Understanding - Infer the domain of the dataset
+function inferDatasetDomain(semantics) {
+  let scores = {
+    hr: 0,
+    healthcare: 0,
+    transactions: 0,
+    inventory: 0,
+    marketing: 0
+  };
+
+  semantics.forEach(sem => {
+    const role = sem.semantic_role;
+    const name = sem.name.toLowerCase();
+
+    // HR markers
+    if (role === "entity_identifier_employee" || name.includes('dept') || name.includes('department') || name.includes('salary') || name.includes('hire') || name.includes('job')) {
+      scores.hr += 1.5;
+    }
+    // Healthcare markers
+    if (role === "entity_identifier_patient" || name.includes('diagnosis') || name.includes('patient') || name.includes('treatment') || name.includes('sickness') || name.includes('visit') || name.includes('doctor')) {
+      scores.healthcare += 1.5;
+    }
+    // Transactions / Sales markers
+    if (role === "entity_identifier_customer" || role === "entity_identifier_product" || name.includes('revenue') || name.includes('sales') || name.includes('price') || name.includes('quantity') || name.includes('order') || name.includes('spent')) {
+      scores.transactions += 1.2;
+    }
+    // Inventory markers
+    if (name.includes('stock') || name.includes('warehouse') || name.includes('inventory') || name.includes('supplier') || name.includes('bin') || name.includes('qty')) {
+      scores.inventory += 1.0;
+    }
+    // Marketing markers
+    if (name.includes('campaign') || name.includes('click') || name.includes('impression') || name.includes('lead') || name.includes('channel') || name.includes('ad')) {
+      scores.marketing += 1.0;
+    }
+  });
+
+  let bestDomain = "Custom Domain";
+  let maxScore = 0;
+  
+  Object.entries(scores).forEach(([dom, score]) => {
+    if (score > maxScore) {
+      maxScore = score;
+      bestDomain = dom;
+    }
+  });
+
+  if (maxScore < 1.0) {
+    return { name: "Custom Business Domain", confidence: 0.8 };
+  }
+
+  const domainNames = {
+    hr: "Human Resources",
+    healthcare: "Healthcare Administration",
+    transactions: "Transactions / Commercial Retail",
+    inventory: "Logistics & Inventory",
+    marketing: "Marketing Campaigns"
+  };
+
+  const confidence = Math.min(0.99, 0.70 + (maxScore * 0.05));
+  return { name: domainNames[bestDomain], confidence };
+}
+
+// Layer 3: Ontology Builder
+function buildDatasetOntology(semantics) {
+  const ontology = { entities: [], metrics: [], dimensions: [], dates: [] };
+
+  semantics.forEach(sem => {
+    const key = sem.colKey;
+    const role = sem.semantic_role;
+
+    if (role.startsWith("entity_identifier")) {
+      ontology.entities.push({ colKey: key, role });
+    } else if (role === "financial_metric" || role === "quantitative_metric") {
+      ontology.metrics.push({ colKey: key, role });
+    } else if (role === "temporal_dimension") {
+      ontology.dates.push({ colKey: key, role });
+    } else if (role === "geographic_dimension" || role === "categorical_dimension") {
+      ontology.dimensions.push({ colKey: key, role });
+    }
+  });
+
+  return ontology;
+}
+
+// Layer 16: Relationship Discovery Engine
+function buildDatasetRelationships(ontology) {
+  const nodes = [];
+  const edges = [];
+  const cardinality = {};
+
+  // Add all entities and columns as nodes
+  headers.forEach(h => {
+    nodes.push({ id: h, label: headerNames[h] || h });
+  });
+
+  // Infer edges based on semantics
+  const primaryEntity = ontology.entities[0]?.colKey;
+
+  if (primaryEntity) {
+    headers.forEach(h => {
+      if (h !== primaryEntity) {
+        edges.push({ from: primaryEntity, to: h, type: "attribute" });
+        cardinality[`${primaryEntity}->${h}`] = "one-to-many";
       }
-    };
+    });
   }
 
-  const btnClear = document.getElementById('btn-ai-clear-chat');
-  if (btnClear) {
-    btnClear.onclick = () => {
-      aiActiveChatHistory = [];
-      saveChatHistoryToWorkspace();
-      renderAiChatHistory();
-    };
+  // Domain-specific structural overrides
+  if (currentDatasetDomain.name === "Human Resources") {
+    const deptCol = headers.find(h => h.toLowerCase().includes('dept') || h.toLowerCase().includes('department'));
+    const empCol = ontology.entities.find(e => e.role === "entity_identifier_employee")?.colKey;
+    if (deptCol && empCol) {
+      edges.push({ from: deptCol, to: empCol, type: "parent-child" });
+      cardinality[`${deptCol}->${empCol}`] = "one-to-many";
+    }
+  } else if (currentDatasetDomain.name === "Transactions / Commercial Retail") {
+    const custCol = ontology.entities.find(e => e.role === "entity_identifier_customer")?.colKey;
+    const prodCol = ontology.entities.find(e => e.role === "entity_identifier_product")?.colKey;
+    const revCol = ontology.metrics.find(m => m.role === "financial_metric")?.colKey;
+
+    if (custCol && prodCol) {
+      edges.push({ from: custCol, to: prodCol, type: "many-to-many" });
+    }
+    if (prodCol && revCol) {
+      edges.push({ from: prodCol, to: revCol, type: "has-metric" });
+    }
   }
 
-  // Bind safe action confirmation overlay
-  const btnYes = document.getElementById('btn-ai-confirm-yes');
-  if (btnYes) btnYes.onclick = () => resolveAiSpreadsheetCommand(true);
+  currentDatasetGraph = { nodes, edges, cardinality, confidence: 0.90 };
+}
 
-  const btnNo = document.getElementById('btn-ai-confirm-no');
-  if (btnNo) btnNo.onclick = () => resolveAiSpreadsheetCommand(false);
+// Layer 4: Dynamic Synonym Engine
+function initializeSynonymEngine(ontology) {
+  const synonyms = {};
+
+  // Initialize synonyms using local column labels
+  headers.forEach(colKey => {
+    const name = (headerNames[colKey] || colKey).toLowerCase();
+    synonyms[name] = colKey;
+    
+    // Add tokenized subparts
+    name.split(/[\s_-]+/).forEach(token => {
+      if (token.length > 2) {
+        if (!synonyms[token]) synonyms[token] = colKey;
+      }
+    });
+  });
+
+  // Overlay common business vocabulary synonyms mapping
+  Object.entries(BASE_SYNONYM_VOCABULARY).forEach(([roleType, searchKeys]) => {
+    // Find matching columns from ontology
+    let targetCols = [];
+    if (roleType === "financial_metric") {
+      targetCols = ontology.metrics.filter(m => m.role === "financial_metric");
+    } else if (roleType === "quantitative_metric") {
+      targetCols = ontology.metrics.filter(m => m.role === "quantitative_metric");
+    } else if (roleType === "geographic_dimension") {
+      targetCols = ontology.dimensions.filter(d => d.role === "geographic_dimension");
+    } else if (roleType === "temporal_dimension") {
+      targetCols = ontology.dates;
+    } else if (roleType === "customer_entity") {
+      targetCols = ontology.entities.filter(e => e.role === "entity_identifier_customer");
+    } else if (roleType === "product_entity") {
+      targetCols = ontology.entities.filter(e => e.role === "entity_identifier_product");
+    } else if (roleType === "employee_entity") {
+      targetCols = ontology.entities.filter(e => e.role === "entity_identifier_employee");
+    }
+
+    if (targetCols.length > 0) {
+      const primaryTarget = targetCols[0].colKey;
+      searchKeys.forEach(key => {
+        if (!synonyms[key]) {
+          synonyms[key] = primaryTarget;
+        }
+      });
+    }
+  });
+
+  currentDatasetSynonyms = synonyms;
+}
+
+// DIL Orchestration trigger
+function analyzeDatasetIntelligence() {
+  if (!gridData || gridData.length === 0) return;
+
+  const semantics = headers.map(h => profileColumnSemantics(h));
+  currentDatasetDomain = inferDatasetDomain(semantics);
+  currentDatasetOntology = buildDatasetOntology(semantics);
+  initializeSynonymEngine(currentDatasetOntology);
+  buildDatasetRelationships(currentDatasetOntology);
+
+  updateCopilotHeaderDetails();
+}
+
+// Override updateCurrentDatasetContext
+const _origUpdateCurrentDatasetContext = updateCurrentDatasetContext;
+updateCurrentDatasetContext = function() {
+  _origUpdateCurrentDatasetContext();
+  analyzeDatasetIntelligence();
 };
 
-function renderAiChatHistory() {
-  const feed = document.getElementById('ai-chat-feed');
-  if (!feed) return;
+/* Layer 13: Entity Recognition Engine */
+function extractEntitiesFromPrompt(prompt) {
+  const normalized = prompt.toLowerCase().trim();
+  const entities = [];
+  const dimensions = [];
+  const filters = [];
+  const dates = [];
 
-  // Preserve welcome bubble
-  let html = `
-    <div class="ai-message assistant" style="display: flex; gap: 12px; max-width: 85%;">
+  // 1. Identify specific numeric identifiers (e.g. Customer 1024 or Patient 55)
+  const idCol = currentDatasetOntology.entities[0]?.colKey;
+  if (idCol) {
+    const numMatch = normalized.match(/\b\d{3,6}\b/);
+    if (numMatch) {
+      const entityVal = numMatch[0];
+      const entityLabel = headerNames[idCol] || idCol;
+      entities.push({
+        entity_type: entityLabel.toLowerCase(),
+        entity_value: entityVal,
+        colKey: idCol
+      });
+      filters.push({ colKey: idCol, op: "eq", value: entityVal });
+    }
+  }
+
+  // 2. Identify explicit categorical dimension values
+  currentDatasetOntology.dimensions.forEach(dim => {
+    const colIdx = headers.indexOf(dim.colKey);
+    if (colIdx === -1) return;
+
+    // Scan uniques (using mapped column statistics from context)
+    const stats = currentDatasetContext.columnStatistics[dim.colKey];
+    if (stats && stats.uniqueValues) {
+      stats.uniqueValues.forEach(val => {
+        const valStr = String(val).toLowerCase();
+        // Exact word boundary checks to avoid partial collision
+        const valRegex = new RegExp(`\\b${escapeRegExp(valStr)}\\b`, 'i');
+        if (valRegex.test(normalized)) {
+          dimensions.push({
+            dimension: headerNames[dim.colKey] || dim.colKey,
+            value: val,
+            colKey: dim.colKey
+          });
+          filters.push({ colKey: dim.colKey, op: "eq", value: val });
+        }
+      });
+    }
+  });
+
+  // 3. Date mapping
+  if (currentDatasetOntology.dates.length > 0) {
+    const dateCol = currentDatasetOntology.dates[0].colKey;
+    const months = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
+    const monthFull = ["january", "february", "march", "april", "may", "june", "july", "august", "september", "october", "november", "december"];
+    
+    let foundMonths = [];
+    months.forEach((m, idx) => {
+      if (normalized.includes(m) || normalized.includes(monthFull[idx])) {
+        foundMonths.push(idx);
+      }
+    });
+
+    if (foundMonths.length > 0) {
+      const yearMatch = normalized.match(/\b(20\d{2})\b/);
+      const year = yearMatch ? parseInt(yearMatch[1]) : 2026;
+      
+      const startMonth = foundMonths[0];
+      const endMonth = foundMonths[foundMonths.length - 1];
+      const startDay = 1;
+      const endDay = new Date(year, endMonth + 1, 0).getDate();
+
+      const minDate = new Date(year, startMonth, startDay);
+      const maxDate = new Date(year, endMonth, endDay);
+      dates.push({ colKey: dateCol, min: minDate, max: maxDate });
+    }
+  }
+
+  return { entities, dimensions, filters, dates };
+}
+
+/* Layer 15: Visualization Planning & Validation */
+function createVisualizationPlan(intent, xCol, yCol, rawType, prompt) {
+  const norm = (prompt || "").toLowerCase();
+
+  // Filter out columns containing id/key/code to avoid bad auto defaults
+  const validMetrics = currentDatasetOntology.metrics.map(m => m.colKey).filter(col => {
+    const name = (headerNames[col] || col).toLowerCase();
+    return !name.includes("id") && !name.includes("key") && !name.includes("code");
+  });
+  
+  const validDimensions = currentDatasetOntology.dimensions.map(d => d.colKey).filter(col => {
+    const name = (headerNames[col] || col).toLowerCase();
+    return !name.includes("id") && !name.includes("key") && !name.includes("code");
+  });
+
+  let finalX = xCol;
+  let finalY = yCol;
+
+  // Visual Planning defaults
+  let chartType = "bar";
+
+  // Correlation check
+  if (norm.includes("scatter") || norm.includes("correlation") || norm.includes("relationship")) {
+    chartType = "scatter";
+    if (!finalY) finalY = validMetrics[0] || currentDatasetOntology.metrics[0]?.colKey || headers[0];
+    if (!finalX) finalX = validMetrics[1] || validMetrics[0] || headers[0];
+  } else {
+    // Standard chart parameters
+    if (!finalY) {
+      finalY = validMetrics[0] || currentDatasetOntology.metrics[0]?.colKey || headers[0];
+    }
+    if (!finalX) {
+      finalX = validDimensions[0] || currentDatasetOntology.dates[0]?.colKey || headers[0];
+    }
+
+    if (norm.includes("donut") || norm.includes("pie") || norm.includes("contribution") || norm.includes("share")) {
+      chartType = "donut";
+    } else if (norm.includes("histogram") || norm.includes("distribution")) {
+      chartType = "bar"; // Rendered as frequency bar chart
+    } else if (norm.includes("table") || norm.includes("records") || norm.includes("detailed")) {
+      chartType = "table";
+    } else if (currentDatasetOntology.dates.some(d => d.colKey === finalX) || norm.includes("trend") || norm.includes("over time") || norm.includes("line") || intent === "TrendAnalysis") {
+      chartType = "line";
+    }
+  }
+
+  // Chart Requirements Verification
+  const isXValid = headers.includes(finalX);
+  const isYValid = headers.includes(finalY);
+
+  if (!isXValid || !isYValid) {
+    return { error: "Visualization Plan requires at least one valid Dimension and one valid Metric." };
+  }
+
+  return {
+    chartType,
+    xAxis: finalX,
+    yAxis: finalY,
+    aggregation: "SUM",
+    title: `${headerNames[finalY] || finalY} Breakdown by ${headerNames[finalX] || finalX}`
+  };
+}
+
+/* Layer 5: Extended Intent Classifier */
+function classifyUserIntent(prompt) {
+  const normalized = prompt.toLowerCase().trim();
+
+  // Greetings
+  if (["hi", "hello", "hey", "good morning", "good afternoon", "good evening", "yo", "greetings"].some(g => normalized === g || normalized.startsWith(g + " ") || normalized.startsWith(g + "!"))) {
+    return "Greeting";
+  }
+
+  // Export Request
+  if (normalized.includes("export") || normalized.includes("download") || normalized.includes("to pdf") || normalized.includes("to docx") || normalized.includes("to pptx") || normalized.includes("to csv") || normalized.includes("to json")) {
+    return "ExportRequest";
+  }
+
+  // Report Generation
+  if (normalized.includes("generate report") || normalized.includes("executive summary") || normalized.includes("create report") || normalized.includes("summary report") || normalized.includes("business review") || normalized.includes("risk profile") || normalized.includes("operations analysis")) {
+    return "ReportGeneration";
+  }
+
+  // Dashboard Generation
+  if (normalized.includes("build dashboard") || normalized.includes("create dashboard") || normalized.includes("generate dashboard") || normalized.includes("add to dashboard")) {
+    return "DashboardGeneration";
+  }
+
+  // Data Quality
+  if (normalized.includes("data quality") || normalized.includes("quality score") || normalized.includes("missing count") || normalized.includes("duplicates score") || normalized.includes("health check") || normalized.includes("missing stats")) {
+    return "DataQuality";
+  }
+
+  // Cleaning / Data quality recommendations
+  if (normalized.includes("clean") || normalized.includes("impute") || normalized.includes("fixing") || normalized.includes("remove duplicates") || normalized.includes("fill missing") || normalized.includes("delete empty") || normalized.includes("delete blank") || normalized.includes("convert date") || normalized.includes("rename column") || normalized.includes("merge columns") || normalized.includes("split column") || normalized.includes("cleaning recommendation")) {
+    return "CleaningRecommendation";
+  }
+
+  // Dataset Questions
+  if (
+    normalized.includes("what dataset") ||
+    normalized.includes("what is this dataset") ||
+    normalized.includes("dataset info") ||
+    normalized.includes("tell me about this dataset") ||
+    normalized.includes("dataset summary") ||
+    normalized.includes("metadata") ||
+    (normalized.includes("using") && normalized.includes("dataset"))
+  ) {
+    return "DatasetQuestion";
+  }
+
+  // Column Questions
+  if (
+    normalized.includes("show column") ||
+    normalized.includes("what column") ||
+    normalized.includes("list field") ||
+    normalized.includes("show field") ||
+    normalized.includes("list column") ||
+    normalized.includes("dataset schema") ||
+    normalized.includes("what fields") ||
+    normalized.includes("columns do i have")
+  ) {
+    return "ColumnQuestion";
+  }
+
+  // Comparison
+  if (normalized.includes("compare") || normalized.includes(" vs ") || normalized.includes("difference") || normalized.includes("versus")) {
+    return "Comparison";
+  }
+
+  // Visualizations
+  if (normalized.includes("chart") || normalized.includes("plot") || normalized.includes("graph") || normalized.includes("histogram") || normalized.includes("scatter") || normalized.includes("pie") || normalized.includes("donut") || normalized.includes("bar")) {
+    return "Visualization";
+  }
+
+  // Diagnostic Explain / Insights / Anomalies
+  if (normalized.startsWith("why") || normalized.includes("anomaly") || normalized.includes("outlier") || normalized.includes("explain") || normalized.includes("cause") || normalized.includes("reason") || normalized.includes("insights list") || normalized.includes("what should i analyze")) {
+    return "Insight";
+  }
+
+  // Trend
+  if (normalized.includes("trend") || normalized.includes("growth") || normalized.includes("over time") || normalized.includes("monthly") || normalized.includes("weekly") || normalized.includes("daily") || normalized.includes("yearly")) {
+    return "TrendAnalysis";
+  }
+
+  // Metric Queries
+  if (normalized.includes("total") || normalized.includes("sum") || normalized.includes("average") || normalized.includes("avg") || normalized.includes("mean") || normalized.includes("median") || normalized.includes("min") || normalized.includes("max") || normalized.includes("count") || normalized.includes("how many") || normalized.includes("expenditure") || normalized.includes("revenue") || normalized.includes("sales") || normalized.includes("spend")) {
+    return "MetricQuery";
+  }
+
+  // General Conversation / Help
+  if (
+    normalized.includes("how are you") ||
+    normalized.includes("what can you do") ||
+    normalized.includes("help") ||
+    normalized.includes("who are you")
+  ) {
+    return "GeneralConversation";
+  }
+
+  return "Unknown";
+}
+
+/* Layer 6 & 11: Query Planning & Disambiguation Engine */
+function generateQueryPlan(prompt) {
+  const normalized = prompt.toLowerCase().trim();
+  const intent = classifyUserIntent(prompt);
+
+  // Exclude greetings & reports from parsing
+  if (intent === "Greeting" || intent === "ReportGeneration" || intent === "ExportRequest") {
+    return { type: "system", intent };
+  }
+
+  // 1. Run Entity Recognition (Layer 13)
+  const recognition = extractEntitiesFromPrompt(prompt);
+
+  // 2. Map target metric using DIL Synonyms
+  let targetMetric = null;
+  let metricConfidence = 0;
+  
+  // Find words in prompt matching synonym engine
+  const words = normalized.split(/\s+/);
+  const potentialMatches = [];
+
+  words.forEach(w => {
+    const cleaned = w.replace(/[^a-z]/g, "");
+    if (currentDatasetSynonyms[cleaned]) {
+      const colKey = currentDatasetSynonyms[cleaned];
+      const stats = currentDatasetContext.columnStatistics[colKey];
+      if (stats) {
+        potentialMatches.push({
+          colKey,
+          confidence: stats.type === "numeric" || stats.type === "currency" ? 0.95 : 0.6
+        });
+      }
+    }
+  });
+
+  // Sort by confidence
+  potentialMatches.sort((a, b) => b.confidence - a.confidence);
+  if (potentialMatches.length > 0) {
+    targetMetric = potentialMatches[0].colKey;
+    metricConfidence = potentialMatches[0].confidence;
+  }
+
+  // 3. Layer 11: Disambiguation Check
+  // Check if multiple potential matches overlap
+  const uniqueMatches = Array.from(new Set(potentialMatches.map(m => m.colKey)));
+  if (uniqueMatches.length > 1 && intent === "MetricQuery") {
+    return {
+      type: "disambiguate",
+      intent,
+      options: uniqueMatches,
+      reason: "Multiple potential numeric columns found mapping to your prompt details."
+    };
+  }
+
+  // Check if no columns found at all for numeric questions
+  if (!targetMetric && intent === "MetricQuery" && currentDatasetOntology.metrics.length > 0) {
+    // Check if user is asking for "profit" but it is missing (Query Safety Layer)
+    if (normalized.includes("profit") || normalized.includes("margin")) {
+      const revenueCol = currentDatasetOntology.metrics.find(m => {
+        const name = (headerNames[m.colKey] || m.colKey).toLowerCase();
+        return name.includes("revenue") || name.includes("sales") || name.includes("income") || name.includes("amount");
+      })?.colKey;
+      const costCol = currentDatasetOntology.metrics.find(m => {
+        const name = (headerNames[m.colKey] || m.colKey).toLowerCase();
+        return name.includes("cost") || name.includes("expense") || name.includes("spent") || name.includes("wages");
+      })?.colKey;
+
+      if (revenueCol && costCol) {
+        return {
+          type: "query_safety_trigger",
+          formula: "profit_subtraction",
+          varA: revenueCol,
+          varB: costCol
+        };
+      }
+    }
+
+    // Default target metric if unsure but confidence threshold met
+    targetMetric = currentDatasetOntology.metrics[0]?.colKey;
+    metricConfidence = 0.5; // low confidence
+  }
+
+  // Find dimension
+  let targetDimension = null;
+  currentDatasetOntology.dimensions.forEach(dim => {
+    const colName = (headerNames[dim.colKey] || dim.colKey).toLowerCase();
+    if (normalized.includes(colName)) {
+      targetDimension = dim.colKey;
+    }
+  });
+  if (!targetDimension) {
+    targetDimension = currentDatasetOntology.dimensions[0]?.colKey;
+  }
+
+  // Operator extraction
+  let op = "sum";
+  if (normalized.includes("average") || normalized.includes("avg") || normalized.includes("mean")) op = "avg";
+  else if (normalized.includes("unique") || normalized.includes("distinct")) op = "count_dist";
+  else if (normalized.includes("count") || normalized.includes("how many")) op = "count";
+  else if (normalized.includes("min") || normalized.includes("lowest")) op = "min";
+  else if (normalized.includes("max") || normalized.includes("highest")) op = "max";
+  else if (normalized.includes("median")) op = "median";
+
+  // Build Query Plan
+  let planType = "aggregation";
+  if (intent === "Comparison") planType = "comparison";
+  else if (intent === "TrendAnalysis") planType = "trend";
+  else if (intent === "Insight") planType = "explain";
+  else if (intent === "Visualization") planType = "chart_command";
+
+  // Extract dates and category filters from entity recognizer
+  const dateFilter = recognition.dates[0] || null;
+  const categoryFilters = recognition.filters;
+
+  let compItems = [];
+  if (categoryFilters && categoryFilters.length >= 2) {
+    compItems = categoryFilters.map(f => f.value);
+  } else {
+    const vsMatch = normalized.match(/(.+)\s+(?:vs|versus|compare)\s+(.+)/);
+    if (vsMatch) {
+      compItems = [vsMatch[1].trim(), vsMatch[2].trim()];
+    }
+  }
+
+  return {
+    type: planType,
+    colKey: targetMetric,
+    xCol: targetDimension,
+    yCol: targetMetric,
+    op,
+    dateFilter,
+    categoryFilters,
+    compItems,
+    direction: (normalized.includes("bottom") || normalized.includes("worst")) ? "bottom" : "top",
+    count: normalized.match(/\b\d+\b/) ? parseInt(normalized.match(/\b\d+\b/)[0]) : 10,
+    rawPromptType: normalized.includes("line") ? "line" : (normalized.includes("pie") ? "pie" : (normalized.includes("donut") ? "donut" : "bar"))
+  };
+}
+
+// Low Confidence Disambiguation renderer
+function renderDisambiguationCard(plan) {
+  const optionsHtml = plan.options.map(colKey => {
+    const name = headerNames[colKey] || colKey;
+    return `<button class="ai-response-action-btn" onclick="resolveDILDisambiguation('${colKey}')" style="margin: 4px; padding: 6px 12px; font-size:11px;">🔢 Use ${name}</button>`;
+  }).join('');
+
+  return `
+    <div class="ai-analyst-report-card" style="border: 1px solid var(--warning); background: rgba(245,158,11,0.02);">
+      <div class="ai-report-header">
+        <span class="ai-report-type-badge" style="color:var(--warning); background:rgba(245,158,11,0.12); border-color:rgba(245,158,11,0.25);">❓ Disambiguation</span>
+        <div class="ai-report-title">Multiple potential columns matching context</div>
+      </div>
+      <p style="font-size: 12px; color: var(--text-secondary); margin: 4px 0 10px 0; line-height: 1.55;">
+        Your prompt refers to a metric mapping to multiple columns in the active spreadsheet ontology. Which of the following columns should I use to calculate?
+      </p>
+      <div style="display:flex; flex-wrap:wrap;">
+        ${optionsHtml}
+      </div>
+    </div>
+  `;
+}
+
+window.resolveDILDisambiguation = function(confirmedColKey) {
+  // Re-inject mapped column into conversation history
+  const promptInput = document.getElementById('ai-prompt-input');
+  const confirmedLabel = headerNames[confirmedColKey] || confirmedColKey;
+  
+  // Set value and trigger submit
+  window.setAiPrompt(`What is the total of ${confirmedLabel}`);
+  handleAiPromptSubmit();
+};
+
+// Query Safety Formula renderer
+function renderQuerySafetyCard(plan) {
+  const nameA = headerNames[plan.varA] || plan.varA;
+  const nameB = headerNames[plan.varB] || plan.varB;
+  
+  return `
+    <div class="ai-analyst-report-card" style="border: 1px solid var(--primary); background: rgba(99,102,241,0.02);">
+      <div class="ai-report-header">
+        <span class="ai-report-type-badge">🛡️ Query Safety</span>
+        <div class="ai-report-title">Calculation Recommendation</div>
+      </div>
+      <p style="font-size: 12px; color: var(--text-secondary); margin: 4px 0 10px 0; line-height: 1.55;">
+        I could not find a direct <strong>Profit</strong> column in the spreadsheet ontology.
+        However, I detected <strong>${nameA}</strong> and <strong>${nameB}</strong> fields. Would you like me to calculate this metric?
+      </p>
+      <div style="display:flex; flex-wrap:wrap; gap: 6px;">
+        <button class="ai-response-action-btn" onclick="resolveQuerySafetyFormula('profit','${plan.varA}','${plan.varB}')">➕ Profit = ${nameA} - ${nameB}</button>
+        <button class="ai-response-action-btn" onclick="resolveQuerySafetyFormula('margin','${plan.varA}','${plan.varB}')">📈 Margin % = (${nameA} - ${nameB}) / ${nameA}</button>
+      </div>
+    </div>
+  `;
+}
+
+window.resolveQuerySafetyFormula = function(formulaName, varA, varB) {
+  // Register formula logic, execute calculation, and push result directly
+  setCopilotState('thinking');
+  
+  setTimeout(() => {
+    let resultValue = 0;
+    let calcString = "";
+    let formattedVal = "";
+    let titleStr = "";
+
+    const idxA = headers.indexOf(varA);
+    const idxB = headers.indexOf(varB);
+    const labelA = headerNames[varA] || varA;
+    const labelB = headerNames[varB] || varB;
+
+    let computedRows = 0;
+    
+    // Safety calculations
+    if (formulaName === 'profit') {
+      gridData.forEach(row => {
+        const valA = getCleanNumericValue(row[idxA]);
+        const valB = getCleanNumericValue(row[idxB]);
+        if (!isNaN(valA) && !isNaN(valB)) {
+          resultValue += (valA - valB);
+          computedRows++;
+        }
+      });
+      calcString = `SUM(${labelA} - ${labelB})`;
+      formattedVal = formatKpiValue(resultValue, varA, 'sum');
+      titleStr = `Calculated Net Profit (${labelA} - ${labelB})`;
+    } else {
+      let sumA = 0;
+      let sumB = 0;
+      gridData.forEach(row => {
+        const valA = getCleanNumericValue(row[idxA]);
+        const valB = getCleanNumericValue(row[idxB]);
+        if (!isNaN(valA) && !isNaN(valB)) {
+          sumA += valA;
+          sumB += valB;
+          computedRows++;
+        }
+      });
+      resultValue = sumA !== 0 ? ((sumA - sumB) / sumA) * 100 : 0;
+      calcString = `(SUM(${labelA}) - SUM(${labelB})) / SUM(${labelA})`;
+      formattedVal = resultValue.toFixed(1) + "%";
+      titleStr = `Calculated Profit Margin %`;
+    }
+
+    const mockResult = {
+      type: "aggregation",
+      title: titleStr,
+      answer: formattedVal,
+      method: calcString,
+      rowsUsed: computedRows,
+      findings: [
+        `Constructed dynamic calculation formula based on relationship graph ontology parameters.`,
+        `Successfully evaluated formula expression across ${computedRows} rows client-side.`
+      ],
+      recommendations: [
+        `Review cost breakdown vectors to see options for increasing net profit margins.`
+      ],
+      confidence: "High",
+      calcDetails: `${calcString}\nRows Used: ${computedRows.toLocaleString()}`,
+      rawAnswer: resultValue
+    };
+
+    const responseHtml = generateHtmlResponse(mockResult);
+    aiActiveChatHistory.push({
+      sender: 'assistant',
+      text: titleStr + ": " + formattedVal,
+      contentHtml: responseHtml,
+      suggestions: ["Show profit trend", "Rank categories by cost", "Generate report"]
+    });
+    
+    saveChatHistoryToWorkspace();
+    renderAiChatHistory();
+    setCopilotState('idle');
+  }, 400);
+};
+
+// ConversationalMemory Expire Check
+function verifyContextExpiration(newPrompt) {
+  // If user changes prompt topic completely (e.g. going from "salary" to "healthcare visit count")
+  if (lastResolvedPlan && lastResolvedPlan.colKey) {
+    const lastColType = detectColumnType(lastResolvedPlan.colKey);
+    const semantics = profileColumnSemantics(lastResolvedPlan.colKey);
+    
+    // Scan prompt for completely unrelated semantic categories
+    const normalized = newPrompt.toLowerCase();
+    if (semantics.semantic_role === "financial_metric" && (normalized.includes("patient") || normalized.includes("diagnosis") || normalized.includes("treatment"))) {
+      // Unrelated topic: reset context
+      conversationContext = {
+        currentMetric: null,
+        currentDimension: null,
+        currentFilters: [],
+        currentDateRange: null,
+        currentEntity: null,
+        currentVisualization: null,
+        currentAnalysisType: null
+      };
+      lastResolvedPlan = null;
+    }
+  }
+}
+
+// Override handleAiPromptSubmit for DIL routing
+function handleAiPromptSubmit() {
+  const input = document.getElementById('ai-prompt-input');
+  if (!input) return;
+  const prompt = input.value.trim();
+  if (!prompt) return;
+
+  // Add User message
+  aiActiveChatHistory.push({
+    sender: 'user',
+    text: prompt
+  });
+  input.value = "";
+  input.style.height = 'auto'; 
+  renderAiChatHistory();
+
+  // Safety grounding check
+  if (!gridData || gridData.length === 0) {
+    setTimeout(() => {
+      aiActiveChatHistory.push({
+        sender: 'assistant',
+        text: "Please load a dataset workspace before asking analysis questions.",
+        contentHtml: `<p style="font-size: 12px; color: var(--text-secondary); margin: 0;">⚠️ Please load a dataset workspace before asking analysis questions.</p>`
+      });
+      saveChatHistoryToWorkspace();
+      renderAiChatHistory();
+    }, 400);
+    return;
+  }
+
+  setCopilotState('thinking');
+
+  // Verify memory resets
+  verifyContextExpiration(prompt);
+
+  const feed = document.getElementById('ai-chat-feed');
+  let typingBubble = null;
+  if (feed) {
+    typingBubble = document.createElement('div');
+    typingBubble.className = 'ai-message assistant typing-indicator';
+    typingBubble.style.cssText = 'display: flex; gap: 12px; max-width: 85%; margin-top: 10px;';
+    typingBubble.innerHTML = `
       <div class="ai-msg-avatar" style="width: 28px; height: 28px; border-radius: 50%; background: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0;">🤖</div>
       <div class="ai-msg-body" style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-color); border-radius: 0 12px 12px 12px; padding: 12px 16px;">
-        <h3 style="font-size: 13px; font-weight: 700; margin: 0 0 6px 0; color: var(--text-primary);">Hello! I am your OneClick AI Analyst.</h3>
-        <p style="font-size: 12px; color: var(--text-secondary); margin: 0; line-height: 1.5;">
-          I am fully aware of your loaded dataset and can help you answer questions, calculate aggregations, build charts, create KPI cards, explain data anomalies, or clean data.
-        </p>
-        <p style="font-size: 12px; color: var(--text-secondary); margin: 8px 0 0 0; line-height: 1.5;">
-          All my computations are executed locally and securely using actual calculations. Ask a question or click on one of the suggestions to get started!
-        </p>
+        <span style="font-size: 12px; color: var(--text-muted);">OneClick DIL Engine is evaluating context...</span>
+      </div>
+    `;
+    feed.appendChild(typingBubble);
+    feed.scrollTop = feed.scrollHeight;
+  }
+
+  setTimeout(() => {
+    // Clear typing bubble
+    if (typingBubble && typingBubble.parentNode) {
+      typingBubble.parentNode.removeChild(typingBubble);
+    }
+
+    routeUserMessage(prompt);
+  }, 450);
+}
+
+// Conversation Router (Top-level Entrypoint)
+function routeUserMessage(prompt) {
+  const intent = classifyUserIntent(prompt);
+  console.log("Router classified intent as:", intent);
+
+  switch (intent) {
+    case "Greeting":
+      handleGreeting(prompt);
+      break;
+    case "DatasetQuestion":
+      handleDatasetQuestion(prompt);
+      break;
+    case "ColumnQuestion":
+      handleColumnQuestion(prompt);
+      break;
+    case "DashboardGeneration":
+      handleDashboard(prompt);
+      break;
+    case "ReportGeneration":
+      handleReport(prompt);
+      break;
+    case "ExportRequest":
+      handleExport(prompt);
+      break;
+    case "DataQuality":
+      handleDataQuality(prompt);
+      break;
+    case "CleaningRecommendation":
+      handleCleaning(prompt);
+      break;
+    case "Visualization":
+      handleVisualization(prompt);
+      break;
+    case "Comparison":
+      handleComparison(prompt);
+      break;
+    case "Insight":
+      handleInsight(prompt);
+      break;
+    case "TrendAnalysis":
+      handleTrend(prompt);
+      break;
+    case "MetricQuery":
+      handleMetricQuery(prompt);
+      break;
+    case "GeneralConversation":
+      handleGeneralConversation(prompt);
+      break;
+    case "Unknown":
+    default:
+      handleGeneralConversation(prompt);
+      break;
+  }
+}
+
+// Context Engine Updates
+function updateConversationContext(plan) {
+  if (!plan) return;
+  if (plan.colKey) conversationContext.currentMetric = plan.colKey;
+  if (plan.xCol) conversationContext.currentDimension = plan.xCol;
+  
+  if (plan.categoryFilters && plan.categoryFilters.length > 0) {
+    if (!conversationContext.currentFilters) {
+      conversationContext.currentFilters = [];
+    }
+    plan.categoryFilters.forEach(newFilter => {
+      // Replace existing filter for same column or add new
+      conversationContext.currentFilters = conversationContext.currentFilters.filter(f => f.colKey !== newFilter.colKey);
+      conversationContext.currentFilters.push(newFilter);
+    });
+  }
+  if (plan.dateFilter) conversationContext.currentDateRange = plan.dateFilter;
+  if (plan.type) conversationContext.currentAnalysisType = plan.type;
+}
+
+// 1. GREETING HANDLER
+function handleGreeting(prompt) {
+  const datasetNameEl = document.getElementById('ws-dataset-name');
+  const datasetName = datasetNameEl ? datasetNameEl.innerText.trim() : (currentDatasetContext.workspaceName || "sales_q2_2026.csv");
+  const rowCount = gridData ? gridData.length : 0;
+  const colCount = headers ? headers.length : 0;
+  const domainName = currentDatasetDomain ? currentDatasetDomain.name : "Custom Business Domain";
+  const domainConf = currentDatasetDomain ? (currentDatasetDomain.confidence * 100).toFixed(0) : "80";
+
+  const responseText = `Hi! I'm your AI Analyst.\n\nCurrent Dataset: ${datasetName}\nRows: ${rowCount.toLocaleString()}\nColumns: ${colCount}\nDetected Domain: ${domainName} (${domainConf}% confidence)\n\nTry asking:\n• What dataset am I using?\n• Show top customers\n• Category vs Quantity graph\n• Revenue by location\n• Generate executive summary`;
+
+  const responseHtml = `
+    <div style="font-size:12.5px; line-height:1.6; color:var(--text-secondary);">
+      <p style="margin-top:0; font-weight:600; color:var(--text-primary);">Hi! I'm your AI Analyst. 👋</p>
+      <div style="background:rgba(255,255,255,0.02); border:1px solid var(--border-color); border-radius:8px; padding:12px; margin:12px 0;">
+        <span style="font-size:11px; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px; display:block; margin-bottom:4px;">Current Grounding Context</span>
+        <div style="font-weight:600; color:var(--text-primary); font-size:13px;">${datasetName}</div>
+        <div style="display:flex; gap:16px; margin-top:8px; font-size:12px;">
+          <div><span style="color:var(--text-muted);">Rows:</span> ${rowCount.toLocaleString()}</div>
+          <div><span style="color:var(--text-muted);">Columns:</span> ${colCount}</div>
+        </div>
+        <div style="margin-top:8px; font-size:12px;"><span style="color:var(--text-muted);">Domain:</span> ${domainName} (${domainConf}%)</div>
+      </div>
+      <p style="margin-bottom:4px; font-weight:600; color:var(--text-primary);">Try asking:</p>
+      <ul style="margin:0; padding-left:18px;">
+        <li style="margin-bottom:4px;">What dataset am I using?</li>
+        <li style="margin-bottom:4px;">Show top customers</li>
+        <li style="margin-bottom:4px;">Category vs Quantity graph</li>
+        <li style="margin-bottom:4px;">Revenue by location</li>
+        <li style="margin-bottom:4px;">Generate executive summary</li>
+      </ul>
+    </div>
+  `;
+
+  aiActiveChatHistory.push({
+    sender: 'assistant',
+    text: responseText,
+    contentHtml: responseHtml,
+    suggestions: ["What dataset am I using?", "Show top customers", "Category vs Quantity graph", "Generate executive summary"]
+  });
+
+  saveChatHistoryToWorkspace();
+  renderAiChatHistory();
+  setCopilotState('idle');
+}
+
+// 2. DATASET QUESTION HANDLER
+function handleDatasetQuestion(prompt) {
+  const datasetNameEl = document.getElementById('ws-dataset-name');
+  const datasetName = datasetNameEl ? datasetNameEl.innerText.trim() : (currentDatasetContext.workspaceName || "sales_q2_2026.csv");
+  const rowCount = gridData ? gridData.length : 0;
+  const colCount = headers ? headers.length : 0;
+  const domainName = currentDatasetDomain ? currentDatasetDomain.name : "Custom Business Domain";
+  const domainConf = currentDatasetDomain ? (currentDatasetDomain.confidence * 100).toFixed(0) : "80";
+  
+  const ontology = currentDatasetOntology || { entities: [], metrics: [], dimensions: [], dates: [] };
+  const metricsStr = ontology.metrics.map(m => headerNames[m.colKey] || m.colKey).join(', ') || 'None';
+  const dimensionsStr = ontology.dimensions.map(d => headerNames[d.colKey] || d.colKey).join(', ') || 'None';
+  const datesStr = ontology.dates.map(d => headerNames[d.colKey] || d.colKey).join(', ') || 'None';
+  const columnsList = headers.map(h => headerNames[h] || h).join(', ');
+  
+  const qualityScore = currentDatasetContext.dataQualityScore || 100;
+  const lastModified = currentDatasetContext.lastModified || new Date().toLocaleString();
+
+  const responseText = `Dataset Name: ${datasetName}\nRows: ${rowCount.toLocaleString()}\nColumns: ${colCount}\nDetected Domain: ${domainName} (${domainConf}% confidence)\nData Quality Score: ${qualityScore}%\nColumn List: ${columnsList}\nDetected Metrics: ${metricsStr}\nDetected Dimensions: ${dimensionsStr}\nDate Columns: ${datesStr}\nLast Modified Time: ${lastModified}`;
+
+  const responseHtml = `
+    <div style="font-size:12.5px; line-height:1.6; color:var(--text-secondary);">
+      <div style="font-weight:600; color:var(--text-primary); font-size:13px; margin-bottom:8px;">📊 Dataset Overview</div>
+      <table style="width:100%; border-collapse:collapse; margin-bottom:12px; font-size:12px;">
+        <tbody>
+          <tr style="border-bottom:1px solid rgba(255,255,255,0.05);"><td style="padding:6px 0; color:var(--text-muted); width:40%;">Dataset Name</td><td style="padding:6px 0; font-weight:600; color:var(--text-primary);">${datasetName}</td></tr>
+          <tr style="border-bottom:1px solid rgba(255,255,255,0.05);"><td style="padding:6px 0; color:var(--text-muted);">Rows</td><td style="padding:6px 0; font-weight:600; color:var(--text-primary);">${rowCount.toLocaleString()}</td></tr>
+          <tr style="border-bottom:1px solid rgba(255,255,255,0.05);"><td style="padding:6px 0; color:var(--text-muted);">Columns</td><td style="padding:6px 0; font-weight:600; color:var(--text-primary);">${colCount}</td></tr>
+          <tr style="border-bottom:1px solid rgba(255,255,255,0.05);"><td style="padding:6px 0; color:var(--text-muted);">Detected Domain</td><td style="padding:6px 0; font-weight:600; color:var(--text-primary);">${domainName} (${domainConf}%)</td></tr>
+          <tr style="border-bottom:1px solid rgba(255,255,255,0.05);"><td style="padding:6px 0; color:var(--text-muted);">Data Quality Score</td><td style="padding:6px 0; font-weight:600; color:var(--success);">${qualityScore}%</td></tr>
+          <tr style="border-bottom:1px solid rgba(255,255,255,0.05);"><td style="padding:6px 0; color:var(--text-muted);">Last Modified Time</td><td style="padding:6px 0; color:var(--text-primary);">${lastModified}</td></tr>
+        </tbody>
+      </table>
+      <div style="background:rgba(255,255,255,0.01); border:1px solid var(--border-color); border-radius:6px; padding:10px; margin-top:8px;">
+        <div style="margin-bottom:4px;"><strong>Columns:</strong> <span style="font-family:var(--font-mono); font-size:11px;">${columnsList}</span></div>
+        <div style="margin-bottom:4px;"><strong>Detected Metrics:</strong> <span style="color:var(--primary);">${metricsStr}</span></div>
+        <div style="margin-bottom:4px;"><strong>Detected Dimensions:</strong> <span style="color:var(--text-primary);">${dimensionsStr}</span></div>
+        <div><strong>Date Fields:</strong> <span style="color:var(--text-muted);">${datesStr}</span></div>
       </div>
     </div>
   `;
 
-  aiActiveChatHistory.forEach(msg => {
-    const isUser = msg.sender === 'user';
-    const avatar = isUser ? '👤' : '🤖';
-    const msgClass = isUser ? 'user' : 'assistant';
+  aiActiveChatHistory.push({
+    sender: 'assistant',
+    text: responseText,
+    contentHtml: responseHtml,
+    suggestions: ["Show columns", "Show top customers", "Generate executive summary"]
+  });
+
+  saveChatHistoryToWorkspace();
+  renderAiChatHistory();
+  setCopilotState('idle');
+}
+
+// 3. COLUMN QUESTION HANDLER
+function handleColumnQuestion(prompt) {
+  const ontology = currentDatasetOntology || { entities: [], metrics: [], dimensions: [], dates: [] };
+  
+  const metrics = ontology.metrics.map(m => headerNames[m.colKey] || m.colKey);
+  const dimensions = ontology.dimensions.map(d => headerNames[d.colKey] || d.colKey);
+  const entities = ontology.entities.map(e => headerNames[e.colKey] || e.colKey);
+  const dates = ontology.dates.map(d => headerNames[d.colKey] || d.colKey);
+
+  const responseText = `Metrics\n--------\n${metrics.join('\n') || 'None'}\n\nDimensions\n--------\n${dimensions.join('\n') || 'None'}\n\nEntities\n--------\n${entities.join('\n') || 'None'}\n\nDates\n--------\n${dates.join('\n') || 'None'}`;
+
+  const responseHtml = `
+    <div style="font-size:12.5px; line-height:1.6; color:var(--text-secondary);">
+      <div style="font-weight:600; color:var(--text-primary); font-size:13px; margin-bottom:8px;">📋 Dataset Schema Details</div>
+      
+      <div style="margin-bottom:8px;">
+        <div style="color:var(--primary); font-weight:700; font-size:11px; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:2px;">📈 Metrics</div>
+        <ul style="margin:0; padding-left:16px;">
+          ${metrics.map(m => `<li>${m}</li>`).join('') || '<li>None</li>'}
+        </ul>
+      </div>
+
+      <div style="margin-bottom:8px;">
+        <div style="color:var(--text-primary); font-weight:700; font-size:11px; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:2px;">🏷️ Dimensions</div>
+        <ul style="margin:0; padding-left:16px;">
+          ${dimensions.map(d => `<li>${d}</li>`).join('') || '<li>None</li>'}
+        </ul>
+      </div>
+
+      <div style="margin-bottom:8px;">
+        <div style="color:var(--warning); font-weight:700; font-size:11px; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:2px;">👤 Entities</div>
+        <ul style="margin:0; padding-left:16px;">
+          ${entities.map(e => `<li>${e}</li>`).join('') || '<li>None</li>'}
+        </ul>
+      </div>
+
+      <div>
+        <div style="color:var(--text-muted); font-weight:700; font-size:11px; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:2px;">📅 Dates</div>
+        <ul style="margin:0; padding-left:16px;">
+          ${dates.map(d => `<li>${d}</li>`).join('') || '<li>None</li>'}
+        </ul>
+      </div>
+    </div>
+  `;
+
+  aiActiveChatHistory.push({
+    sender: 'assistant',
+    text: responseText,
+    contentHtml: responseHtml,
+    suggestions: ["What dataset am I using?", "Show top customers", "Generate executive summary"]
+  });
+
+  saveChatHistoryToWorkspace();
+  renderAiChatHistory();
+  setCopilotState('idle');
+}
+
+// 4. GENERAL CONVERSATION HANDLER
+function handleGeneralConversation(prompt) {
+  const normalized = prompt.toLowerCase().trim();
+  let responseText = "";
+
+  const datasetNameEl = document.getElementById('ws-dataset-name');
+  const datasetName = datasetNameEl ? datasetNameEl.innerText.trim() : (currentDatasetContext.workspaceName || "");
+  const hasDataset = gridData && gridData.length > 0;
+
+  if (normalized.includes("how are you")) {
+    responseText = hasDataset 
+      ? `I'm doing great, thank you! I'm currently looking at your dataset "${datasetName}" and ready to help you analyze it. What would you like to explore?`
+      : "I'm doing great, thank you! Please load a dataset so we can start analyzing your data together.";
+  } else if (normalized.includes("who are you") || normalized.includes("what are you") || normalized.includes("help") || normalized.includes("what can you do")) {
+    responseText = "I'm your senior AI Data Analyst here in OneClick. I help you understand your data without writing code. Here is what I can do:\n\n• Show columns & describe dataset schemas\n• Calculate metrics (aggregates, averages, sums)\n• Generate charts (bars, lines, donuts, scatters)\n• Analyze trends and key insights\n• Impute or clean spreadsheet columns\n• Export reports in PDF or CSV formats\n\nHow can I help you right now?";
+  } else if (normalized.includes("analyze next") || normalized.includes("what should i analyze")) {
+    if (hasDataset) {
+      const ontology = currentDatasetOntology || { entities: [], metrics: [], dimensions: [], dates: [] };
+      const dim = ontology.dimensions[0] ? headerNames[ontology.dimensions[0].colKey] || ontology.dimensions[0].colKey : "";
+      const met = ontology.metrics[0] ? headerNames[ontology.metrics[0].colKey] || ontology.metrics[0].colKey : "";
+      
+      responseText = `Looking at "${datasetName}", here are a few suggestions for what to analyze next:\n• The relationship between **${dim || 'dimensions'}** and **${met || 'metrics'}**. Try asking: "${dim || 'Category'} vs ${met || 'Spend'} graph".\n• General calculations, e.g. "What is total ${met || 'spend'}?".\n• A diagnostic summary: "Generate executive summary".\n• Clean up duplicates or fill missing values.`;
+    } else {
+      responseText = "Please load a dataset workspace, and I will recommend specific analyses based on your columns and data profile!";
+    }
+  } else if (normalized.includes("explain this chart") || normalized.includes("explain chart") || normalized.includes("explain graph")) {
+    if (hasDataset) {
+      responseText = "I can explain the charts we generate here. Try asking a visualization question first (e.g. \"Category vs Quantity graph\"), and I'll display the chart along with key analyst findings and insights detailing what the data tells us.";
+    } else {
+      responseText = "No active chart or dataset is loaded. Please load a dataset and ask for a graph.";
+    }
+  } else {
+    responseText = hasDataset 
+      ? `I understand. We are currently analyzing the "${datasetName}" dataset. Let me know if you want to calculate any metric, generate a chart, or run a data quality check!`
+      : "I understand. I am your AI Analyst. Please load a dataset workspace to begin analyzing your columns and metrics.";
+  }
+
+  const responseHtml = `<p style="font-size:12.5px; line-height:1.6; color:var(--text-secondary);">${responseText.replace(/\n/g, '<br/>')}</p>`;
+
+  aiActiveChatHistory.push({
+    sender: 'assistant',
+    text: responseText,
+    contentHtml: responseHtml,
+    suggestions: hasDataset ? ["What dataset am I using?", "Show columns", "Generate executive summary"] : []
+  });
+
+  saveChatHistoryToWorkspace();
+  renderAiChatHistory();
+  setCopilotState('idle');
+}
+
+// 5. DASHBOARD HANDLER
+function handleDashboard(prompt) {
+  const responseText = "Sure! I can help you design or add metrics to your dashboard. We can inject KPI cards, ranking tables, and charts directly. Let me know which columns you'd like to pin to your dashboard!";
+  const responseHtml = `
+    <div style="font-size:12.5px; color:var(--text-secondary); line-height:1.6;">
+      <p style="margin-top:0; font-weight: 600; color: var(--text-primary);">📋 Dashboard Builder Assistant</p>
+      <p>I can pin metrics directly to your dashboard workspace layout. You can request:</p>
+      <ul style="margin:4px 0; padding-left:18px;">
+        <li>Add KPI cards for any metric (e.g. total spend)</li>
+        <li>Pin trend lines or bar chart widgets</li>
+      </ul>
+      <p style="margin-bottom:0; margin-top:8px;">What widget would you like to place next?</p>
+    </div>
+  `;
+  aiActiveChatHistory.push({
+    sender: 'assistant',
+    text: responseText,
+    contentHtml: responseHtml,
+    suggestions: ["Show columns", "Generate executive summary"]
+  });
+  saveChatHistoryToWorkspace();
+  renderAiChatHistory();
+  setCopilotState('idle');
+}
+
+// 6. REPORT HANDLER
+function handleReport(prompt) {
+  let reportTitle = "Executive Synthesis Summary";
+  if (prompt.toLowerCase().includes("risk")) reportTitle = "Risk Profile Assessment";
+  else if (prompt.toLowerCase().includes("operations")) reportTitle = "Operations Performance Analysis";
+  else if (prompt.toLowerCase().includes("business review")) reportTitle = "Monthly Business Review (MBR)";
+  
+  executeReportGeneration({ type: "report" }, reportTitle);
+  setCopilotState('idle');
+}
+
+// 7. EXPORT HANDLER
+function handleExport(prompt) {
+  let format = "csv";
+  if (prompt.toLowerCase().includes("pdf")) format = "pdf";
+  else if (prompt.toLowerCase().includes("pptx") || prompt.toLowerCase().includes("powerpoint") || prompt.toLowerCase().includes("slide")) format = "pptx";
+  else if (prompt.toLowerCase().includes("docx") || prompt.toLowerCase().includes("word")) format = "docx";
+  else if (prompt.toLowerCase().includes("json")) format = "json";
+  
+  executeExportCommand({ type: "export_command", format });
+  setCopilotState('idle');
+}
+
+// 8. DATA QUALITY HANDLER
+function handleDataQuality(prompt) {
+  const qualityScore = currentDatasetContext.dataQualityScore || 100;
+  const duplicateStats = currentDatasetContext.duplicateStats || 0;
+  let missingValTotal = 0;
+  const missingByCol = [];
+  
+  if (currentDatasetContext.missingValueStats) {
+    Object.entries(currentDatasetContext.missingValueStats).forEach(([colKey, v]) => {
+      missingValTotal += v;
+      if (v > 0) {
+        missingByCol.push(`${headerNames[colKey] || colKey}: ${v} missing`);
+      }
+    });
+  }
+
+  const responseText = `Data Quality Health Check\n------------------------\nOverall Score: ${qualityScore}%\nDuplicate Rows: ${duplicateStats}\nMissing Cells: ${missingValTotal}\n\nDetails:\n${missingByCol.join('\n') || 'No missing values found!'}`;
+
+  const responseHtml = `
+    <div style="font-size:12.5px; line-height:1.6; color:var(--text-secondary);">
+      <div style="font-weight:600; color:var(--text-primary); font-size:13px; margin-bottom:8px;">🩺 Data Quality Health Report</div>
+      <div style="display:flex; gap:12px; margin-bottom:12px;">
+        <div style="flex:1; background:rgba(255,255,255,0.02); border:1px solid var(--border-color); border-radius:6px; padding:10px; text-align:center;">
+          <div style="font-size:10px; color:var(--text-muted); text-transform:uppercase;">Quality Score</div>
+          <div style="font-size:20px; font-weight:700; color:${qualityScore >= 80 ? 'var(--success)' : 'var(--warning)'}; margin-top:2px;">${qualityScore}%</div>
+        </div>
+        <div style="flex:1; background:rgba(255,255,255,0.02); border:1px solid var(--border-color); border-radius:6px; padding:10px; text-align:center;">
+          <div style="font-size:10px; color:var(--text-muted); text-transform:uppercase;">Duplicates</div>
+          <div style="font-size:20px; font-weight:700; color:${duplicateStats > 0 ? 'var(--warning)' : 'var(--text-primary)'}; margin-top:2px;">${duplicateStats}</div>
+        </div>
+        <div style="flex:1; background:rgba(255,255,255,0.02); border:1px solid var(--border-color); border-radius:6px; padding:10px; text-align:center;">
+          <div style="font-size:10px; color:var(--text-muted); text-transform:uppercase;">Missing Cells</div>
+          <div style="font-size:20px; font-weight:700; color:${missingValTotal > 0 ? 'var(--warning)' : 'var(--success)'}; margin-top:2px;">${missingValTotal}</div>
+        </div>
+      </div>
+      ${missingByCol.length > 0 ? `
+        <div style="background:rgba(239,68,68,0.02); border:1px solid rgba(239,68,68,0.15); border-radius:6px; padding:10px;">
+          <div style="font-weight:600; color:var(--text-primary); font-size:11px; text-transform:uppercase; margin-bottom:4px;">⚠️ Missing values breakdown</div>
+          <ul style="margin:0; padding-left:16px; font-size:12px;">
+            ${missingByCol.map(item => `<li>${item}</li>`).join('')}
+          </ul>
+        </div>
+      ` : `
+        <div style="background:rgba(16,185,129,0.02); border:1px solid rgba(16,185,129,0.15); border-radius:6px; padding:10px; color:var(--success); text-align:center; font-weight:600; font-size:12px;">
+          ✨ No missing values detected in the active sheet!
+        </div>
+      `}
+    </div>
+  `;
+
+  aiActiveChatHistory.push({
+    sender: 'assistant',
+    text: responseText,
+    contentHtml: responseHtml,
+    suggestions: ["Clean missing values", "Show columns", "Generate executive summary"]
+  });
+
+  saveChatHistoryToWorkspace();
+  renderAiChatHistory();
+  setCopilotState('idle');
+}
+
+// 9. CLEANING HANDLER
+function handleCleaning(prompt) {
+  let plan = generateQueryPlan(prompt);
+  let action = "remove_duplicates";
+  const norm = prompt.toLowerCase();
+  
+  if (norm.includes("fill") || norm.includes("missing") || norm.includes("impute")) {
+    action = "fill_missing";
+  } else if (norm.includes("delete empty") || norm.includes("delete blank")) {
+    action = "delete_empty_rows";
+  } else if (norm.includes("convert date")) {
+    action = "convert_date";
+  } else if (norm.includes("rename")) {
+    action = "rename_column";
+  } else if (norm.includes("merge")) {
+    action = "merge_columns";
+  } else if (norm.includes("split")) {
+    action = "split_column";
+  } else {
+    // Recommendation based on health stats
+    const duplicateStats = currentDatasetContext.duplicateStats || 0;
+    let missingValTotal = 0;
+    let colWithMissing = null;
     
-    html += `
-      <div class="ai-message ${msgClass}" style="display: flex; gap: 12px; max-width: 85%; margin-top: 10px;">
-        <div class="ai-msg-avatar" style="width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0;">${avatar}</div>
-        <div class="ai-msg-body" style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-color); padding: 12px 16px; border-radius: ${isUser ? '12px 0 12px 12px' : '0 12px 12px 12px'};">
-          ${msg.contentHtml || `<p style="font-size: 12px; color: var(--text-secondary); margin: 0; line-height: 1.5;">${msg.text}</p>`}
+    if (currentDatasetContext.missingValueStats) {
+      Object.entries(currentDatasetContext.missingValueStats).forEach(([colKey, v]) => {
+        missingValTotal += v;
+        if (v > 0 && !colWithMissing) {
+          colWithMissing = colKey;
+        }
+      });
+    }
+
+    if (duplicateStats > 0) {
+      action = "remove_duplicates";
+    } else if (missingValTotal > 0 && colWithMissing) {
+      action = "fill_missing";
+      plan.colKey = colWithMissing;
+    }
+  }
+
+  const cleaningPlan = { 
+    type: "spreadsheet", 
+    action, 
+    colKey: plan.colKey || currentDatasetOntology.metrics[0]?.colKey || headers[0], 
+    method: norm.includes("mean") ? "mean" : "median" 
+  };
+  
+  showAiSpreadsheetConfirmation(cleaningPlan);
+  setCopilotState('idle');
+}
+
+/* Synonym Groups and Helper Functions for Visual Mapping */
+const VIZ_SYNONYM_GROUPS = [
+  ["expenditure", "spent", "spending", "cost", "amount", "revenue ($)", "revenue"],
+  ["customer", "client", "buyer", "consumer", "customer id", "customer_id", "order id", "order_id"],
+  ["sales", "revenue", "turnover", "revenue ($)"],
+  ["quantity", "units", "volume", "units sold"],
+  ["location", "city", "region", "country"]
+];
+
+function getVizSynonyms(word) {
+  const wordLower = word.toLowerCase();
+  for (const group of VIZ_SYNONYM_GROUPS) {
+    if (group.some(g => {
+      const gLower = g.toLowerCase();
+      if (wordLower === gLower) return true;
+      const tokens = gLower.split(/[^a-z0-9]/).filter(Boolean);
+      return tokens.includes(wordLower);
+    })) {
+      return group;
+    }
+  }
+  return [wordLower];
+}
+
+function findMappedColumnsForViz(prompt) {
+  const normalized = prompt.toLowerCase();
+  const matchedDimensions = [];
+  const matchedMetrics = [];
+
+  const ontologyMetrics = (currentDatasetOntology.metrics || []).map(m => m.colKey);
+  const ontologyDimensions = (currentDatasetOntology.dimensions || []).map(d => d.colKey);
+  const ontologyEntities = (currentDatasetOntology.entities || []).map(e => e.colKey);
+  const ontologyDates = (currentDatasetOntology.dates || []).map(d => d.colKey);
+
+  const allMetricKeys = ontologyMetrics;
+  const allDimensionKeys = [...ontologyDimensions, ...ontologyEntities, ...ontologyDates];
+
+  const matchesColumn = (colKey) => {
+    const colName = (headerNames[colKey] || colKey).toLowerCase();
+    if (normalized.includes(colName)) return true;
+
+    const colTokens = colName.split(/[^a-z0-9]/).filter(Boolean);
+    const promptTokens = normalized.split(/[^a-z0-9]/).filter(Boolean);
+
+    for (const token of colTokens) {
+      if (promptTokens.includes(token)) return true;
+    }
+
+    for (const pToken of promptTokens) {
+      const syns = getVizSynonyms(pToken);
+      for (const syn of syns) {
+        if (colName === syn) return true;
+        const synTokens = syn.split(/[^a-z0-9]/).filter(Boolean);
+        if (synTokens.length > 0 && synTokens.every(st => colTokens.includes(st))) {
+          return true;
+        }
+      }
+    }
+    return false;
+  };
+
+  allMetricKeys.forEach(colKey => {
+    if (matchesColumn(colKey)) matchedMetrics.push(colKey);
+  });
+
+  allDimensionKeys.forEach(colKey => {
+    if (matchesColumn(colKey)) matchedDimensions.push(colKey);
+  });
+
+  return {
+    dimensions: Array.from(new Set(matchedDimensions)),
+    metrics: Array.from(new Set(matchedMetrics))
+  };
+}
+
+function buildChartConfigData(type, xCol, yCol, label) {
+  const xIdx = headers.indexOf(xCol);
+  const yIdx = headers.indexOf(yCol);
+  if (xIdx === -1 || yIdx === -1) return null;
+
+  const groups = {};
+  gridData.forEach(row => {
+    const xVal = String(row[xIdx] || "Unknown").trim();
+    const yVal = getCleanNumericValue(row[yIdx]);
+    if (!isNaN(yVal)) {
+      groups[xVal] = (groups[xVal] || 0) + yVal;
+    }
+  });
+
+  let sortedEntries = Object.entries(groups);
+  const isDate = (currentDatasetOntology.dates || []).some(d => d.colKey === xCol);
+  if (isDate) {
+    sortedEntries.sort((a, b) => new Date(a[0]) - new Date(b[0]));
+  } else {
+    sortedEntries.sort((a, b) => b[1] - a[1]);
+    if (sortedEntries.length > 15) {
+      sortedEntries = sortedEntries.slice(0, 15);
+    }
+  }
+
+  const labels = sortedEntries.map(e => e[0]);
+  const data = sortedEntries.map(e => e[1]);
+
+  const chartjsType = type === 'donut' ? 'doughnut' : (type === 'horizontalBar' ? 'bar' : type);
+  const indexAxis = type === 'horizontalBar' ? 'y' : 'x';
+  const datasetLabel = headerNames[yCol] || yCol;
+
+  return {
+    chartjsType,
+    indexAxis,
+    label: label || `${datasetLabel} by ${headerNames[xCol] || xCol}`,
+    xCol,
+    yCol,
+    chartData: {
+      labels,
+      datasets: [{
+        label: datasetLabel,
+        data,
+        backgroundColor: chartjsType === 'doughnut' || chartjsType === 'pie'
+          ? ['#6366F1', '#8B5CF6', '#EC4899', '#10B981', '#F59E0B', '#3B82F6', '#EF4444', '#84CC16', '#06B6D4', '#14B8A6']
+          : '#6366F1',
+        borderColor: chartjsType === 'doughnut' || chartjsType === 'pie' ? 'rgba(255,255,255,0.1)' : '#6366F1',
+        borderWidth: 1
+      }]
+    }
+  };
+}
+
+function renderVisualizationClarificationCard(mapped, prompt) {
+  const msgId = 'clarify-viz-' + Date.now() + '-' + Math.floor(Math.random() * 1000);
+  
+  const allMetrics = (currentDatasetOntology.metrics || []);
+  const allDimensions = [
+    ...(currentDatasetOntology.dimensions || []),
+    ...(currentDatasetOntology.entities || []),
+    ...(currentDatasetOntology.dates || [])
+  ];
+
+  let cardHtml = "";
+  
+  // Case A: 1 Dimension found, 0 or multiple Metrics found
+  if (mapped.dimensions.length === 1 && mapped.metrics.length !== 1) {
+    const dimKey = mapped.dimensions[0];
+    const dimName = headerNames[dimKey] || dimKey;
+    
+    const metricButtons = allMetrics.map(m => {
+      const name = headerNames[m.colKey] || m.colKey;
+      return `<button class="ai-response-action-btn" onclick="resolveVisualizationClarification('${dimKey}', '${m.colKey}', 'bar', '${prompt.replace(/'/g, "\\'")}')" style="margin: 4px; padding: 6px 12px; font-size:11px;">📈 ${name}</button>`;
+    }).join('');
+
+    cardHtml = `
+      <div class="ai-analyst-report-card" style="border: 1px solid var(--warning); background: rgba(245,158,11,0.02);">
+        <div class="ai-report-header">
+          <span class="ai-report-type-badge" style="color:var(--warning); background:rgba(245,158,11,0.12); border-color:rgba(245,158,11,0.25);">❓ Visualization Mapping</span>
+          <div class="ai-report-title">Metric Selection Required</div>
+        </div>
+        <p style="font-size: 12px; color: var(--text-secondary); margin: 4px 0 10px 0; line-height: 1.55;">
+          I found: <strong>${dimName}</strong> (Dimension)<br/>
+          Which metric did you mean?
+        </p>
+        <div style="display:flex; flex-wrap:wrap; gap: 4px;">
+          ${metricButtons}
         </div>
       </div>
     `;
+  }
+  // Case B: 1 Metric found, 0 or multiple Dimensions found
+  else if (mapped.metrics.length === 1 && mapped.dimensions.length !== 1) {
+    const metKey = mapped.metrics[0];
+    const metName = headerNames[metKey] || metKey;
+
+    const dimButtons = allDimensions.map(d => {
+      const name = headerNames[d.colKey] || d.colKey;
+      return `<button class="ai-response-action-btn" onclick="resolveVisualizationClarification('${d.colKey}', '${metKey}', 'bar', '${prompt.replace(/'/g, "\\'")}')" style="margin: 4px; padding: 6px 12px; font-size:11px;">🏷️ ${name}</button>`;
+    }).join('');
+
+    cardHtml = `
+      <div class="ai-analyst-report-card" style="border: 1px solid var(--warning); background: rgba(245,158,11,0.02);">
+        <div class="ai-report-header">
+          <span class="ai-report-type-badge" style="color:var(--warning); background:rgba(245,158,11,0.12); border-color:rgba(245,158,11,0.25);">❓ Visualization Mapping</span>
+          <div class="ai-report-title">Dimension Selection Required</div>
+        </div>
+        <p style="font-size: 12px; color: var(--text-secondary); margin: 4px 0 10px 0; line-height: 1.55;">
+          I found: <strong>${metName}</strong> (Metric)<br/>
+          Which dimension did you mean?
+        </p>
+        <div style="display:flex; flex-wrap:wrap; gap: 4px;">
+          ${dimButtons}
+        </div>
+      </div>
+    `;
+  }
+  // Case C: Complete Failure or ambiguity
+  else {
+    const dimOptions = allDimensions.map(d => `<option value="${d.colKey}">${headerNames[d.colKey] || d.colKey}</option>`).join('');
+    const metOptions = allMetrics.map(m => `<option value="${m.colKey}">${headerNames[m.colKey] || m.colKey}</option>`).join('');
+
+    cardHtml = `
+      <div class="ai-analyst-report-card" style="border: 1px solid var(--warning); background: rgba(245,158,11,0.02);">
+        <div class="ai-report-header">
+          <span class="ai-report-type-badge" style="color:var(--warning); background:rgba(245,158,11,0.12); border-color:rgba(245,158,11,0.25);">❓ Visualization Failure</span>
+          <div class="ai-report-title">I couldn't confidently identify the requested columns</div>
+        </div>
+        <p style="font-size: 12px; color: var(--text-secondary); margin: 4px 0 10px 0; line-height: 1.55;">
+          Please select a dimension and a metric from the lists below to generate the visualization:
+        </p>
+        <div style="margin: 8px 0; display: flex; gap: 8px;">
+          <select id="select-fallback-dim-${msgId}" class="ai-select" style="flex:1; background:rgba(15,23,42,0.6); border:1px solid var(--border-color); color:var(--text-primary); border-radius:4px; padding:6px; font-size:12px;">
+            <option value="">-- Select Dimension --</option>
+            ${dimOptions}
+          </select>
+          <select id="select-fallback-met-${msgId}" class="ai-select" style="flex:1; background:rgba(15,23,42,0.6); border:1px solid var(--border-color); color:var(--text-primary); border-radius:4px; padding:6px; font-size:12px;">
+            <option value="">-- Select Metric --</option>
+            ${metOptions}
+          </select>
+        </div>
+        <button class="ai-response-action-btn" onclick="submitVisualizationFallback('${msgId}')">📊 Generate Chart</button>
+      </div>
+    `;
+  }
+
+  aiActiveChatHistory.push({
+    sender: 'assistant',
+    text: "I couldn't map the visualization columns confidently. Please clarify.",
+    contentHtml: cardHtml
   });
 
-  feed.innerHTML = html;
-  feed.scrollTop = feed.scrollHeight;
+  saveChatHistoryToWorkspace();
+  renderAiChatHistory();
+  setCopilotState('idle');
 }
+
+// 10. VISUALIZATION HANDLER
+function handleVisualization(prompt) {
+  if (!headers || headers.length === 0) {
+    aiActiveChatHistory.push({
+      sender: 'assistant',
+      text: "No active dataset is loaded. Please load a dataset first.",
+      contentHtml: `<p style="font-size:12px; color:var(--text-secondary); margin:0;">⚠️ No active dataset is loaded. Please load a dataset first.</p>`
+    });
+    saveChatHistoryToWorkspace();
+    renderAiChatHistory();
+    setCopilotState('idle');
+    return;
+  }
+
+  const mapped = findMappedColumnsForViz(prompt);
+  const normPrompt = prompt.toLowerCase();
+
+  // If dimension is missing but trend keywords are present, map the date column
+  if (mapped.dimensions.length === 0 && (normPrompt.includes("trend") || normPrompt.includes("over time") || normPrompt.includes("monthly") || normPrompt.includes("yearly") || normPrompt.includes("weekly") || normPrompt.includes("daily"))) {
+    if (currentDatasetOntology.dates && currentDatasetOntology.dates.length > 0) {
+      mapped.dimensions.push(currentDatasetOntology.dates[0].colKey);
+    }
+  }
+
+  // Visual Safety Validation
+  if (mapped.dimensions.length === 1 && mapped.metrics.length === 1) {
+    const xCol = mapped.dimensions[0];
+    const yCol = mapped.metrics[0];
+
+    let chartType = "bar";
+    if (normPrompt.includes("scatter") || normPrompt.includes("correlation") || normPrompt.includes("relationship")) {
+      chartType = "scatter";
+    } else if (normPrompt.includes("donut") || normPrompt.includes("pie") || normPrompt.includes("contribution") || normPrompt.includes("share")) {
+      chartType = "donut";
+    } else if (normPrompt.includes("histogram") || normPrompt.includes("distribution")) {
+      chartType = "bar";
+    } else if (normPrompt.includes("table") || normPrompt.includes("records") || normPrompt.includes("detailed")) {
+      chartType = "table";
+    } else if ((currentDatasetOntology.dates || []).some(d => d.colKey === xCol) || normPrompt.includes("trend") || normPrompt.includes("over time") || normPrompt.includes("line")) {
+      chartType = "line";
+    }
+
+    if (!headers.includes(xCol) || !headers.includes(yCol)) {
+      renderVisualizationClarificationCard(mapped, prompt);
+      return;
+    }
+
+    const title = `${headerNames[yCol] || yCol} Breakdown by ${headerNames[xCol] || xCol}`;
+    
+    // Mandatory console logging before return
+    const intent = "Visualization";
+    const mappedColumns = { dimension: xCol, metric: yCol };
+    const queryPlan = { type: "chart_command", xCol, yCol, chartType };
+    console.log({
+      intent,
+      mappedColumns,
+      chartType,
+      queryPlan
+    });
+
+    const msgId = 'chart-' + Date.now() + '-' + Math.floor(Math.random() * 1000);
+    const chartConfig = buildChartConfigData(chartType, xCol, yCol, title);
+
+    const calcPlan = {
+      type: "ranking",
+      colKey: yCol,
+      xCol: xCol,
+      yCol: yCol,
+      direction: "top",
+      count: 5
+    };
+    const analysisResult = executeAiCalculation(calcPlan);
+    const findingsList = analysisResult.findings || [];
+    const recsList = analysisResult.recommendations || [];
+    const insightsList = [
+      `Analyzing ${headerNames[yCol] || yCol} broken down by ${headerNames[xCol] || xCol} highlights key performance deviations.`,
+      `Comparing segments supports optimization choices by pointing out outliers.`
+    ];
+
+    const responseHtml = `
+      <div class="ai-analyst-report-card">
+        <div class="ai-report-header">
+          <span class="ai-report-type-badge">📊 Chart Generated</span>
+          <div class="ai-report-title">${title}</div>
+        </div>
+        
+        <div class="ai-chart-canvas-wrap" style="height: 220px; background: rgba(0,0,0,0.2); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; margin: 12px 0; position: relative;">
+          <canvas id="${msgId}" class="ai-chat-canvas"></canvas>
+        </div>
+        <div class="ai-chart-action-bar" style="display:flex; justify-content:center; gap:6px; margin-bottom:12px;">
+          <button class="ai-chart-action-btn" onclick="downloadChatChartPng('${msgId}')">📥 PNG</button>
+          <button class="ai-chart-action-btn" onclick="downloadChatChartSvg('${msgId}')">📥 SVG</button>
+          <button class="ai-chart-action-btn" onclick="addChatChartToDashboard('${msgId}','${xCol||''}','${yCol||''}','${chartConfig ? chartConfig.chartjsType : 'bar'}')">📌 Add to Dashboard</button>
+        </div>
+
+        <div class="ai-report-section">
+          <div class="ai-report-section-title">💡 Key Findings</div>
+          <ul class="ai-report-list">
+            ${findingsList.map(f => `<li style="margin-bottom:4px;color:var(--text-secondary);line-height:1.55;">${f}</li>`).join('') || `<li>Analyzed ${headerNames[yCol]} by ${headerNames[xCol]}.</li>`}
+          </ul>
+        </div>
+
+        <div class="ai-report-section">
+          <div class="ai-report-section-title">🧠 Strategic Insights</div>
+          <ul class="ai-report-list">
+            ${insightsList.map(i => `<li style="margin-bottom:4px;color:#a5b4fc;line-height:1.55;">${i}</li>`).join('')}
+          </ul>
+        </div>
+
+        <div class="ai-report-section">
+          <div class="ai-report-section-title">🎯 Actionable Recommendations</div>
+          <ul class="ai-report-list">
+            ${recsList.map(r => `<li style="margin-bottom:4px;color:var(--text-primary);line-height:1.55;">${r}</li>`).join('') || `<li>Add this breakdown to the dashboard for monitoring.</li>`}
+          </ul>
+        </div>
+
+        <div class="ai-report-actions">
+          <button class="ai-response-action-btn" onclick="exportCSVSnapshot()">💾 Export CSV</button>
+        </div>
+      </div>
+    `;
+
+    const suggestions = getSuggestionsForIntent("Visualization", queryPlan);
+
+    aiActiveChatHistory.push({
+      sender: 'assistant',
+      msgId,
+      text: `Generated visualization for ${title}.`,
+      contentHtml: responseHtml,
+      chartConfig,
+      suggestions: suggestions
+    });
+
+    saveChatHistoryToWorkspace();
+    renderAiChatHistory();
+    setCopilotState('idle');
+  } else {
+    // If validation fails (0 or multiple dimension/metric columns found)
+    renderVisualizationClarificationCard(mapped, prompt);
+  }
+}
+
+// 11. METRIC QUERY HANDLER
+function handleMetricQuery(prompt) {
+  let plan = generateQueryPlan(prompt);
+  
+  if (plan.type === "disambiguate") {
+    const cardHtml = renderDisambiguationCard(plan);
+    aiActiveChatHistory.push({
+      sender: 'assistant',
+      text: plan.reason,
+      contentHtml: cardHtml
+    });
+    saveChatHistoryToWorkspace();
+    renderAiChatHistory();
+    setCopilotState('idle');
+    return;
+  }
+
+  if (plan.type === "query_safety_trigger") {
+    const cardHtml = renderQuerySafetyCard(plan);
+    aiActiveChatHistory.push({
+      sender: 'assistant',
+      text: "Profit column missing. Offering safely calculated options.",
+      contentHtml: cardHtml
+    });
+    saveChatHistoryToWorkspace();
+    renderAiChatHistory();
+    setCopilotState('idle');
+    return;
+  }
+
+  if (lastResolvedPlan) {
+    plan = mergeConversationalMemory(prompt, lastResolvedPlan);
+  }
+
+  if (!plan || (!plan.colKey && plan.op !== 'count')) {
+    aiActiveChatHistory.push({
+      sender: 'assistant',
+      text: "I couldn't map that column metric in the dataset ontology. Please name a metric column.",
+      contentHtml: `<p style="font-size:12px; color:var(--text-secondary); margin:0;">⚠️ I couldn't map that column metric in the dataset ontology. Please name a metric column.</p>`
+    });
+    saveChatHistoryToWorkspace();
+    renderAiChatHistory();
+    setCopilotState('idle');
+    return;
+  }
+
+  lastResolvedPlan = plan;
+  updateConversationContext(plan);
+
+  const result = executeAiCalculation(plan);
+  const suggestions = getSuggestionsForIntent("MetricQuery", plan);
+  const responseHtml = generateHtmlResponse(result);
+
+  aiActiveChatHistory.push({
+    sender: 'assistant',
+    text: result.title + ": " + result.answer,
+    contentHtml: responseHtml,
+    suggestions: suggestions
+  });
+
+  saveChatHistoryToWorkspace();
+  renderAiChatHistory();
+  setCopilotState('idle');
+}
+
+// 12. COMPARISON HANDLER
+function handleComparison(prompt) {
+  let plan = generateQueryPlan(prompt);
+  if (lastResolvedPlan) {
+    plan = mergeConversationalMemory(prompt, lastResolvedPlan);
+  }
+  
+  plan.type = "comparison";
+  lastResolvedPlan = plan;
+  updateConversationContext(plan);
+
+  const result = executeAiCalculation(plan);
+  const suggestions = getSuggestionsForIntent("Comparison", plan);
+  const responseHtml = generateHtmlResponse(result);
+
+  aiActiveChatHistory.push({
+    sender: 'assistant',
+    text: result.title + ": " + result.answer,
+    contentHtml: responseHtml,
+    suggestions: suggestions
+  });
+
+  saveChatHistoryToWorkspace();
+  renderAiChatHistory();
+  setCopilotState('idle');
+}
+
+// 13. INSIGHT HANDLER
+function handleInsight(prompt) {
+  let plan = generateQueryPlan(prompt);
+  if (lastResolvedPlan) {
+    plan = mergeConversationalMemory(prompt, lastResolvedPlan);
+  }
+
+  plan.type = "explain";
+  lastResolvedPlan = plan;
+  updateConversationContext(plan);
+
+  const result = executeAiCalculation(plan);
+  const suggestions = getSuggestionsForIntent("Insight", plan);
+  const responseHtml = generateHtmlResponse(result);
+
+  aiActiveChatHistory.push({
+    sender: 'assistant',
+    text: result.title + ": " + (result.primary || result.answer),
+    contentHtml: responseHtml,
+    suggestions: suggestions
+  });
+
+  saveChatHistoryToWorkspace();
+  renderAiChatHistory();
+  setCopilotState('idle');
+}
+
+// 14. TREND HANDLER
+function handleTrend(prompt) {
+  let plan = generateQueryPlan(prompt);
+  if (lastResolvedPlan) {
+    plan = mergeConversationalMemory(prompt, lastResolvedPlan);
+  }
+
+  plan.type = "trend";
+  lastResolvedPlan = plan;
+  updateConversationContext(plan);
+
+  const result = executeAiCalculation(plan);
+  const suggestions = getSuggestionsForIntent("TrendAnalysis", plan);
+  const responseHtml = generateHtmlResponse(result);
+
+  aiActiveChatHistory.push({
+    sender: 'assistant',
+    text: result.title + ": " + result.answer,
+    contentHtml: responseHtml,
+    suggestions: suggestions
+  });
+
+  saveChatHistoryToWorkspace();
+  renderAiChatHistory();
+  setCopilotState('idle');
+}
+
+// Dynamic Header detailing (Domain & Cardinality info)
+function updateCopilotHeaderDetails() {
+  const nameLabel = document.getElementById('ai-dataset-name-label');
+  const rowsLabel = document.getElementById('ai-dataset-rows-label');
+  const colsLabel = document.getElementById('ai-dataset-cols-label');
+  const statusLabel = document.getElementById('ai-copilot-status');
+  
+  const datasetNameEl = document.getElementById('ws-dataset-name');
+  const datasetName = datasetNameEl ? datasetNameEl.innerText.trim() : "";
+  
+  if (nameLabel) {
+    nameLabel.innerText = datasetName || (gridData && gridData.length > 0 ? "Active Dataset" : "No active dataset");
+  }
+  if (rowsLabel) {
+    rowsLabel.innerText = gridData && gridData.length > 0 ? `${gridData.length.toLocaleString()} rows` : "0 rows";
+  }
+  if (colsLabel) {
+    colsLabel.innerText = headers && headers.length > 0 ? `${headers.length} cols` : "0 cols";
+  }
+  if (statusLabel) {
+    statusLabel.innerText = gridData && gridData.length > 0 ? currentDatasetDomain.name : "Offline";
+  }
+}
+
+// Base fallback generator
+function generateHtmlResponse(result) {
+  const confColor = result.confidence === 'High' ? '#10b981' : result.confidence === 'Medium' ? '#f59e0b' : '#ef4444';
+
+  const renderList = (items, clr) => {
+    if (!items || items.length === 0) return '';
+    return items.map(f => `<li style="margin-bottom:4px;color:${clr || 'var(--text-secondary)'};line-height:1.55;">${f}</li>`).join('');
+  };
+
+  const findingsSection = (result.findings && result.findings.length > 0) ? `
+    <div class="ai-report-section">
+      <div class="ai-report-section-title">&#x1F4A1; Key Findings</div>
+      <ul class="ai-report-list">${renderList(result.findings)}</ul>
+    </div>` : '';
+
+  const recsSection = (result.recommendations && result.recommendations.length > 0) ? `
+    <div class="ai-report-section">
+      <div class="ai-report-section-title">&#x1F3AF; Recommendations</div>
+      <ul class="ai-report-list">${renderList(result.recommendations, 'var(--text-primary)')}</ul>
+    </div>` : '';
+
+  const metaFooter = `
+    <div class="ai-report-meta-row">
+      ${result.method ? `<div class="ai-report-meta-pill"><span class="ai-report-meta-lbl">METHOD</span><code class="ai-report-method">${result.method}</code></div>` : ''}
+      ${result.rowsUsed != null ? `<div class="ai-report-meta-pill"><span class="ai-report-meta-lbl">ROWS</span><span class="ai-report-meta-val">${result.rowsUsed.toLocaleString()}</span></div>` : ''}
+      ${result.confidence ? `<div class="ai-report-conf-badge" style="background:${confColor}22;border:1px solid ${confColor}55;"><span style="width:6px;height:6px;border-radius:50%;background:${confColor};display:inline-block;flex-shrink:0;"></span><span style="color:${confColor};font-weight:700;font-size:10px;">${result.confidence} Confidence</span></div>` : ''}
+    </div>`;
+
+  // Ranking table
+  if (result.type === "table") {
+    const rowsHtml = result.items.map(item => `<tr class="ai-rank-row"><td class="ai-rank-num">${item.rank}</td><td class="ai-rank-label">${item.label}</td><td class="ai-rank-value">${item.value}</td></tr>`).join('');
+    return `<div class="ai-analyst-report-card">
+      <div class="ai-report-header"><span class="ai-report-type-badge">&#x1F4CA; Ranking</span><div class="ai-report-title">${result.title}</div></div>
+      <div class="ai-report-answer-block"><div class="ai-report-answer-label">TOP RESULT</div><div class="ai-report-answer-value">${result.answer || '&mdash;'}</div></div>
+      <table class="ai-report-rank-table"><thead><tr><th>#</th><th>Item</th><th>Value</th></tr></thead><tbody>${rowsHtml}</tbody></table>
+      ${findingsSection}${recsSection}${metaFooter}
+      <div class="ai-report-actions">
+        <button class="ai-response-action-btn" onclick="renderChatChart({type:'horizontalBar',xCol:'${result.xCol}',yCol:'${result.yCol}'})">&#x1F4CA; View Chart in Chat</button>
+        <button class="ai-response-action-btn" onclick="injectTableChart('${result.xCol}','${result.yCol}')">&#x1F4CC; Add to Dashboard</button>
+        <button class="ai-response-action-btn" onclick="exportCSVSnapshot()">&#x1F4C5; Export CSV</button>
+      </div></div>`;
+  }
+
+  // Trend
+  if (result.type === "trend") {
+    const isUp = (result.answer || '').startsWith('Upward');
+    const trendIcon = isUp ? '&#x1F4C8;' : '&#x1F4C9;';
+    const trendColor = isUp ? '#10b981' : '#ef4444';
+    const chartCfgJson = result.chartConfig ? JSON.stringify(result.chartConfig) : null;
+    return `<div class="ai-analyst-report-card">
+      <div class="ai-report-header"><span class="ai-report-type-badge">${trendIcon} Trend</span><div class="ai-report-title">${result.title}</div></div>
+      <div class="ai-report-answer-block"><div class="ai-report-answer-label">TREND DIRECTION</div><div class="ai-report-answer-value" style="color:${trendColor};">${result.answer || '&mdash;'}</div></div>
+      ${result.comparisonHTML ? `<div class="ai-report-comparison-body">${result.comparisonHTML}</div>` : ''}
+      ${findingsSection}${recsSection}${metaFooter}
+      <div class="ai-report-actions">
+        ${chartCfgJson ? `<button class="ai-response-action-btn" id="btn-chat-chart-${Date.now()}" onclick='renderChatChart(${chartCfgJson.replace(/\\/g,"\\\\").replace(/'/g,"&apos;")})'>${trendIcon} View Trend Chart</button>` : ''}
+        <button class="ai-response-action-btn" onclick="injectTrendChart('${result.xCol}','${result.yCol}')">&#x1F4CC; Add to Dashboard</button>
+      </div></div>`;
+  }
+
+  // Comparison / Distribution
+  if (result.type === "comparison") {
+    return `<div class="ai-analyst-report-card">
+      <div class="ai-report-header"><span class="ai-report-type-badge">&#x1F52C; Comparison</span><div class="ai-report-title">${result.title}</div></div>
+      <div class="ai-report-answer-block"><div class="ai-report-answer-label">RESULT</div><div class="ai-report-answer-value">${result.answer || '&mdash;'}</div></div>
+      ${result.comparisonHTML ? `<div class="ai-report-comparison-body">${result.comparisonHTML}</div>` : ''}
+      ${findingsSection}${recsSection}${metaFooter}
+      ${result.xCol ? `<div class="ai-report-actions"><button class="ai-response-action-btn" onclick="renderChatChart({type:'bar',xCol:'${result.xCol}',yCol:'${result.yCol}'})">&#x1F4CA; View Chart in Chat</button></div>` : ''}
+    </div>`;
+  }
+
+  // Root-cause Explain
+  if (result.type === "explain") {
+    return `<div class="ai-analyst-report-card">
+      <div class="ai-report-header"><span class="ai-report-type-badge">&#x1F50E; Diagnostic</span><div class="ai-report-title">${result.title}</div></div>
+      <div class="ai-report-answer-block"><div class="ai-report-answer-label">PRIMARY FINDING</div><div class="ai-report-answer-value" style="font-size:13px;">${result.primary || result.answer || '&mdash;'}</div></div>
+      <div class="ai-report-explain-block">
+        ${result.secondary ? `<div class="ai-report-explain-row"><span class="ai-report-explain-tag secondary">Secondary Cause</span><span>${result.secondary}</span></div>` : ''}
+        ${result.riskItem ? `<div class="ai-report-explain-row"><span class="ai-report-explain-tag risk">Risk</span><span style="color:#f59e0b;">${result.riskItem}</span></div>` : ''}
+      </div>
+      ${findingsSection}${recsSection}${metaFooter}
+    </div>`;
+  }
+
+  // Standard Aggregation (default)
+  return `<div class="ai-analyst-report-card">
+    <div class="ai-report-header"><span class="ai-report-type-badge">&#x1F522; Calculation</span><div class="ai-report-title">${result.title}</div></div>
+    <div class="ai-report-answer-block"><div class="ai-report-answer-label">RESULT</div><div class="ai-report-answer-value">${result.answer || '&mdash;'}</div></div>
+    ${findingsSection}${recsSection}${metaFooter}
+    ${result.colKey && result.colKey !== 'null' ? `<div class="ai-report-actions"><button class="ai-response-action-btn" onclick="injectKpiCard('${result.colKey}','${result.op||'sum'}')">&#x1F522; Add KPI Card</button></div>` : ''}
+  </div>`;
+}
+
+// Analyst Reasoning Engine & recommendations builders
+const _origGenerateHtmlResponse = generateHtmlResponse;
+generateHtmlResponse = function(result) {
+  const confColor = result.confidence === 'High' ? '#10b981' : result.confidence === 'Medium' ? '#f59e0b' : '#ef4444';
+
+  const renderList = (items, clr) => {
+    if (!items || items.length === 0) return '';
+    return items.map(f => `<li style="margin-bottom:4px;color:${clr || 'var(--text-secondary)'};line-height:1.55;">${f}</li>`).join('');
+  };
+
+  // Layers 8 & 12: Add Analyst summary
+  const findingsSection = (result.findings && result.findings.length > 0) ? `
+    <div class="ai-report-section">
+      <div class="ai-report-section-title">💡 Key Findings</div>
+      <ul class="ai-report-list">${renderList(result.findings)}</ul>
+    </div>` : '';
+
+  const insightsSection = (result.insights && result.insights.length > 0) ? `
+    <div class="ai-report-section">
+      <div class="ai-report-section-title">🧠 Strategic Insights</div>
+      <ul class="ai-report-list">${renderList(result.insights, '#a5b4fc')}</ul>
+    </div>` : '';
+
+  const recsSection = (result.recommendations && result.recommendations.length > 0) ? `
+    <div class="ai-report-section">
+      <div class="ai-report-section-title">🎯 Actionable Recommendations</div>
+      <ul class="ai-report-list">${renderList(result.recommendations, 'var(--text-primary)')}</ul>
+    </div>` : '';
+
+  const metaFooter = `
+    <div class="ai-report-meta-row">
+      ${result.method ? `<div class="ai-report-meta-pill"><span class="ai-report-meta-lbl">METHOD</span><code class="ai-report-method">${result.method}</code></div>` : ''}
+      ${result.rowsUsed != null ? `<div class="ai-report-meta-pill"><span class="ai-report-meta-lbl">ROWS</span><span class="ai-report-meta-val">${result.rowsUsed.toLocaleString()}</span></div>` : ''}
+      ${result.confidence ? `<div class="ai-report-conf-badge" style="background:${confColor}22;border:1px solid ${confColor}55;"><span style="width:6px;height:6px;border-radius:50%;background:${confColor};display:inline-block;flex-shrink:0;"></span><span style="color:${confColor};font-weight:700;font-size:10px;margin-left:4px;">${result.confidence} Confidence</span></div>` : ''}
+    </div>`;
+
+  if (result.type === "table") {
+    const rowsHtml = result.items.map(item => `<tr class="ai-rank-row"><td class="ai-rank-num">${item.rank}</td><td class="ai-rank-label">${item.label}</td><td class="ai-rank-value">${item.value}</td></tr>`).join('');
+    return `<div class="ai-analyst-report-card">
+      <div class="ai-report-header"><span class="ai-report-type-badge">📊 Ranking</span><div class="ai-report-title">${result.title}</div></div>
+      <div class="ai-report-answer-block"><div class="ai-report-answer-label">TOP RESULT</div><div class="ai-report-answer-value">${result.answer || '&mdash;'}</div></div>
+      <table class="ai-report-rank-table"><thead><tr><th>#</th><th>Item</th><th>Value</th></tr></thead><tbody>${rowsHtml}</tbody></table>
+      ${findingsSection}${insightsSection}${recsSection}${metaFooter}
+      <div class="ai-report-actions">
+        <button class="ai-response-action-btn" onclick="renderChatChart({type:'horizontalBar',xCol:'${result.xCol}',yCol:'${result.yCol}'})">📊 View Chart in Chat</button>
+        <button class="ai-response-action-btn" onclick="injectTableChart('${result.xCol}','${result.yCol}')">📌 Add to Dashboard</button>
+        <button class="ai-response-action-btn" onclick="exportCSVSnapshot()">💾 Export CSV</button>
+      </div></div>`;
+  }
+
+  if (result.type === "trend") {
+    const isUp = (result.answer || '').startsWith('Upward');
+    const trendIcon = isUp ? '📈' : '📉';
+    const trendColor = isUp ? '#10b981' : '#ef4444';
+    const chartCfgJson = result.chartConfig ? JSON.stringify(result.chartConfig) : null;
+    return `<div class="ai-analyst-report-card">
+      <div class="ai-report-header"><span class="ai-report-type-badge">${trendIcon} Trend</span><div class="ai-report-title">${result.title}</div></div>
+      <div class="ai-report-answer-block"><div class="ai-report-answer-label">TREND DIRECTION</div><div class="ai-report-answer-value" style="color:${trendColor};">${result.answer || '&mdash;'}</div></div>
+      ${result.comparisonHTML ? `<div class="ai-report-comparison-body">${result.comparisonHTML}</div>` : ''}
+      ${findingsSection}${insightsSection}${recsSection}${metaFooter}
+      <div class="ai-report-actions">
+        ${chartCfgJson ? `<button class="ai-response-action-btn" onclick='renderChatChart(${chartCfgJson.replace(/\\/g,"\\\\").replace(/'/g,"&apos;")})'>${trendIcon} View Trend Chart</button>` : ''}
+        <button class="ai-response-action-btn" onclick="injectTrendChart('${result.xCol}','${result.yCol}')">📌 Add to Dashboard</button>
+      </div></div>`;
+  }
+
+  if (result.type === "comparison") {
+    return `<div class="ai-analyst-report-card">
+      <div class="ai-report-header"><span class="ai-report-type-badge">🔬 Comparison</span><div class="ai-report-title">${result.title}</div></div>
+      <div class="ai-report-answer-block"><div class="ai-report-answer-label">RESULT</div><div class="ai-report-answer-value">${result.answer || '&mdash;'}</div></div>
+      ${result.comparisonHTML ? `<div class="ai-report-comparison-body">${result.comparisonHTML}</div>` : ''}
+      ${findingsSection}${insightsSection}${recsSection}${metaFooter}
+      ${result.xCol ? `<div class="ai-report-actions"><button class="ai-response-action-btn" onclick="renderChatChart({type:'bar',xCol:'${result.xCol}',yCol:'${result.yCol}'})">📊 View Chart in Chat</button></div>` : ''}
+    </div>`;
+  }
+
+  if (result.type === "explain") {
+    return `<div class="ai-analyst-report-card">
+      <div class="ai-report-header"><span class="ai-report-type-badge">🔎 Diagnostic</span><div class="ai-report-title">${result.title}</div></div>
+      <div class="ai-report-answer-block"><div class="ai-report-answer-label">PRIMARY FINDING</div><div class="ai-report-answer-value" style="font-size:13px;">${result.primary || result.answer || '&mdash;'}</div></div>
+      <div class="ai-report-explain-block">
+        ${result.secondary ? `<div class="ai-report-explain-row"><span class="ai-report-explain-tag secondary">Secondary Cause</span><span>${result.secondary}</span></div>` : ''}
+        ${result.riskItem ? `<div class="ai-report-explain-row"><span class="ai-report-explain-tag risk">Risk</span><span style="color:#f59e0b;">${result.riskItem}</span></div>` : ''}
+      </div>
+      ${findingsSection}${insightsSection}${recsSection}${metaFooter}
+    </div>`;
+  }
+
+  // Base fallback calculation rendering with insights section
+  const baseCalculationsCard = `<div class="ai-analyst-report-card">
+    <div class="ai-report-header"><span class="ai-report-type-badge">&#x1F522; Calculation</span><div class="ai-report-title">${result.title}</div></div>
+    <div class="ai-report-answer-block"><div class="ai-report-answer-label">RESULT</div><div class="ai-report-answer-value">${result.answer || '&mdash;'}</div></div>
+    ${findingsSection}${insightsSection}${recsSection}${metaFooter}
+    ${result.colKey && result.colKey !== 'null' ? `<div class="ai-report-actions"><button class="ai-response-action-btn" onclick="injectKpiCard('${result.colKey}','${result.op||'sum'}')">&#x1F522; Add KPI Card</button></div>` : ''}
+  </div>`;
+
+  return baseCalculationsCard;
+};
 
 function renderPastConversationsList() {
   const container = document.getElementById('ai-conversations-list');
@@ -10907,650 +12945,291 @@ function saveChatHistoryToWorkspace() {
   });
 }
 
-// 3. User Prompt Submission
-function handleAiPromptSubmit() {
-  const input = document.getElementById('ai-prompt-input');
-  if (!input) return;
-  const prompt = input.value.trim();
-  if (!prompt) return;
-
-  // Add User message
-  aiActiveChatHistory.push({
-    sender: 'user',
-    text: prompt
-  });
-  input.value = "";
-  input.style.height = 'auto'; // Reset textarea height after clearing
-  renderAiChatHistory();
-
-  // Safety Check
-  if (!gridData || gridData.length === 0) {
-    setTimeout(() => {
-      aiActiveChatHistory.push({
-        sender: 'assistant',
-        text: "Please load a dataset workspace before asking analysis questions.",
-        contentHtml: `<p style="font-size: 12px; color: var(--text-secondary); margin: 0;">⚠️ Please load a dataset workspace before asking analysis questions.</p>`
-      });
-      saveChatHistoryToWorkspace();
-      renderAiChatHistory();
-    }, 400);
-    return;
-  }
-
-  // Non-blocking UI indicator
-  const fab = document.getElementById('ai-copilot-fab');
-  const posClass = getCopilotPositionClass ? getCopilotPositionClass() : 'fab-bottom-right';
-  if (fab) {
-    fab.className = `ai-copilot-fab ${posClass} state-processing`;
-  }
-
-  const feed = document.getElementById('ai-chat-feed');
-  let typingBubble = null;
-  if (feed) {
-    typingBubble = document.createElement('div');
-    typingBubble.className = 'ai-message assistant typing-indicator';
-    typingBubble.style.cssText = 'display: flex; gap: 12px; max-width: 85%; margin-top: 10px;';
-    typingBubble.innerHTML = `
-      <div class="ai-msg-avatar" style="width: 28px; height: 28px; border-radius: 50%; background: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0;">🤖</div>
-      <div class="ai-msg-body" style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-color); border-radius: 0 12px 12px 12px; padding: 12px 16px;">
-        <span style="font-size: 12px; color: var(--text-muted);">OneClick is analyzing...</span>
-      </div>
-    `;
-    feed.appendChild(typingBubble);
-    feed.scrollTop = feed.scrollHeight;
-  }
-
-  setTimeout(() => {
-    // Remove typing bubble
-    if (typingBubble && typingBubble.parentNode) {
-      typingBubble.parentNode.removeChild(typingBubble);
-    }
-
-    if (fab) {
-      fab.className = `ai-copilot-fab ${posClass} state-responding`;
-      setTimeout(() => {
-        const drawer = document.getElementById('ai-copilot-drawer');
-        const isOpen = drawer && drawer.classList.contains('open');
-        fab.className = `ai-copilot-fab ${posClass} ${isOpen ? 'state-listening' : 'state-idle'}`;
-      }, 2000);
-    }
-
-    const intent = classifyUserIntent(prompt);
-    let plan = parseUserPrompt(prompt);
-    
-    // Memory merging for follow-up or bare questions
-    if ((intent === "General Follow-up" || !plan) && lastResolvedPlan) {
-      plan = mergeConversationalMemory(prompt, lastResolvedPlan);
-    }
-
-    if (!plan) {
-      aiActiveChatHistory.push({
-        sender: 'assistant',
-        text: "Unable to calculate from current dataset.",
-        contentHtml: `<p style="font-size: 12px; color: var(--text-secondary); margin: 0;">❌ Unable to calculate from current dataset.</p>`
-      });
-      saveChatHistoryToWorkspace();
-      renderAiChatHistory();
-      return;
-    }
-
-    if (plan.type === "spreadsheet") {
-      showAiSpreadsheetConfirmation(plan);
-    } else if (plan.type === "chart_command") {
-      executeChartCommand(plan);
-    } else if (plan.type === "modify_chart_command") {
-      executeModifyChartCommand(plan);
-    } else if (plan.type === "kpi_command") {
-      executeKpiCommand(plan);
-    } else if (plan.type === "export_command") {
-      executeExportCommand(plan);
-    } else if (plan.type === "report") {
-      executeReportGeneration(plan);
+function executeExportCommand(plan) {
+  let formatName = "";
+  try {
+    if (plan.format === "pdf") {
+      formatName = "PDF Report";
+      if (typeof exportToPDF === 'function') exportToPDF();
+      else throw new Error("PDF exporter not available.");
+    } else if (plan.format === "pptx") {
+      formatName = "PowerPoint Report";
+      if (typeof exportToPPTX === 'function') exportToPPTX();
+      else throw new Error("PPTX exporter not available.");
+    } else if (plan.format === "docx") {
+      formatName = "Word Document";
+      if (typeof exportToWord === 'function') exportToWord();
+      else throw new Error("Word exporter not available.");
+    } else if (plan.format === "json") {
+      formatName = "Dashboard JSON Layout";
+      if (typeof exportDashboardJSON === 'function') exportDashboardJSON();
+      else throw new Error("Dashboard JSON exporter not available.");
     } else {
-      const result = executeAiCalculation(plan);
-      if (result.error) {
-        aiActiveChatHistory.push({
-          sender: 'assistant',
-          text: result.error,
-          contentHtml: `<p style="font-size: 12px; color: var(--text-secondary); margin: 0;">⚠️ ${result.error}</p>`
-        });
-      } else {
-        // Update lastResolvedPlan for conversational memory
-        lastResolvedPlan = plan;
+      formatName = "CSV Spreadsheet";
+      if (typeof exportCSVSnapshot === 'function') exportCSVSnapshot();
+      else throw new Error("CSV exporter not available.");
+    }
+    
+    aiActiveChatHistory.push({
+      sender: 'assistant',
+      text: `Triggered export for ${formatName}.`,
+      contentHtml: `
+        <div style="font-size:12px; color:var(--text-primary);">
+          📤 <strong>Export Triggered:</strong> Successfully started generating and exporting your <strong>${formatName}</strong>. Check your downloads!
+        </div>
+      `
+    });
+  } catch (err) {
+    aiActiveChatHistory.push({
+      sender: 'assistant',
+      text: `Failed to export: ${err.message}`,
+      contentHtml: `
+        <div style="font-size:12px; color:var(--error);">
+          ❌ <strong>Export Failed:</strong> ${err.message}
+        </div>
+      `
+    });
+  }
+}
 
-        // Dynamic suggestions
-        const suggestions = getSuggestionsForIntent(intent, plan);
+function executeReportGeneration(plan, reportTitle = "Executive Synthesis Summary") {
+  const stats = runStatisticalInsights();
+  const datasetNameEl = document.getElementById('ws-dataset-name');
+  const datasetName = datasetNameEl ? datasetNameEl.innerText.trim() : "Dataset";
+  
+  const totalRows = gridData.length;
+  const colCount = headers.length;
+  
+  let totalNumVal = 0;
+  const numCol = currentDatasetContext.numericColumns[0];
+  if (numCol) {
+    const colIdx = headers.indexOf(numCol);
+    gridData.forEach(row => {
+      const v = getCleanNumericValue(row[colIdx]);
+      if (!isNaN(v)) totalNumVal += v;
+    });
+  }
+  
+  const numColLabel = numCol ? (headerNames[numCol] || numCol) : "Records";
+  const formattedTotal = numCol ? formatKpiValue(totalNumVal, numCol, "sum") : totalRows.toLocaleString();
 
-        const responseHtml = generateHtmlResponse(result);
-        aiActiveChatHistory.push({
-          sender: 'assistant',
-          text: result.title + ": " + result.answer,
-          contentHtml: responseHtml,
-          suggestions: suggestions
-        });
+  const findingsList = stats.findings.map(f => `<li>🔍 ${f}</li>`).join('') || "<li>🔍 No major anomalies detected.</li>";
+  const risksList = stats.risks.map(r => `<li>⚠️ ${r}</li>`).join('') || "<li>✅ No significant concentration risks identified.</li>";
+  const recommendationsList = stats.recommendations.map(rec => `<li>🎯 ${rec}</li>`).join('') || "<li>🎯 Continue regular metrics monitoring.</li>";
+
+  const contentHtml = `
+    <div class="ai-msg-response-card report-card" style="background: rgba(255,255,255,0.015); border:1px solid var(--border-color); border-radius: 10px; padding: 16px; width: 100%;">
+      <div style="font-weight: 700; font-size:13.5px; color:var(--primary); margin-bottom:12px; border-bottom:1px solid rgba(255,255,255,0.06); padding-bottom:6px; display:flex; align-items:center; gap:8px;">
+        📝 ${reportTitle}: ${datasetName}
+      </div>
+      
+      <div style="margin-bottom:12px;">
+        <h4 style="font-size:11.5px; margin:0 0 6px 0; color:var(--text-primary); font-weight: 700;">📊 Dataset Overview</h4>
+        <div style="display:flex; gap:16px; background:rgba(0,0,0,0.15); padding:8px 12px; border-radius:6px; font-size:11px;">
+          <div><span style="color:var(--text-muted);">Rows:</span> <strong>${totalRows.toLocaleString()}</strong></div>
+          <div><span style="color:var(--text-muted);">Columns:</span> <strong>${colCount}</strong></div>
+          <div><span style="color:var(--text-muted);">Total ${numColLabel}:</span> <strong>${formattedTotal}</strong></div>
+        </div>
+      </div>
+
+      <div style="margin-bottom:12px;">
+        <h4 style="font-size:11.5px; margin:0 0 6px 0; color:var(--text-primary); font-weight: 700;">💡 Key Findings</h4>
+        <ul style="margin:0; padding-left:16px; font-size:11.5px; color:var(--text-secondary); line-height:1.5;">
+          ${findingsList}
+        </ul>
+      </div>
+
+      <div style="margin-bottom:12px;">
+        <h4 style="font-size:11.5px; margin:0 0 6px 0; color:var(--text-primary); font-weight: 700;">⚠️ Identified Risks</h4>
+        <ul style="margin:0; padding-left:16px; font-size:11.5px; color:var(--text-secondary); line-height:1.5;">
+          ${risksList}
+        </ul>
+      </div>
+
+      <div style="margin-bottom:14px;">
+        <h4 style="font-size:11.5px; margin:0 0 6px 0; color:var(--text-primary); font-weight: 700;">🎯 Strategic Recommendations</h4>
+        <ul style="margin:0; padding-left:16px; font-size:11.5px; color:var(--text-secondary); line-height:1.5;">
+          ${recommendationsList}
+        </ul>
+      </div>
+
+      <div style="border-top:1px solid rgba(255,255,255,0.06); padding-top:10px; display:flex; flex-wrap:wrap; gap:6px;">
+        <button class="ai-response-action-btn" onclick="executeExportCommand({type:'export_command', format:'pdf'})">📥 Export PDF</button>
+        <button class="ai-response-action-btn" onclick="executeExportCommand({type:'export_command', format:'pptx'})">📊 PPTX Slides</button>
+        <button class="ai-response-action-btn" onclick="executeExportCommand({type:'export_command', format:'docx'})">📄 Word Doc</button>
+        <button class="ai-response-action-btn" onclick="window.saveReportToWorkspaceStorage()">💾 Save to Storage</button>
+      </div>
+    </div>
+  `;
+
+  aiActiveChatHistory.push({
+    sender: 'assistant',
+    text: `${reportTitle} report compiled!`,
+    contentHtml: contentHtml
+  });
+  renderAiChatHistory();
+  showToast("Executive summary report compiled!", "success");
+  
+  logActivity("Generate Report", `Compiled executive summary for ${datasetName}.`, "Success");
+}
+
+window.saveReportToWorkspaceStorage = function() {
+  const datasetNameEl = document.getElementById('ws-dataset-name');
+  const datasetName = datasetNameEl ? datasetNameEl.innerText.trim() : "raw_dataset";
+  const reportName = `AI_Summary_${datasetName.replace(/[^a-zA-Z0-9]/g, '_')}`;
+  
+  try {
+    const key = saveDashboardToStorage(reportName);
+    showToast(`Saved report: ${reportName} to storage!`, "success");
+    if (typeof loadAndRenderReportsList === 'function') {
+      loadAndRenderReportsList();
+    }
+  } catch (err) {
+    showToast("Failed to save report: " + err.message, "error");
+  }
+};
+
+// DOM Safe Bindings
+function bindCopilotEvents() {
+  const fab = document.getElementById("oneclick-copilot-fab");
+  const closeBtn = document.getElementById("btn-ai-close-drawer");
+  const posToggleBtn = document.getElementById("btn-ai-toggle-position");
+  const promptInput = document.getElementById("ai-prompt-input");
+  const btnSend = document.getElementById("btn-ai-send");
+  const btnClear = document.getElementById("btn-ai-clear-chat");
+  const btnPdf = document.getElementById("btn-ai-quick-pdf");
+  const btnCsv = document.getElementById("btn-ai-quick-csv");
+
+  const btnYes = document.getElementById('btn-ai-confirm-yes');
+  if (btnYes) btnYes.onclick = () => resolveAiSpreadsheetCommand(true);
+
+  const btnNo = document.getElementById('btn-ai-confirm-no');
+  if (btnNo) btnNo.onclick = () => resolveAiSpreadsheetCommand(false);
+
+  const initialSide = localStorage.getItem('oneclick_copilot_position') || 'Right';
+  const posClass = initialSide.toLowerCase() === 'left' ? 'fab-bottom-left' : 'fab-bottom-right';
+  
+  if (fab) {
+    fab.className = `ai-copilot-fab ${posClass} state-idle`;
+    fab.onclick = () => window.toggleAiCopilot();
+  }
+  
+  const drawer = document.getElementById('oneclick-copilot-panel');
+  if (drawer) {
+    drawer.className = `ai-copilot-panel ${posClass}`;
+  }
+
+  if (closeBtn) closeBtn.onclick = () => window.toggleAiCopilot(false);
+  if (posToggleBtn) posToggleBtn.onclick = () => window.toggleCopilotSide();
+
+  if (promptInput) {
+    promptInput.onkeydown = (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        handleAiPromptSubmit();
       }
+    };
+    promptInput.addEventListener('input', () => {
+      promptInput.style.height = 'auto';
+      promptInput.style.height = promptInput.scrollHeight + 'px';
+    });
+  }
+
+  if (btnSend) btnSend.onclick = handleAiPromptSubmit;
+
+  if (btnClear) {
+    btnClear.onclick = () => {
+      aiActiveChatHistory = [];
       saveChatHistoryToWorkspace();
       renderAiChatHistory();
-    }
-  }, 450);
+    };
+  }
+
+  if (btnPdf) btnPdf.onclick = () => executeExportCommand({ type: "export_command", format: "pdf" });
+  if (btnCsv) btnCsv.onclick = () => executeExportCommand({ type: "export_command", format: "csv" });
+
+  analyzeDatasetIntelligence();
+  renderPastConversationsList();
+  renderAiChatHistory();
+}
+
+function initializeCopilot() {
+  bindCopilotEvents();
+}
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", initializeCopilot);
+} else {
+  initializeCopilot();
 }
 
 function escapeRegExp(string) {
   return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-function classifyUserIntent(prompt) {
-  const normalized = prompt.toLowerCase().trim();
+function setCopilotState(state) {
+  const fab = document.getElementById('oneclick-copilot-fab');
+  if (!fab) return;
   
-  // 1. Dashboard Action
-  if (normalized.includes("add to dashboard") || normalized.includes("add this chart") || normalized.includes("add widget") || normalized.includes("remove widget") || normalized.includes("delete widget") || normalized.includes("resize widget") || normalized.includes("change width") || normalized.includes("change size")) {
-    return "Dashboard Action";
-  }
+  fab.classList.remove('state-idle', 'state-thinking', 'state-processing', 'state-generating-chart', 'state-generating-report', 'state-insight-available');
   
-  // 2. Report Generation
-  if (normalized.includes("executive summary") || normalized.includes("generate report") || normalized.includes("create report") || (normalized.includes("findings") && normalized.includes("report")) || normalized.includes("summary report") || normalized.includes("overview report")) {
-    return "Report Generation";
-  }
-  
-  // 3. Data Cleaning Action
-  if (normalized.includes("duplicate") || normalized.includes("missing") || normalized.includes("impute") || normalized.includes("fill") || normalized.includes("delete empty") || normalized.includes("remove empty") || normalized.includes("rename") || normalized.includes("merge") || normalized.includes("split") || normalized.includes("convert date") || normalized.includes("clean data")) {
-    return "Data Cleaning Action";
-  }
-  
-  // 4. Visualization
-  if (normalized.includes("chart") || normalized.includes("plot") || normalized.includes("visual") || normalized.includes("graph") || normalized.includes("histogram") || normalized.includes("scatter") || normalized.includes("trend chart") || normalized.includes("pie") || normalized.includes("donut") || normalized.includes("bar chart") || normalized.includes("line chart")) {
-    return "Visualization";
-  }
-  
-  // 5. Insight
-  if (normalized.startsWith("why") || normalized.includes("explain") || normalized.includes("anomaly") || normalized.includes("outlier") || normalized.includes("insight") || normalized.includes("reason for") || normalized.includes("cause of")) {
-    return "Insight";
-  }
-  
-  // 6. Question
-  if (normalized.includes("dataset") || normalized.includes("using") || normalized.includes("schema") || normalized.includes("columns") || normalized.includes("data type") || normalized.includes("headers") || normalized.includes("fields") || normalized.includes("what sheet") || normalized.includes("what file") || normalized.startsWith("what is the name of")) {
-    return "Question";
-  }
-  
-  // 7. Calculation
-  if (normalized.includes("total") || normalized.includes("sum") || normalized.includes("average") || normalized.includes("avg") || normalized.includes("mean") || normalized.includes("median") || normalized.includes("max") || normalized.includes("min") || normalized.includes("count") || normalized.includes("how many") || normalized.includes("rows") || normalized.includes("columns count") || normalized.includes("uniques") || normalized.includes("distinct")) {
-    return "Calculation";
-  }
-  
-  // Fallback follow-ups
-  const followUpTriggers = ["what about", "and for", "only for", "excluding", "how about", "in ", "for ", "what is", "and ", "excl"];
-  if (followUpTriggers.some(trigger => normalized.startsWith(trigger)) || lastResolvedPlan) {
-    return "Calculation"; 
-  }
-  
-  return "Question";
-}
-
-function extractPromptParameters(prompt) {
-  const normalized = prompt.toLowerCase().trim();
-  const cols = currentDatasetContext.columns;
-  
-  // Column matching
-  const matchedCols = [];
-  const aliases = {
-    "rev": ["revenue", "sales", "turnover"],
-    "revenue": ["revenue", "sales", "turnover"],
-    "sales": ["sales", "revenue"],
-    "prof": ["profit", "income", "earnings", "margin"],
-    "profit": ["profit", "income", "margin"],
-    "cust": ["customer", "client", "buyer"],
-    "customer": ["customer", "client"],
-    "cat": ["category", "type", "group", "genre"],
-    "category": ["category", "type", "group"],
-    "qty": ["quantity", "volume", "units", "count"],
-    "quantity": ["quantity", "volume", "units"]
-  };
-
-  cols.forEach(colKey => {
-    const colName = (headerNames[colKey] || colKey).toLowerCase();
-    if (normalized.includes(colName) || normalized.includes(colKey.toLowerCase())) {
-      matchedCols.push({ colKey, name: colName, length: colName.length });
-    } else {
-      Object.entries(aliases).forEach(([aliasKey, searchTerms]) => {
-        if (normalized.split(/\s+/).some(word => word.startsWith(aliasKey))) {
-          if (searchTerms.some(term => colName.includes(term))) {
-            matchedCols.push({ colKey, name: colName, length: aliasKey.length });
-          }
-        }
-      });
-    }
-  });
-  matchedCols.sort((a, b) => b.length - a.length);
-  const colKey = matchedCols[0] ? matchedCols[0].colKey : null;
-
-  // Operator matching
-  let op = null;
-  if (normalized.includes("total") || normalized.includes("sum")) op = "sum";
-  else if (normalized.includes("average") || normalized.includes("avg") || normalized.includes("mean")) op = "avg";
-  else if (normalized.includes("unique") || normalized.includes("distinct")) op = "count_dist";
-  else if (normalized.includes("count") || normalized.includes("how many") || normalized.includes("number of")) op = "count";
-  else if (normalized.includes("min") || normalized.includes("lowest") || normalized.includes("minimum")) op = "min";
-  else if (normalized.includes("max") || normalized.includes("highest") || normalized.includes("maximum")) op = "max";
-  else if (normalized.includes("median")) op = "median";
-
-  // Date filter matching
-  let dateFilter = null;
-  const dateCol = currentDatasetContext.dateColumns[0];
-  if (dateCol) {
-    const months = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
-    const monthFullNames = ["january", "february", "march", "april", "may", "june", "july", "august", "september", "october", "november", "december"];
-    let foundMonths = [];
-    months.forEach((m, idx) => {
-      if (normalized.includes(m) || normalized.includes(monthFullNames[idx])) {
-        foundMonths.push(idx);
-      }
-    });
-
-    const yearMatch = normalized.match(/\b(20\d{2})\b/);
-    const year = yearMatch ? parseInt(yearMatch[1]) : 2026;
-
-    if (foundMonths.length > 0) {
-      const dayMatches = normalized.match(/\b([1-9]|[12]\d|3[01])\b/g);
-      let startDay = 1;
-      let endDay = 28;
-      if (dayMatches && dayMatches.length >= 2) {
-        startDay = parseInt(dayMatches[0]);
-        endDay = parseInt(dayMatches[1]);
-      } else if (dayMatches && dayMatches.length === 1) {
-        startDay = 1;
-        endDay = parseInt(dayMatches[0]);
-      } else {
-        startDay = 1;
-        endDay = new Date(year, foundMonths[foundMonths.length - 1] + 1, 0).getDate();
-      }
-
-      const startMonth = foundMonths[0];
-      const endMonth = foundMonths[foundMonths.length - 1];
-
-      const minDate = new Date(year, startMonth, startDay);
-      const maxDate = new Date(year, endMonth, endDay);
-      dateFilter = { dateCol, min: minDate, max: maxDate };
-    }
-  }
-
-  // Category filter matching
-  const categoryFilters = [];
-  const categoricalCols = currentDatasetContext.categoricalColumns;
-  categoricalCols.forEach(catColKey => {
-    const stats = currentDatasetContext.columnStatistics[catColKey];
-    if (stats && stats.uniqueValues) {
-      stats.uniqueValues.forEach(val => {
-        const lowerVal = String(val).toLowerCase();
-        const valRegex = new RegExp(`\\b${escapeRegExp(lowerVal)}\\b`, 'i');
-        if (valRegex.test(normalized)) {
-          const excludeRegex = new RegExp(`(excl|exclude|except|not|don't want)\\s+(?:\\w+\\s+){0,2}${escapeRegExp(lowerVal)}`, 'i');
-          const isExclude = excludeRegex.test(normalized);
-          categoryFilters.push({
-            colKey: catColKey,
-            op: isExclude ? 'neq' : 'eq',
-            value: val
-          });
-        }
-      });
-    }
-  });
-
-  return { colKey, op, dateFilter, categoryFilters };
-}
-
-function mergeConversationalMemory(prompt, lastPlan) {
-  const params = extractPromptParameters(prompt);
-  if (!lastPlan) return null;
-
-  const mergedPlan = JSON.parse(JSON.stringify(lastPlan));
-  
-  if (params.colKey) {
-    mergedPlan.colKey = params.colKey;
-  }
-  if (params.op) {
-    mergedPlan.op = params.op;
-  }
-  if (params.dateFilter) {
-    mergedPlan.dateFilter = params.dateFilter;
-  }
-  
-  if (params.categoryFilters && params.categoryFilters.length > 0) {
-    if (!mergedPlan.categoryFilters) {
-      mergedPlan.categoryFilters = [];
-    }
-    params.categoryFilters.forEach(newFilter => {
-      mergedPlan.categoryFilters = mergedPlan.categoryFilters.filter(f => f.colKey !== newFilter.colKey);
-      mergedPlan.categoryFilters.push(newFilter);
-    });
-  }
-  
-  return mergedPlan;
-}
-
-function getSuggestionsForIntent(intent, plan) {
-  const suggestions = [];
-  
-  if (intent === "Metric Query" || (plan && plan.type === "aggregation")) {
-    suggestions.push("Show trend over time");
-    suggestions.push("Create a KPI card");
-    if (currentDatasetContext.categoricalColumns && currentDatasetContext.categoricalColumns.length > 0) {
-      const catCol = currentDatasetContext.categoricalColumns[0];
-      const name = headerNames[catCol] || catCol;
-      suggestions.push(`Breakdown by ${name}`);
-    }
-  } else if (intent === "Comparison Query" || (plan && plan.type === "comparison")) {
-    suggestions.push("Show distribution statistics");
-    suggestions.push("Create a comparison chart");
-  } else if (intent === "Visualization Request" || (plan && plan.type === "chart_command")) {
-    suggestions.push("Resize chart to 12 columns");
-    suggestions.push("Change chart to pie");
-    suggestions.push("Add average KPI card");
-  } else if (intent === "Insight Request" || (plan && plan.type === "explain")) {
-    suggestions.push("Generate executive summary");
-    suggestions.push("Show dataset schema");
-  } else if (intent === "Report Request" || (plan && plan.type === "report")) {
-    suggestions.push("Export PDF report");
-    suggestions.push("Export PPTX slides");
-    suggestions.push("Show profit trend");
+  if (state === 'thinking' || state === 'processing') {
+    fab.classList.add('state-thinking');
+  } else if (state === 'chart' || state === 'generating-chart') {
+    fab.classList.add('state-generating-chart');
+  } else if (state === 'report' || state === 'generating-report') {
+    fab.classList.add('state-generating-report');
+  } else if (state === 'insight' || state === 'insight-available') {
+    fab.classList.add('state-insight-available');
   } else {
-    suggestions.push("What are key findings?");
-    suggestions.push("Generate dashboard");
-    suggestions.push("Show columns list");
+    fab.classList.add('state-idle');
   }
-  
-  return suggestions.slice(0, 3);
 }
 
-// 4. Intent Parser Classifier
-function parseUserPrompt(prompt) {
-  const normalized = prompt.toLowerCase().trim();
-  const cols = currentDatasetContext.columns;
+function logActivity(type, details, status) {
+  const datasetNameEl = document.getElementById('ws-dataset-name');
+  const datasetName = datasetNameEl ? datasetNameEl.innerText.trim() : "raw_dataset";
   
-  const matchedCols = [];
-  const aliases = {
-    "rev": ["revenue", "sales", "turnover"],
-    "revenue": ["revenue", "sales", "turnover"],
-    "sales": ["sales", "revenue"],
-    "prof": ["profit", "income", "earnings", "margin"],
-    "profit": ["profit", "income", "margin"],
-    "cust": ["customer", "client", "buyer"],
-    "customer": ["customer", "client"],
-    "cat": ["category", "type", "group", "genre"],
-    "category": ["category", "type", "group"],
-    "qty": ["quantity", "volume", "units", "count"],
-    "quantity": ["quantity", "volume", "units"]
+  const logItem = {
+    time: new Date().toLocaleTimeString(),
+    type,
+    details,
+    datasetName,
+    status
   };
 
-  cols.forEach(colKey => {
-    const colName = (headerNames[colKey] || colKey).toLowerCase();
-    // Direct matches
-    if (normalized.includes(colName) || normalized.includes(colKey.toLowerCase())) {
-      matchedCols.push({ colKey, name: colName, length: colName.length });
-    } else {
-      // Alias/Abbreviation semantic match
-      Object.entries(aliases).forEach(([aliasKey, searchTerms]) => {
-        if (normalized.split(/\s+/).some(word => word.startsWith(aliasKey))) {
-          if (searchTerms.some(term => colName.includes(term))) {
-            matchedCols.push({ colKey, name: colName, length: aliasKey.length });
-          }
-        }
-      });
-    }
-  });
-
-  matchedCols.sort((a, b) => b.length - a.length);
-
-  const getCol = () => matchedCols[0] ? matchedCols[0].colKey : null;
-
-  // Executive Summary/Report Commands
-  if (normalized.includes("executive summary") || normalized.includes("generate report") || normalized.includes("create report") || normalized.includes("findings summary")) {
-    return { type: "report" };
-  }
-
-  // Modify Chart Commands
-  if (normalized.includes("change") || normalized.includes("make") || normalized.includes("resize") || normalized.includes("convert") || normalized.includes("swap") || normalized.includes("update") || normalized.includes("width to") || normalized.includes("size to")) {
-    let newType = null;
-    if (normalized.includes("line")) newType = "line";
-    else if (normalized.includes("bar")) newType = "bar";
-    else if (normalized.includes("pie")) newType = "pie";
-    else if (normalized.includes("donut")) newType = "donut";
-    else if (normalized.includes("area")) newType = "area";
-    else if (normalized.includes("scatter")) newType = "scatter";
-    else if (normalized.includes("heatmap")) newType = "heatmap";
-    else if (normalized.includes("table")) newType = "table";
-
-    let newWidth = null;
-    const widthMatch = normalized.match(/\b(width|size|columns|col)\b\s*(?:to\s*)?(\d+)/) || normalized.match(/\b(\d+)\s*(?:columns|col|width)\b/);
-    if (widthMatch) {
-      newWidth = parseInt(widthMatch[2] || widthMatch[1]);
-      if (newWidth > 12) newWidth = 12;
-      if (newWidth < 3) newWidth = 3;
-    }
-
-    if (newType || newWidth) {
-      return {
-        type: "modify_chart_command",
-        chartType: newType,
-        width: newWidth,
-        xCol: getCol()
-      };
-    }
-  }
-
-  // Export/Reporting Commands
-  if (normalized.includes("export") || normalized.includes("report") || normalized.includes("powerpoint") || normalized.includes("word") || normalized.includes("pdf") || normalized.includes("pptx") || normalized.includes("docx") || normalized.includes("download")) {
-    if (normalized.includes("pdf")) return { type: "export_command", format: "pdf" };
-    if (normalized.includes("powerpoint") || normalized.includes("pptx") || normalized.includes("presentation") || normalized.includes("slide")) return { type: "export_command", format: "pptx" };
-    if (normalized.includes("word") || normalized.includes("docx") || normalized.includes("doc")) return { type: "export_command", format: "docx" };
-    if (normalized.includes("dashboard") || normalized.includes("layout") || normalized.includes("json")) return { type: "export_command", format: "json" };
-    if (normalized.includes("csv") || normalized.includes("excel") || normalized.includes("data") || normalized.includes("sheet")) return { type: "export_command", format: "csv" };
-  }
-
-  // 1. Spreadsheet Commands
-  if (normalized.includes("duplicate")) {
-    return { type: "spreadsheet", action: "remove_duplicates" };
-  }
-  if (normalized.includes("missing") || normalized.includes("impute") || normalized.includes("fill")) {
-    const colKey = getCol() || currentDatasetContext.numericColumns[0];
-    let method = "median";
-    if (normalized.includes("mean") || normalized.includes("average")) method = "mean";
-    else if (normalized.includes("mode")) method = "mode";
-    return { type: "spreadsheet", action: "fill_missing", colKey, method };
-  }
-  if (normalized.includes("delete empty") || normalized.includes("remove empty") || normalized.includes("delete blank") || normalized.includes("delete empty rows")) {
-    return { type: "spreadsheet", action: "delete_empty_rows" };
-  }
-  if (normalized.includes("convert date") || normalized.includes("date format") || normalized.includes("to date")) {
-    const colKey = getCol() || currentDatasetContext.dateColumns[0];
-    return { type: "spreadsheet", action: "convert_date", colKey };
-  }
-  if (normalized.includes("rename")) {
-    const match = normalized.match(/rename\s+(\w+)\s+to\s+([\w\s\$%_]+)/);
-    const colKey = match ? cols.find(c => c.toLowerCase() === match[1] || (headerNames[c] || "").toLowerCase() === match[1]) : getCol();
-    const newName = match ? match[2].trim() : "New Named Column";
-    return { type: "spreadsheet", action: "rename_column", colKey, newName };
-  }
-  if (normalized.includes("merge")) {
-    return { type: "spreadsheet", action: "merge_columns" };
-  }
-  if (normalized.includes("split")) {
-    const colKey = getCol();
-    return { type: "spreadsheet", action: "split_column", colKey };
-  }
-
-  // 2. KPI creation commands
-  if (normalized.includes("create kpi") || normalized.includes("add kpi") || (normalized.startsWith("kpi") && normalized.includes("for"))) {
-    const colKey = getCol() || currentDatasetContext.numericColumns[0];
-    let agg = "sum";
-    if (normalized.includes("average") || normalized.includes("avg") || normalized.includes("mean")) agg = "avg";
-    else if (normalized.includes("count")) agg = "count";
-    else if (normalized.includes("min")) agg = "min";
-    else if (normalized.includes("max")) agg = "max";
-    return { type: "kpi_command", colKey, agg };
-  }
-
-  // 3. Chart creation commands
-  if (normalized.includes("chart") || normalized.includes("plot") || normalized.includes("visual") || normalized.includes("graph") || normalized.includes("histogram") || normalized.includes("scatter") || normalized.includes("bar") || normalized.includes("line") || normalized.includes("pie") || normalized.includes("donut") || normalized.includes("trend")) {
-    let chartType = "bar";
-    if (normalized.includes("line") || normalized.includes("trend") || normalized.includes("over time") || normalized.includes("time series")) {
-      chartType = "line";
-    } else if (normalized.includes("pie") || normalized.includes("donut") || normalized.includes("market share") || normalized.includes("proportion")) {
-      chartType = "pie";
-    } else if (normalized.includes("scatter") || normalized.includes("correlation") || normalized.includes("relationship")) {
-      chartType = "scatter";
-    } else if (normalized.includes("horizontal") || normalized.includes("ranking") || normalized.includes("top")) {
-      chartType = "horizontalBar";
-    } else if (normalized.includes("distribution") || normalized.includes("histogram")) {
-      chartType = "bar";
-    } else if (normalized.includes("table")) {
-      chartType = "table";
-    }
-
-    const numericCols = currentDatasetContext.numericColumns;
-    const catCols = currentDatasetContext.categoricalColumns;
-    const dateCols = currentDatasetContext.dateColumns;
-
-    let xCol = matchedCols.find(c => catCols.includes(c.colKey) || dateCols.includes(c.colKey))?.colKey;
-    if (!xCol) xCol = catCols[0] || dateCols[0] || cols[0];
-
-    let yCol = matchedCols.find(c => numericCols.includes(c.colKey) && c.colKey !== xCol)?.colKey;
-    if (!yCol) yCol = numericCols[0] || cols[0];
-
-    let agg = "sum";
-    if (normalized.includes("average") || normalized.includes("avg") || normalized.includes("mean")) agg = "avg";
-    else if (normalized.includes("count")) agg = "count";
-
-    // Auto-detect chart type based on context if not explicitly mentioned
-    if (chartType === "bar" && !normalized.includes("bar") && !normalized.includes("histogram")) {
-      if (dateCols.includes(xCol)) {
-        chartType = "line";
-      } else if (normalized.includes("ranking") || normalized.includes("top")) {
-        chartType = "horizontalBar";
-      }
-    }
-
-    return { type: "chart_command", chartType, xCol, yCol, agg };
-  }
-
-  // 4. Trend Analysis
-  if (normalized.includes("trend") || normalized.includes("growth") || normalized.includes("over time")) {
-    const colKey = getCol() || currentDatasetContext.numericColumns[0];
-    const dateCol = currentDatasetContext.dateColumns[0] || cols[0];
-    return { type: "trend", colKey, dateCol };
-  }
-
-  // 5. Explain Data
-  if (normalized.startsWith("why") || normalized.includes("explain")) {
-    const colKey = getCol() || currentDatasetContext.numericColumns[0];
-    return { type: "explain", colKey };
-  }
-
-  // 6. Ranking Queries
-  if (normalized.includes("top") || normalized.includes("bottom") || normalized.includes("best") || normalized.includes("worst") || normalized.includes("breakdown") || normalized.includes("by ")) {
-    const direction = (normalized.includes("bottom") || normalized.includes("worst")) ? "bottom" : "top";
-    const numMatch = normalized.match(/\d+/);
-    const count = numMatch ? parseInt(numMatch[0]) : 5;
-    
-    const numericCols = currentDatasetContext.numericColumns;
-    const catCols = currentDatasetContext.categoricalColumns;
-
-    let yCol = matchedCols.find(c => numericCols.includes(c.colKey))?.colKey;
-    if (!yCol) yCol = numericCols[0] || cols[0];
-
-    let xCol = matchedCols.find(c => catCols.includes(c.colKey) && c.colKey !== yCol)?.colKey;
-    if (!xCol) xCol = catCols[0] || cols[0];
-
-    return { type: "ranking", direction, count, xCol, yCol };
-  }
-
-  // 7. Comparison Queries
-  if (normalized.includes("compare") || normalized.includes(" vs ")) {
-    const numericCols = currentDatasetContext.numericColumns;
-    let yCol = matchedCols.find(c => numericCols.includes(c.colKey))?.colKey;
-    if (!yCol) yCol = numericCols[0] || cols[0];
-
-    let compItems = [];
-    if (normalized.includes(" vs ")) {
-      const parts = normalized.split(" vs ");
-      const beforeWords = parts[0].trim().split(" ");
-      const afterWords = parts[1].trim().split(" ");
-      compItems = [beforeWords[beforeWords.length - 1], afterWords[0]];
-    }
-
-    return { type: "comparison", yCol, compItems };
-  }
-
-  // 8. Aggregations (default)
-  let op = null;
-  if (normalized.includes("total") || normalized.includes("sum")) op = "sum";
-  else if (normalized.includes("average") || normalized.includes("avg") || normalized.includes("mean")) op = "avg";
-  else if (normalized.includes("unique") || normalized.includes("distinct")) op = "count_dist";
-  else if (normalized.includes("count") || normalized.includes("how many") || normalized.includes("number of")) op = "count";
-  else if (normalized.includes("min") || normalized.includes("lowest") || normalized.includes("minimum")) op = "min";
-  else if (normalized.includes("max") || normalized.includes("highest") || normalized.includes("maximum")) op = "max";
-  else if (normalized.includes("median")) op = "median";
-
-  if (op) {
-    const colKey = getCol() || (op === 'count' ? null : currentDatasetContext.numericColumns[0]);
-    let dateFilter = null;
-    const dateCol = currentDatasetContext.dateColumns[0];
-    
-    if (dateCol) {
-      const months = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
-      let foundMonths = [];
-      months.forEach((m, idx) => {
-        if (normalized.includes(m)) {
-          foundMonths.push(idx);
-        }
-      });
-      
-      const yearMatch = normalized.match(/\b(20\d{2})\b/);
-      const year = yearMatch ? parseInt(yearMatch[1]) : 2026;
-
-      if (foundMonths.length > 0) {
-        const dayMatches = normalized.match(/\b([1-9]|[12]\d|3[01])\b/g);
-        let startDay = 1;
-        let endDay = 28;
-        if (dayMatches && dayMatches.length >= 2) {
-          startDay = parseInt(dayMatches[0]);
-          endDay = parseInt(dayMatches[1]);
-        } else if (dayMatches && dayMatches.length === 1) {
-          startDay = 1;
-          endDay = parseInt(dayMatches[0]);
-        } else {
-          startDay = 1;
-          endDay = 30;
-        }
-
-        const startMonth = foundMonths[0];
-        const endMonth = foundMonths[foundMonths.length - 1];
-
-        const minDate = new Date(year, startMonth, startDay);
-        const maxDate = new Date(year, endMonth, endDay);
-        dateFilter = { dateCol, min: minDate, max: maxDate };
-      }
-    }
-
-    return { type: "aggregation", op, colKey, dateFilter };
-  }
-
-  if (getCol()) {
-    const colKey = getCol();
-    const isNum = currentDatasetContext.numericColumns.includes(colKey);
-    return { type: "aggregation", op: isNum ? "sum" : "count", colKey };
-  }
-
-  return null;
+  sessionAuditLogs.unshift(logItem);
 }
 
-// 5. Query Calculation local execution
+window.initHistoryView = function() {
+  const container = document.getElementById('history-table-body');
+  if (!container) return;
+
+  if (sessionAuditLogs.length === 0) {
+    logActivity("Session Started", "Analytics platform loaded workspace environment.", "Completed");
+  }
+
+  let html = sessionAuditLogs.map(log => `
+    <tr>
+      <td style="font-family:var(--font-mono); font-size:11px;">${log.time}</td>
+      <td style="font-weight:600; color:var(--text-primary);">${log.type}</td>
+      <td style="color:var(--text-secondary);">${log.details}</td>
+      <td style="font-size:12px; color:var(--text-muted);">${log.datasetName}</td>
+      <td style="text-align: right; padding-right:24px;">
+        <span class="recent-status-badge cleaned" style="background-color:rgba(34,197,94,0.08);">${log.status}</span>
+      </td>
+    </tr>
+  `).join('');
+
+  container.innerHTML = html;
+};
+
 function executeAiCalculation(plan) {
   if (!plan) return { error: "Unable to calculate from current dataset." };
 
   const totalRows = gridData.length;
   if (totalRows === 0) return { error: "Dataset is empty." };
 
-  // Helper to check category filters on a row
   function rowPassesCategoryFilters(row) {
     if (plan.categoryFilters && plan.categoryFilters.length > 0) {
       for (const f of plan.categoryFilters) {
@@ -11570,7 +13249,6 @@ function executeAiCalculation(plan) {
     return true;
   }
 
-  // Construct label detailing active category filters
   let categoryRangeStr = "";
   if (plan.categoryFilters && plan.categoryFilters.length > 0) {
     categoryRangeStr = " for " + plan.categoryFilters.map(f => `${f.op === 'neq' ? 'not ' : ''}${f.value}`).join(', ');
@@ -11664,23 +13342,30 @@ function executeAiCalculation(plan) {
     const formattedVal = formatKpiValue(resultValue, plan.colKey, op);
     let findings = [];
     let recommendations = [];
+    let insights = [];
     
     if (op === "sum") {
       findings.push(`The calculated total sum of ${colLabel} is ${formattedVal}.`);
       findings.push(`This sum reflects the combined total volume across all active transactions.`);
+      insights.push(`The total sum highlights the collective scale of ${colLabel} across the matching rows.`);
+      insights.push(`Major volume concentrations in top categories drive the majority of this yield.`);
       recommendations.push(`Use this total value for periodic budget and strategic forecasting.`);
       recommendations.push(`Verify against operational records to check for transaction leaks.`);
     } else if (op === "avg") {
       findings.push(`The arithmetic average of ${colLabel} is ${formattedVal}.`);
       findings.push(`This is the baseline transactional performance for each recorded segment.`);
+      insights.push(`The average value serves as a performance baseline per row.`);
+      insights.push(`High variations around this average suggest segment-specific pricing or size differences.`);
       recommendations.push(`Target raising this average through focused upsell campaigns.`);
       recommendations.push(`Monitor transaction size deviation to verify standard pricing consistency.`);
     } else if (op === "count") {
       findings.push(`The active database contains ${formattedVal} matching rows.`);
       findings.push(`This volume reflects the active filtered record depth.`);
+      insights.push(`Record count reflects the transaction volume and sample size for calculations.`);
       recommendations.push(`Audit row counts regularly to verify dataset completeness.`);
     } else {
       findings.push(`The ${op.toUpperCase()} calculated for ${colLabel} is ${formattedVal}.`);
+      insights.push(`This benchmark helps model standard transactional expectations.`);
       recommendations.push(`Use this baseline benchmark for capacity and threshold plans.`);
     }
 
@@ -11690,6 +13375,7 @@ function executeAiCalculation(plan) {
       method: calcString,
       rowsUsed: filteredCount,
       findings,
+      insights,
       recommendations,
       confidence: currentDatasetContext.dataQualityScore >= 80 ? "High" : "Medium",
       calcDetails: `${calcString}\nRows Used: ${filteredCount.toLocaleString()} / ${totalRows.toLocaleString()}${filterDetails}`,
@@ -11740,6 +13426,10 @@ function executeAiCalculation(plan) {
       `The top performer is "${list[0]?.label || 'N/A'}" with a total of ${list[0]?.value || '0'}.`,
       `This top category dominates the active layout rankings.`
     ];
+    let insights = [
+      `Rankings show that the top category "${list[0]?.label || 'N/A'}" accounts for a major portion of the overall ${yLabel}.`,
+      `The Pareto principle likely applies here, with top segments driving the vast majority of volume.`
+    ];
     let recommendations = [
       `Promote high-margin products within "${list[0]?.label || 'N/A'}" to capture more yield.`,
       `Implement seasonal campaigns targeting growth in lower rankings to distribute concentration risk.`
@@ -11753,6 +13443,7 @@ function executeAiCalculation(plan) {
       method: `GROUP BY(${xLabel}), SUM(${yLabel})`,
       rowsUsed: filteredCount,
       findings,
+      insights,
       recommendations,
       confidence: "High",
       calcDetails: `GROUP BY(${xLabel}), SUM(${yLabel}), SORT(${plan.direction === "top" ? "DESC" : "ASC"}), LIMIT(${plan.count})\nRows Used: ${filteredCount.toLocaleString()} / ${totalRows.toLocaleString()}${filterDetails}`,
@@ -11785,7 +13476,7 @@ function executeAiCalculation(plan) {
     const catCol = profile.catCols[0];
     const catIdx = headers.indexOf(catCol);
 
-    if (catIdx !== -1 && plan.compItems.length >= 2) {
+    if (catIdx !== -1 && plan.compItems && plan.compItems.length >= 2) {
       const valA = plan.compItems[0].toLowerCase();
       const valB = plan.compItems[1].toLowerCase();
 
@@ -11833,6 +13524,10 @@ function executeAiCalculation(plan) {
             `"${winner}" has the higher total contribution compared to the other segment.`,
             `The absolute variance is ${formatKpiValue(Math.abs(diff), plan.yCol, "sum")} (${Math.abs(pctDiff).toFixed(1)}% variance).`
           ],
+          insights: [
+            `The performance variance between ${labelA} and ${labelB} indicates potential efficiency gaps.`,
+            `Directing resources to the higher-performing segment will maximize overall returns.`
+          ],
           recommendations: [
             `Leverage the success of "${winner}" for targeted campaigns in low-yield periods.`,
             `Perform a root-cause study on the lower segment to find improvements.`
@@ -11870,6 +13565,10 @@ function executeAiCalculation(plan) {
         `The mean of ${yLabel} is ${formatKpiValue(mean, plan.yCol, "avg")}, with a median of ${formatKpiValue(median, plan.yCol, "median")}.`,
         `Standard deviation is ${formatKpiValue(stdDev, plan.yCol, "avg")}, indicating ${stdDev / mean > 0.5 ? 'high' : 'moderate'} spread across the dataset.`,
         `Value range spans from ${formatKpiValue(minVal, plan.yCol, "min")} to ${formatKpiValue(maxVal, plan.yCol, "max")}.`
+      ],
+      insights: [
+        `Median and mean values align, suggesting a ${Math.abs(mean - median) / mean < 0.15 ? 'fairly symmetrical' : 'skewed'} distribution.`,
+        `Standard deviation of ${formatKpiValue(stdDev, plan.yCol, "avg")} suggests the spread around the average is ${stdDev / mean > 0.4 ? 'high' : 'stable'}.`
       ],
       recommendations: [
         `${stdDev / mean > 0.5 ? 'High variance detected — investigate outlier rows for data quality issues.' : 'Distribution is fairly tight — suitable for trend projection.'}`,
@@ -11944,6 +13643,10 @@ function executeAiCalculation(plan) {
         `Trough was in ${troughMonth[0]} at ${formatKpiValue(troughMonth[1], plan.colKey, "sum")}.`,
         `Trend spans ${sortedMonths.length} time periods.`
       ],
+      insights: [
+        `The trend indicates a net change of ${pct >= 0 ? '+' : ''}${pct.toFixed(1)}% across the timeline.`,
+        `Peak performance in ${peakMonth[0]} points to seasonal strength that can be leveraged for planning.`
+      ],
       recommendations: [
         `${pct >= 0 ? 'Positive trajectory — sustain current strategies to maintain momentum.' : 'Declining trend detected — investigate root causes in lower performing periods.'}`,
         `Plan targeted campaigns around the ${peakMonth[0]} period to capitalise on historically high performance.`
@@ -11986,6 +13689,10 @@ function executeAiCalculation(plan) {
         secondary,
         ...(stats.findings.slice(1, 3) || [])
       ].filter(Boolean),
+      insights: [
+        `Primary diagnostics indicate "${primary}" is the leading indicator.`,
+        `Potential growth opportunities align with "${secondary}".`
+      ],
       recommendations: [
         ...(stats.recommendations || []).slice(0, 2),
         `Address risk: ${riskItem}`
@@ -11998,524 +13705,73 @@ function executeAiCalculation(plan) {
   return { error: "Unable to calculate from current dataset." };
 }
 
-// 6. Response Generators — Premium Analyst Report Card
-function generateHtmlResponse(result) {
-  const confColor = result.confidence === 'High' ? '#10b981' : result.confidence === 'Medium' ? '#f59e0b' : '#ef4444';
+function mergeConversationalMemory(prompt, lastPlan) {
+  if (!lastPlan) return null;
 
-  const renderList = (items, clr) => {
-    if (!items || items.length === 0) return '';
-    return items.map(f => `<li style="margin-bottom:4px;color:${clr || 'var(--text-secondary)'};line-height:1.55;">${f}</li>`).join('');
-  };
+  const newPlan = generateQueryPlan(prompt);
+  const mergedPlan = JSON.parse(JSON.stringify(lastPlan));
 
-  const findingsSection = (result.findings && result.findings.length > 0) ? `
-    <div class="ai-report-section">
-      <div class="ai-report-section-title">&#x1F4A1; Key Findings</div>
-      <ul class="ai-report-list">${renderList(result.findings)}</ul>
-    </div>` : '';
-
-  const recsSection = (result.recommendations && result.recommendations.length > 0) ? `
-    <div class="ai-report-section">
-      <div class="ai-report-section-title">&#x1F3AF; Recommendations</div>
-      <ul class="ai-report-list">${renderList(result.recommendations, 'var(--text-primary)')}</ul>
-    </div>` : '';
-
-  const metaFooter = `
-    <div class="ai-report-meta-row">
-      ${result.method ? `<div class="ai-report-meta-pill"><span class="ai-report-meta-lbl">METHOD</span><code class="ai-report-method">${result.method}</code></div>` : ''}
-      ${result.rowsUsed != null ? `<div class="ai-report-meta-pill"><span class="ai-report-meta-lbl">ROWS</span><span class="ai-report-meta-val">${result.rowsUsed.toLocaleString()}</span></div>` : ''}
-      ${result.confidence ? `<div class="ai-report-conf-badge" style="background:${confColor}22;border:1px solid ${confColor}55;"><span style="width:6px;height:6px;border-radius:50%;background:${confColor};display:inline-block;flex-shrink:0;"></span><span style="color:${confColor};font-weight:700;font-size:10px;">${result.confidence} Confidence</span></div>` : ''}
-    </div>`;
-
-  // Ranking table
-  if (result.type === "table") {
-    const rowsHtml = result.items.map(item => `<tr class="ai-rank-row"><td class="ai-rank-num">${item.rank}</td><td class="ai-rank-label">${item.label}</td><td class="ai-rank-value">${item.value}</td></tr>`).join('');
-    return `<div class="ai-analyst-report-card">
-      <div class="ai-report-header"><span class="ai-report-type-badge">&#x1F4CA; Ranking</span><div class="ai-report-title">${result.title}</div></div>
-      <div class="ai-report-answer-block"><div class="ai-report-answer-label">TOP RESULT</div><div class="ai-report-answer-value">${result.answer || '&mdash;'}</div></div>
-      <table class="ai-report-rank-table"><thead><tr><th>#</th><th>Item</th><th>Value</th></tr></thead><tbody>${rowsHtml}</tbody></table>
-      ${findingsSection}${recsSection}${metaFooter}
-      <div class="ai-report-actions">
-        <button class="ai-response-action-btn" onclick="renderChatChart({type:'horizontalBar',xCol:'${result.xCol}',yCol:'${result.yCol}'})">&#x1F4CA; View Chart in Chat</button>
-        <button class="ai-response-action-btn" onclick="injectTableChart('${result.xCol}','${result.yCol}')">&#x1F4CC; Add to Dashboard</button>
-        <button class="ai-response-action-btn" onclick="exportCSVSnapshot()">&#x1F4C5; Export CSV</button>
-      </div></div>`;
+  if (newPlan.colKey && newPlan.colKey !== lastPlan.colKey) {
+    mergedPlan.colKey = newPlan.colKey;
+    mergedPlan.yCol = newPlan.colKey;
+  }
+  if (newPlan.op && newPlan.op !== lastPlan.op) {
+    mergedPlan.op = newPlan.op;
+  }
+  if (newPlan.type && newPlan.type !== 'system') {
+    mergedPlan.type = newPlan.type;
   }
 
-  // Trend
-  if (result.type === "trend") {
-    const isUp = (result.answer || '').startsWith('Upward');
-    const trendIcon = isUp ? '&#x1F4C8;' : '&#x1F4C9;';
-    const trendColor = isUp ? '#10b981' : '#ef4444';
-    const chartCfgJson = result.chartConfig ? JSON.stringify(result.chartConfig) : null;
-    return `<div class="ai-analyst-report-card">
-      <div class="ai-report-header"><span class="ai-report-type-badge">${trendIcon} Trend</span><div class="ai-report-title">${result.title}</div></div>
-      <div class="ai-report-answer-block"><div class="ai-report-answer-label">TREND DIRECTION</div><div class="ai-report-answer-value" style="color:${trendColor};">${result.answer || '&mdash;'}</div></div>
-      ${result.comparisonHTML ? `<div class="ai-report-comparison-body">${result.comparisonHTML}</div>` : ''}
-      ${findingsSection}${recsSection}${metaFooter}
-      <div class="ai-report-actions">
-        ${chartCfgJson ? `<button class="ai-response-action-btn" id="btn-chat-chart-${Date.now()}" onclick='renderChatChart(${chartCfgJson.replace(/\\/g,"\\\\").replace(/'/g,"&apos;")})'>${trendIcon} View Trend Chart</button>` : ''}
-        <button class="ai-response-action-btn" onclick="injectTrendChart('${result.xCol}','${result.yCol}')">&#x1F4CC; Add to Dashboard</button>
-      </div></div>`;
-  }
-
-  // Comparison / Distribution
-  if (result.type === "comparison") {
-    return `<div class="ai-analyst-report-card">
-      <div class="ai-report-header"><span class="ai-report-type-badge">&#x1F52C; Comparison</span><div class="ai-report-title">${result.title}</div></div>
-      <div class="ai-report-answer-block"><div class="ai-report-answer-label">RESULT</div><div class="ai-report-answer-value">${result.answer || '&mdash;'}</div></div>
-      ${result.comparisonHTML ? `<div class="ai-report-comparison-body">${result.comparisonHTML}</div>` : ''}
-      ${findingsSection}${recsSection}${metaFooter}
-      ${result.xCol ? `<div class="ai-report-actions"><button class="ai-response-action-btn" onclick="renderChatChart({type:'bar',xCol:'${result.xCol}',yCol:'${result.yCol}'})">&#x1F4CA; View Chart in Chat</button></div>` : ''}
-    </div>`;
-  }
-
-  // Root-cause Explain
-  if (result.type === "explain") {
-    return `<div class="ai-analyst-report-card">
-      <div class="ai-report-header"><span class="ai-report-type-badge">&#x1F50E; Diagnostic</span><div class="ai-report-title">${result.title}</div></div>
-      <div class="ai-report-answer-block"><div class="ai-report-answer-label">PRIMARY FINDING</div><div class="ai-report-answer-value" style="font-size:13px;">${result.primary || result.answer || '&mdash;'}</div></div>
-      <div class="ai-report-explain-block">
-        ${result.secondary ? `<div class="ai-report-explain-row"><span class="ai-report-explain-tag secondary">Secondary Cause</span><span>${result.secondary}</span></div>` : ''}
-        ${result.riskItem ? `<div class="ai-report-explain-row"><span class="ai-report-explain-tag risk">Risk</span><span style="color:#f59e0b;">${result.riskItem}</span></div>` : ''}
-      </div>
-      ${findingsSection}${recsSection}${metaFooter}
-    </div>`;
-  }
-
-  // Standard Aggregation (default)
-  return `<div class="ai-analyst-report-card">
-    <div class="ai-report-header"><span class="ai-report-type-badge">&#x1F522; Calculation</span><div class="ai-report-title">${result.title}</div></div>
-    <div class="ai-report-answer-block"><div class="ai-report-answer-label">RESULT</div><div class="ai-report-answer-value">${result.answer || '&mdash;'}</div></div>
-    ${findingsSection}${recsSection}${metaFooter}
-    ${result.colKey && result.colKey !== 'null' ? `<div class="ai-report-actions"><button class="ai-response-action-btn" onclick="injectKpiCard('${result.colKey}','${result.op||'sum'}')">&#x1F522; Add KPI Card</button></div>` : ''}
-  </div>`;
-}
-
-/* ════ TASK 5 & 6: In-Chat Chart Rendering & Action Utilities ════ */
-
-// Registry for active Chart.js instances keyed by canvas id
-if (typeof window.chatChartInstances === 'undefined') window.chatChartInstances = {};
-
-// Build Chart.js data from gridData for the given xCol/yCol
-function buildChatChartData(xCol, yCol, chartType) {
-  const xIdx = headers.indexOf(xCol);
-  const yIdx = headers.indexOf(yCol);
-  if (xIdx === -1 && yIdx === -1) return null;
-
-  if (chartType === 'scatter') {
-    const pts = [];
-    gridData.forEach(row => {
-      const x = getCleanNumericValue(row[xIdx]);
-      const y = getCleanNumericValue(row[yIdx]);
-      if (!isNaN(x) && !isNaN(y)) pts.push({ x, y });
-    });
-    return { labels: null, datasets: [{ label: `${headerNames[yCol]||yCol} vs ${headerNames[xCol]||xCol}`, data: pts, backgroundColor: 'rgba(99,102,241,0.6)' }] };
-  }
-
-  const groups = {};
-  gridData.forEach(row => {
-    const key = String(row[xIdx] !== undefined ? row[xIdx] : 'Unknown').trim();
-    const v = getCleanNumericValue(row[yIdx]);
-    if (!isNaN(v)) groups[key] = (groups[key] || 0) + v;
-  });
-
-  let entries = Object.entries(groups);
-  if (entries.length > 20) entries = entries.sort((a,b) => b[1]-a[1]).slice(0, 20);
-
-  const labels = entries.map(e => e[0]);
-  const data = entries.map(e => e[1]);
-
-  const palette = ['rgba(99,102,241,0.75)','rgba(139,92,246,0.75)','rgba(16,185,129,0.75)','rgba(245,158,11,0.75)','rgba(239,68,68,0.75)','rgba(59,130,246,0.75)','rgba(234,179,8,0.75)','rgba(236,72,153,0.75)'];
-  const colors = labels.map((_, i) => palette[i % palette.length]);
-
-  return { labels, datasets: [{ label: headerNames[yCol] || yCol, data, backgroundColor: colors, borderColor: colors.map(c => c.replace('0.75','1')), borderWidth: 1.5 }] };
-}
-
-// Build Chart.js data from pre-computed labels/data arrays (for trend results)
-function buildChatChartDataFromConfig(cfg) {
-  const palette = ['rgba(99,102,241,0.85)','rgba(139,92,246,0.85)'];
-  return {
-    labels: cfg.labels,
-    datasets: [{
-      label: cfg.label || 'Value',
-      data: cfg.data,
-      backgroundColor: cfg.type === 'line' ? 'rgba(99,102,241,0.1)' : palette,
-      borderColor: 'rgba(99,102,241,1)',
-      borderWidth: 2,
-      fill: cfg.type === 'line',
-      tension: 0.4,
-      pointRadius: 3,
-      pointHoverRadius: 5
-    }]
-  };
-}
-
-// Called from action buttons inside analyst cards: renders a chart directly into the chat feed
-window.renderChatChart = function(cfg) {
-  if (!cfg || !cfg.type) return;
-  const chartId = 'chat-chart-' + Date.now();
-  const label = cfg.label || `${headerNames[cfg.yCol]||cfg.yCol||''} by ${headerNames[cfg.xCol]||cfg.xCol||''}`.trim();
-
-  // Build chart.js compatible type
-  const isHBar = cfg.type === 'horizontalBar';
-  const chartjsType = isHBar ? 'bar' : (cfg.type || 'bar');
-  const indexAxis = isHBar ? 'y' : 'x';
-
-  // Compose chartData
-  let chartData;
-  if (cfg.labels && cfg.data) {
-    // Pre-computed data (trend config)
-    chartData = buildChatChartDataFromConfig(cfg);
-  } else if (cfg.xCol && cfg.yCol) {
-    chartData = buildChatChartData(cfg.xCol, cfg.yCol, cfg.type);
-  }
-
-  if (!chartData) {
-    showToast('Not enough data to render chart.', 'warning');
-    return;
-  }
-
-  // Push a chart message into chat history
-  const chartMsgId = 'chart-msg-' + Date.now();
-  aiActiveChatHistory.push({
-    sender: 'assistant',
-    msgId: chartMsgId,
-    text: label,
-    chartConfig: { chartjsType, indexAxis, label, chartData, xCol: cfg.xCol, yCol: cfg.yCol }
-  });
-  saveChatHistoryToWorkspace();
-  renderAiChatHistory();
-  showToast('Chart rendered in chat!', 'success');
-};
-
-// Download chart canvas as PNG
-window.downloadChatChartPng = function(chartId) {
-  const inst = window.chatChartInstances[chartId];
-  if (!inst) return;
-  const a = document.createElement('a');
-  a.href = inst.canvas.toDataURL('image/png');
-  a.download = 'oneclick_chart.png';
-  a.click();
-};
-
-// Download chart as SVG (PNG wrapped in SVG)
-window.downloadChatChartSvg = function(chartId) {
-  const inst = window.chatChartInstances[chartId];
-  if (!inst) return;
-  const png = inst.canvas.toDataURL('image/png');
-  const w = inst.canvas.width, h = inst.canvas.height;
-  const svgContent = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}"><image href="${png}" width="${w}" height="${h}"/></svg>`;
-  const blob = new Blob([svgContent], { type: 'image/svg+xml' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'oneclick_chart.svg';
-  a.click();
-};
-
-// Download chart as PDF via print window
-window.downloadChatChartPdf = function(chartId) {
-  const inst = window.chatChartInstances[chartId];
-  if (!inst) return;
-  const png = inst.canvas.toDataURL('image/png');
-  const win = window.open('', '_blank');
-  win.document.write(`<!DOCTYPE html><html><head><style>body{margin:0;display:flex;align-items:center;justify-content:center;height:100vh;}img{max-width:100%;}</style></head><body><img src="${png}"/></body></html>`);
-  win.document.close();
-  setTimeout(() => { win.print(); win.close(); }, 500);
-};
-
-// Copy chart insight summary to clipboard
-window.copyChatChartInsight = function(chartId) {
-  const inst = window.chatChartInstances[chartId];
-  if (!inst) return;
-  const ds = inst.data.datasets[0];
-  const labels = inst.data.labels || [];
-  const data = ds ? ds.data : [];
-  const rows = labels.map((l, i) => `${l}: ${Array.isArray(data[i]) ? JSON.stringify(data[i]) : data[i]}`);
-  const text = `OneClick Insight: ${ds ? ds.label : ''}\n${rows.join('\n')}`;
-  navigator.clipboard.writeText(text).then(() => showToast('Insight copied to clipboard!', 'success'));
-};
-
-// Add a chat chart to the dashboard as a widget
-window.addChatChartToDashboard = function(chartId, xCol, yCol, chartType) {
-  const newId = 'ai-chat-' + Date.now();
-  const title = `${headerNames[yCol]||yCol||''} by ${headerNames[xCol]||xCol||''}`.trim() || 'Chart';
-  const widget = { id: newId, title, type: chartType === 'horizontalBar' ? 'bar' : chartType, xCol: xCol||'', yCol: yCol||'', yCol2: '', agg: 'sum', w: 6 };
-  dashboardWidgets.push(widget);
-  renderDashboardCanvas();
-  showToast('Chart added to dashboard!', 'success');
-  logActivity('Create Chart', `Added ${chartType} chart via in-chat action.`, 'Success');
-};
-// 7. Automated Widget Injection Commands
-window.injectKpiCard = function(colKey, agg) {
-  const newId = 'ai-kpi-' + Date.now();
-  const title = colKey && colKey !== "null" ? `${headerNames[colKey] || colKey} KPI` : 'Records KPI';
-  
-  const widget = {
-    id: newId,
-    title: title,
-    type: 'kpi',
-    xCol: '',
-    yCol: (colKey && colKey !== "null") ? colKey : '',
-    yCol2: '',
-    agg: agg || 'sum',
-    w: 3
-  };
-  
-  dashboardWidgets.push(widget);
-  renderDashboardCanvas();
-  showToast("KPI added to dashboard canvas!", "success");
-  
-  logActivity("Create KPI", `Added KPI widget for ${title} via AI Analyst.`, "Success");
-};
-
-window.injectTableChart = function(xCol, yCol) {
-  const newId = 'ai-bar-' + Date.now();
-  const title = `${headerNames[yCol] || yCol} by ${headerNames[xCol] || xCol}`;
-
-  const widget = {
-    id: newId,
-    title: title,
-    type: 'bar',
-    xCol: xCol,
-    yCol: yCol,
-    yCol2: '',
-    agg: 'sum',
-    w: 6
-  };
-
-  dashboardWidgets.push(widget);
-  renderDashboardCanvas();
-  showToast("Bar chart added to dashboard canvas!", "success");
-  
-  logActivity("Create Chart", `Added Bar chart widget for ${title} via AI Analyst.`, "Success");
-};
-
-window.injectTrendChart = function(xCol, yCol) {
-  const newId = 'ai-trend-' + Date.now();
-  const title = `${headerNames[yCol] || yCol} Trend over Time`;
-
-  const widget = {
-    id: newId,
-    title: title,
-    type: 'line',
-    xCol: xCol,
-    yCol: yCol,
-    yCol2: '',
-    agg: 'sum',
-    w: 12
-  };
-
-  dashboardWidgets.push(widget);
-  renderDashboardCanvas();
-  showToast("Trend chart added to dashboard canvas!", "success");
-  
-  logActivity("Create Chart", `Added Trend Line chart widget for ${title} via AI Analyst.`, "Success");
-};
-
-// Task 7: Chart commands now render directly in chat; dashboard addition is user-initiated
-function executeChartCommand(plan) {
-  const title = ${headerNames[plan.yCol] || plan.yCol || ''} by .trim();
-  const cfg = { type: plan.chartType, xCol: plan.xCol, yCol: plan.yCol, label: title };
-  window.renderChatChart(cfg);
-  logActivity('Create Chart', Rendered  chart in chat for ., 'Success');
-}
-
-function executeKpiCommand(plan) {
-  const newId = 'ai-kpi-' + Date.now();
-  const title = plan.colKey ? `${headerNames[plan.colKey] || plan.colKey} KPI` : 'Records KPI';
-
-  const widget = {
-    id: newId,
-    title: title,
-    type: 'kpi',
-    xCol: '',
-    yCol: plan.colKey || '',
-    yCol2: '',
-    agg: plan.agg,
-    w: 3
-  };
-
-  dashboardWidgets.push(widget);
-  renderDashboardCanvas();
-
-  aiActiveChatHistory.push({
-    sender: 'assistant',
-    text: `Successfully created KPI card for ${title} and added it to your dashboard.`,
-    contentHtml: `
-      <div style="font-size:12px; color:var(--text-primary);">
-        🔢 <strong>KPI Created:</strong> Added <strong>${title}</strong> card to dashboard layout.
-      </div>
-    `
-  });
-  saveChatHistoryToWorkspace();
-  renderAiChatHistory();
-  showToast("KPI card added!", "success");
-  
-  logActivity("Create KPI", `Added KPI widget via AI Analyst commands.`, "Success");
-}
-
-function executeModifyChartCommand(plan) {
-  if (dashboardWidgets.length === 0) {
-    aiActiveChatHistory.push({
-      sender: 'assistant',
-      text: "No charts found on the dashboard to modify.",
-      contentHtml: `<p style="font-size: 12px; color: var(--text-secondary); margin: 0;">⚠️ No charts found on the dashboard to modify.</p>`
-    });
-    saveChatHistoryToWorkspace();
-    renderAiChatHistory();
-    return;
-  }
-
-  let widgetToModify = null;
-  
-  if (plan.xCol) {
-    widgetToModify = dashboardWidgets.slice().reverse().find(w => w.xCol === plan.xCol || w.yCol === plan.xCol);
+  if (newPlan.dateFilter) {
+    mergedPlan.dateFilter = newPlan.dateFilter;
   }
   
-  if (!widgetToModify) {
-    widgetToModify = dashboardWidgets.slice().reverse().find(w => w.type !== 'kpi');
-  }
-
-  if (!widgetToModify) {
-    aiActiveChatHistory.push({
-      sender: 'assistant',
-      text: "No chart widget found to modify.",
-      contentHtml: `<p style="font-size: 12px; color: var(--text-secondary); margin: 0;">⚠️ No chart widget found to modify.</p>`
-    });
-    saveChatHistoryToWorkspace();
-    renderAiChatHistory();
-    return;
-  }
-
-  let changesText = [];
-  if (plan.chartType) {
-    widgetToModify.type = plan.chartType;
-    changesText.push(`type to <strong>${plan.chartType.toUpperCase()}</strong>`);
-  }
-  if (plan.width) {
-    widgetToModify.w = plan.width;
-    changesText.push(`width to <strong>${plan.width} cols</strong>`);
-  }
-
-  renderDashboardCanvas();
-
-  aiActiveChatHistory.push({
-    sender: 'assistant',
-    text: `Updated dashboard widget ${widgetToModify.title}.`,
-    contentHtml: `
-      <div style="font-size:12px; color:var(--text-primary);">
-        🔧 <strong>Widget Updated:</strong> Modified <strong>${widgetToModify.title}</strong> (${changesText.join(' and ')}).
-      </div>
-    `,
-    suggestions: ["Resize chart to 12 columns", "Change chart to pie", "Export PDF report"]
-  });
-  saveChatHistoryToWorkspace();
-  renderAiChatHistory();
-  showToast("Widget updated!", "success");
-
-  logActivity("Modify Chart", `Modified widget ${widgetToModify.id} settings.`, "Success");
-}
-
-function executeReportGeneration(plan) {
-  const stats = runStatisticalInsights();
-  const datasetNameEl = document.getElementById('ws-dataset-name');
-  const datasetName = datasetNameEl ? datasetNameEl.innerText.trim() : "Dataset";
-  
-  const totalRows = gridData.length;
-  const colCount = headers.length;
-  
-  let totalNumVal = 0;
-  const numCol = currentDatasetContext.numericColumns[0];
-  if (numCol) {
-    const colIdx = headers.indexOf(numCol);
-    gridData.forEach(row => {
-      const v = getCleanNumericValue(row[colIdx]);
-      if (!isNaN(v)) totalNumVal += v;
-    });
-  }
-  
-  const numColLabel = numCol ? (headerNames[numCol] || numCol) : "Records";
-  const formattedTotal = numCol ? formatKpiValue(totalNumVal, numCol, "sum") : totalRows.toLocaleString();
-
-  const findingsList = stats.findings.map(f => `<li>🔍 ${f}</li>`).join('') || "<li>🔍 No major anomalies detected.</li>";
-  const risksList = stats.risks.map(r => `<li>⚠️ ${r}</li>`).join('') || "<li>✅ No significant concentration risks identified.</li>";
-  const recommendationsList = stats.recommendations.map(rec => `<li>🎯 ${rec}</li>`).join('') || "<li>🎯 Continue regular metrics monitoring.</li>";
-
-  const contentHtml = `
-    <div class="ai-msg-response-card report-card" style="background: rgba(255,255,255,0.015); border:1px solid var(--border-color); border-radius: 10px; padding: 16px; width: 100%;">
-      <div style="font-weight: 700; font-size:13.5px; color:var(--primary); margin-bottom:12px; border-bottom:1px solid rgba(255,255,255,0.06); padding-bottom:6px; display:flex; align-items:center; gap:8px;">
-        📝 Executive Analyst Summary: ${datasetName}
-      </div>
-      
-      <div style="margin-bottom:12px;">
-        <h4 style="font-size:11.5px; margin:0 0 6px 0; color:var(--text-primary); font-weight: 700;">📊 Dataset Overview</h4>
-        <div style="display:flex; gap:16px; background:rgba(0,0,0,0.15); padding:8px 12px; border-radius:6px; font-size:11px;">
-          <div><span style="color:var(--text-muted);">Rows:</span> <strong>${totalRows.toLocaleString()}</strong></div>
-          <div><span style="color:var(--text-muted);">Columns:</span> <strong>${colCount}</strong></div>
-          <div><span style="color:var(--text-muted);">Total ${numColLabel}:</span> <strong>${formattedTotal}</strong></div>
-        </div>
-      </div>
-
-      <div style="margin-bottom:12px;">
-        <h4 style="font-size:11.5px; margin:0 0 6px 0; color:var(--text-primary); font-weight: 700;">💡 Key Findings</h4>
-        <ul style="margin:0; padding-left:16px; font-size:11.5px; color:var(--text-secondary); line-height:1.5;">
-          ${findingsList}
-        </ul>
-      </div>
-
-      <div style="margin-bottom:12px;">
-        <h4 style="font-size:11.5px; margin:0 0 6px 0; color:var(--text-primary); font-weight: 700;">⚠️ Identified Risks</h4>
-        <ul style="margin:0; padding-left:16px; font-size:11.5px; color:var(--text-secondary); line-height:1.5;">
-          ${risksList}
-        </ul>
-      </div>
-
-      <div style="margin-bottom:14px;">
-        <h4 style="font-size:11.5px; margin:0 0 6px 0; color:var(--text-primary); font-weight: 700;">🎯 Strategic Recommendations</h4>
-        <ul style="margin:0; padding-left:16px; font-size:11.5px; color:var(--text-secondary); line-height:1.5;">
-          ${recommendationsList}
-        </ul>
-      </div>
-
-      <div style="border-top:1px solid rgba(255,255,255,0.06); padding-top:10px; display:flex; flex-wrap:wrap; gap:6px;">
-        <button class="ai-response-action-btn" onclick="executeExportCommand({type:'export_command', format:'pdf'})">📥 Export PDF</button>
-        <button class="ai-response-action-btn" onclick="executeExportCommand({type:'export_command', format:'pptx'})">📊 PPTX Slides</button>
-        <button class="ai-response-action-btn" onclick="executeExportCommand({type:'export_command', format:'docx'})">📄 Word Doc</button>
-        <button class="ai-response-action-btn" onclick="window.saveReportToWorkspaceStorage()">💾 Save to Storage</button>
-      </div>
-    </div>
-  `;
-
-  aiActiveChatHistory.push({
-    sender: 'assistant',
-    text: `Executive summary generated for ${datasetName}.`,
-    contentHtml: contentHtml,
-    suggestions: ["Show profit trend", "Top 5 products by revenue", "Show dataset schema"]
-  });
-  saveChatHistoryToWorkspace();
-  renderAiChatHistory();
-  showToast("Executive summary report compiled!", "success");
-  
-  logActivity("Generate Report", `Compiled executive summary for ${datasetName}.`, "Success");
-}
-
-window.saveReportToWorkspaceStorage = function() {
-  const datasetNameEl = document.getElementById('ws-dataset-name');
-  const datasetName = datasetNameEl ? datasetNameEl.innerText.trim() : "raw_dataset";
-  const reportName = `AI_Summary_${datasetName.replace(/[^a-zA-Z0-9]/g, '_')}`;
-  
-  try {
-    const key = saveDashboardToStorage(reportName);
-    showToast(`Saved report: ${reportName} to storage!`, "success");
-    if (typeof loadAndRenderReportsList === 'function') {
-      loadAndRenderReportsList();
+  if (newPlan.categoryFilters && newPlan.categoryFilters.length > 0) {
+    if (!mergedPlan.categoryFilters) {
+      mergedPlan.categoryFilters = [];
     }
-  } catch (err) {
-    showToast("Failed to save report: " + err.message, "error");
+    newPlan.categoryFilters.forEach(newFilter => {
+      mergedPlan.categoryFilters = mergedPlan.categoryFilters.filter(f => f.colKey !== newFilter.colKey);
+      mergedPlan.categoryFilters.push(newFilter);
+    });
   }
-};
 
-// 8. Safe Preprocessing Spreadsheet Actions Confirmation & Resolvers
+  return mergedPlan;
+}
+
+function getSuggestionsForIntent(intent, plan) {
+  const suggestions = [];
+  
+  if (intent === "Metric Query" || (plan && plan.type === "aggregation")) {
+    suggestions.push("Show trend over time");
+    suggestions.push("Create a KPI card");
+    if (currentDatasetContext.categoricalColumns && currentDatasetContext.categoricalColumns.length > 0) {
+      const catCol = currentDatasetContext.categoricalColumns[0];
+      const name = headerNames[catCol] || catCol;
+      suggestions.push(`Breakdown by ${name}`);
+    }
+  } else if (intent === "Comparison Query" || (plan && plan.type === "comparison")) {
+    suggestions.push("Show distribution statistics");
+    suggestions.push("Create a comparison chart");
+  } else if (intent === "Visualization Request" || (plan && plan.type === "chart_command")) {
+    suggestions.push("Resize chart to 12 columns");
+    suggestions.push("Change chart to pie");
+    suggestions.push("Add average KPI card");
+  } else if (intent === "Insight Request" || (plan && plan.type === "explain")) {
+    suggestions.push("Generate executive summary");
+    suggestions.push("Show dataset schema");
+  } else if (intent === "Report Request" || (plan && plan.type === "report")) {
+    suggestions.push("Export PDF report");
+    suggestions.push("Export PPTX slides");
+    suggestions.push("Show profit trend");
+  } else {
+    suggestions.push("What are key findings?");
+    suggestions.push("Generate dashboard");
+    suggestions.push("Show columns list");
+  }
+  return suggestions;
+}
+
 function showAiSpreadsheetConfirmation(plan) {
   const overlay = document.getElementById('ai-confirmation-overlay');
   const titleEl = document.getElementById('ai-confirm-title');
@@ -12726,185 +13982,7 @@ function resolveAiSpreadsheetCommand(isConfirmed) {
   }, 500);
 }
 
-// 9. History View Activity Logs
-function logActivity(type, details, status) {
-  const datasetNameEl = document.getElementById('ws-dataset-name');
-  const datasetName = datasetNameEl ? datasetNameEl.innerText : "raw_dataset";
-  
-  const logItem = {
-    time: new Date().toLocaleTimeString(),
-    type,
-    details,
-    datasetName,
-    status
-  };
-
-  sessionAuditLogs.unshift(logItem);
-}
-
-window.initHistoryView = function() {
-  const container = document.getElementById('history-table-body');
-  if (!container) return;
-
-  if (sessionAuditLogs.length === 0) {
-    logActivity("Session Started", "Analytics platform loaded workspace environment.", "Completed");
-  }
-
-  let html = sessionAuditLogs.map(log => `
-    <tr>
-      <td style="font-family:var(--font-mono); font-size:11px;">${log.time}</td>
-      <td style="font-weight:600; color:var(--text-primary);">${log.type}</td>
-      <td style="color:var(--text-secondary);">${log.details}</td>
-      <td style="font-size:12px; color:var(--text-muted);">${log.datasetName}</td>
-      <td style="text-align: right; padding-right:24px;">
-        <span class="recent-status-badge cleaned" style="background-color:rgba(34,197,94,0.08);">${log.status}</span>
-      </td>
-    </tr>
-  `).join('');
-
-  container.innerHTML = html;
-};
-
-/* ==================== ONECLICK FLOATING AI ANALYST V2 LOGIC ==================== */
-
-function getCopilotPositionClass() {
-  const pos = localStorage.getItem('oneclick_copilot_position') || 'Right';
-  return pos.toLowerCase() === 'left' ? 'fab-bottom-left' : 'fab-bottom-right';
-}
-
-window.toggleAiCopilot = function(forceOpen) {
-  const drawer = document.getElementById('ai-copilot-drawer');
-  const fab = document.getElementById('ai-copilot-fab');
-  if (!drawer || !fab) return;
-
-  const isOpen = drawer.classList.contains('open');
-  const shouldOpen = typeof forceOpen === 'boolean' ? forceOpen : !isOpen;
-  const posClass = getCopilotPositionClass();
-
-  if (shouldOpen) {
-    drawer.className = `ai-copilot-panel ${posClass} open`;
-    fab.className = `ai-copilot-fab ${posClass} state-listening`;
-    
-    // Auto focus
-    const input = document.getElementById('ai-prompt-input');
-    if (input) {
-      setTimeout(() => {
-        input.focus();
-      }, 200);
-    }
-    
-    updateCopilotHeaderDetails();
-    
-    // Hide notifications badge
-    const badge = document.getElementById('ai-copilot-badge');
-    if (badge) badge.style.display = 'none';
-  } else {
-    drawer.className = `ai-copilot-panel ${posClass}`;
-    fab.className = `ai-copilot-fab ${posClass} state-idle`;
-  }
-};
-
-window.toggleCopilotSide = function() {
-  const currentPos = localStorage.getItem('oneclick_copilot_position') || 'Right';
-  const newPos = currentPos.toLowerCase() === 'right' ? 'Left' : 'Right';
-  localStorage.setItem('oneclick_copilot_position', newPos);
-  
-  // Update UI Elements
-  const posClass = newPos.toLowerCase() === 'left' ? 'fab-bottom-left' : 'fab-bottom-right';
-  const oldPosClass = newPos.toLowerCase() === 'left' ? 'fab-bottom-right' : 'fab-bottom-left';
-  
-  const fab = document.getElementById('ai-copilot-fab');
-  const drawer = document.getElementById('ai-copilot-drawer');
-  
-  if (fab) {
-    fab.classList.remove(oldPosClass);
-    fab.classList.add(posClass);
-  }
-  if (drawer) {
-    drawer.classList.remove(oldPosClass);
-    drawer.classList.add(posClass);
-  }
-  
-  // Sync the settings select dropdown if present
-  const select = document.getElementById('settings-copilot-position');
-  if (select) {
-    select.value = newPos;
-  }
-  
-  showToast(`Copilot panel moved to the ${newPos.toLowerCase()} side!`, "success");
-};
-
-function updateCopilotHeaderDetails() {
-  const nameLabel = document.getElementById('ai-dataset-name-label');
-  const rowsLabel = document.getElementById('ai-dataset-rows-label');
-  const colsLabel = document.getElementById('ai-dataset-cols-label');
-  
-  const datasetNameEl = document.getElementById('ws-dataset-name');
-  const datasetName = datasetNameEl ? datasetNameEl.innerText.trim() : "";
-  
-  if (nameLabel) {
-    nameLabel.innerText = datasetName || (gridData && gridData.length > 0 ? "Active Dataset" : "No active dataset");
-  }
-  if (rowsLabel) {
-    rowsLabel.innerText = gridData && gridData.length > 0 ? `${gridData.length.toLocaleString()} rows` : "0 rows";
-  }
-  if (colsLabel) {
-    colsLabel.innerText = headers && headers.length > 0 ? `${headers.length} cols` : "0 cols";
-  }
-}
-
-function executeExportCommand(plan) {
-  let formatName = "";
-  try {
-    if (plan.format === "pdf") {
-      formatName = "PDF Report";
-      if (typeof exportToPDF === 'function') exportToPDF();
-      else throw new Error("PDF exporter not available.");
-    } else if (plan.format === "pptx") {
-      formatName = "PowerPoint Report";
-      if (typeof exportToPPTX === 'function') exportToPPTX();
-      else throw new Error("PPTX exporter not available.");
-    } else if (plan.format === "docx") {
-      formatName = "Word Document";
-      if (typeof exportToWord === 'function') exportToWord();
-      else throw new Error("Word exporter not available.");
-    } else if (plan.format === "json") {
-      formatName = "Dashboard JSON Layout";
-      if (typeof exportDashboardJSON === 'function') exportDashboardJSON();
-      else throw new Error("Dashboard JSON exporter not available.");
-    } else {
-      formatName = "CSV Spreadsheet";
-      if (typeof exportCSVSnapshot === 'function') exportCSVSnapshot();
-      else throw new Error("CSV exporter not available.");
-    }
-    
-    aiActiveChatHistory.push({
-      sender: 'assistant',
-      text: `Triggered export for ${formatName}.`,
-      contentHtml: `
-        <div style="font-size:12px; color:var(--text-primary);">
-          📤 <strong>Export Triggered:</strong> Successfully started generating and exporting your <strong>${formatName}</strong>. Check your downloads!
-        </div>
-      `
-    });
-  } catch (err) {
-    aiActiveChatHistory.push({
-      sender: 'assistant',
-      text: `Failed to export: ${err.message}`,
-      contentHtml: `
-        <div style="font-size:12px; color:var(--error);">
-          ❌ <strong>Export Failed:</strong> ${err.message}
-        </div>
-      `
-    });
-  }
-  saveChatHistoryToWorkspace();
-  renderAiChatHistory();
-}
-
-
-
-// Generate Dataset Snapshot welcome card
+// Workspace state loading welcome snapshot card
 function generateDatasetSnapshotHtml() {
   const datasetNameEl = document.getElementById('ws-dataset-name');
   const datasetName = datasetNameEl ? datasetNameEl.innerText.trim() : "raw_dataset";
@@ -12914,7 +13992,7 @@ function generateDatasetSnapshotHtml() {
       <div class="ai-message assistant" style="display: flex; gap: 12px; max-width: 85%;">
         <div class="ai-msg-avatar" style="width: 28px; height: 28px; border-radius: 50%; background: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0;">🤖</div>
         <div class="ai-msg-body" style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-color); border-radius: 0 12px 12px 12px; padding: 12px 16px;">
-          <h3 style="font-size: 13.5px; font-weight: 700; margin: 0 0 6px 0; color: var(--text-primary);">Welcome to OneClick Copilot</h3>
+          <h3 style="font-size: 13.5px; font-weight: 700; margin: 0 0 6px 0; color: var(--text-primary);">Welcome to OneClick Copilot v3</h3>
           <p style="font-size: 12px; color: var(--text-secondary); margin: 0; line-height: 1.5;">
             Please load a dataset workspace to start analyzing. I can perform metrics calculations, visualization edits, data cleansing, and report exports.
           </p>
@@ -12923,10 +14001,8 @@ function generateDatasetSnapshotHtml() {
     `;
   }
   
-  // Profile the columns
   const profile = profileColumns();
   
-  // Calculate duplicates & missing values
   let missing = 0;
   gridData.forEach(row => {
     row.forEach(cell => {
@@ -12936,7 +14012,6 @@ function generateDatasetSnapshotHtml() {
   const totalCells = gridData.length * headers.length;
   const missingPct = totalCells > 0 ? ((missing / totalCells) * 100).toFixed(1) : 0;
   
-  // Duplicates
   let duplicates = 0;
   const seenRows = new Set();
   gridData.forEach(row => {
@@ -12948,17 +14023,14 @@ function generateDatasetSnapshotHtml() {
     }
   });
   
-  // Data Quality Score
   const missingPenalty = totalCells > 0 ? (missing / totalCells) * 100 : 0;
   const duplicatePenalty = gridData.length > 0 ? (duplicates / gridData.length) * 100 : 0;
   const qualityScore = Math.max(0, Math.round(100 - missingPenalty - duplicatePenalty));
   const qualityColor = qualityScore >= 80 ? 'var(--success, #10b981)' : qualityScore >= 50 ? 'var(--warning, #f59e0b)' : 'var(--error, #ef4444)';
 
-  // Column details
   const numColNames = profile.numCols.map(c => headerNames[c] || c).join(', ');
   const dimColNames = [...profile.catCols, ...profile.dateCols, ...profile.textCols].map(c => headerNames[c] || c).join(', ');
   
-  // Find top category
   let topCategoryInfo = "N/A";
   const catCol = profile.catCols[0];
   const numCol = profile.numCols[0];
@@ -12986,7 +14058,7 @@ function generateDatasetSnapshotHtml() {
       <div class="ai-msg-avatar" style="width: 28px; height: 28px; border-radius: 50%; background: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0;">🤖</div>
       <div class="ai-msg-body" style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-color); border-radius: 12px; padding: 16px; width: 100%;">
         <div style="font-weight: 700; font-size: 13.5px; color: var(--primary); margin-bottom: 12px; display: flex; align-items: center; gap: 6px;">
-          📊 Dataset Snapshot: <span style="color: #ffffff;">${datasetName}</span>
+          📊 Dataset Grounding Snapshot: <span style="color: #ffffff;">${datasetName}</span>
         </div>
         
         <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 14px; background: rgba(0, 0, 0, 0.2); padding: 10px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.04);">
@@ -12998,22 +14070,23 @@ function generateDatasetSnapshotHtml() {
         </div>
 
         <div style="font-size: 11.5px; color: var(--text-secondary); display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; border-top: 1px solid rgba(255, 255, 255, 0.04); padding-top: 8px; text-align: left;">
-          <div><strong>Metrics:</strong> <span style="font-size: 10.5px; color: var(--text-muted);">${numColNames || 'None'}</span></div>
-          <div><strong>Dimensions:</strong> <span style="font-size: 10.5px; color: var(--text-muted);">${dimColNames || 'None'}</span></div>
-          <div><strong>Top Category:</strong> <span style="font-size: 11px; color: #ffffff;">${topCategoryInfo}</span></div>
+          <div><strong>Metric Columns:</strong> <span style="font-size: 10.5px; color: var(--text-muted);">${numColNames || 'None'}</span></div>
+          <div><strong>Dimension Fields:</strong> <span style="font-size: 10.5px; color: var(--text-muted);">${dimColNames || 'None'}</span></div>
+          <div><strong>Top Category Segment:</strong> <span style="font-size: 11px; color: #ffffff;">${topCategoryInfo}</span></div>
         </div>
 
         <div style="display: flex; flex-wrap: wrap; gap: 6px; border-top: 1px solid rgba(255, 255, 255, 0.04); padding-top: 10px;">
-          <button class="ai-response-action-btn" onclick="setAiPrompt('build dashboard')" style="font-size: 10px; padding: 5px 8px;">📊 Generate Dashboard</button>
-          <button class="ai-response-action-btn" onclick="setAiPrompt('What are key findings?')" style="font-size: 10px; padding: 5px 8px;">💡 Find Insights</button>
-          <button class="ai-response-action-btn" onclick="setAiPrompt('show columns')" style="font-size: 10px; padding: 5px 8px;">📋 Show Columns</button>
-          <button class="ai-response-action-btn" onclick="setAiPrompt('generate executive summary')" style="font-size: 10px; padding: 5px 8px;">📝 Executive Summary</button>
+          <button class="ai-response-action-btn" onclick="setAiPrompt('What is total revenue?')" style="font-size: 10px; padding: 5px 8px;">🔢 Calculate Revenue</button>
+          <button class="ai-response-action-btn" onclick="setAiPrompt('Show top customers')" style="font-size: 10px; padding: 5px 8px;">📊 Rank Customers</button>
+          <button class="ai-response-action-btn" onclick="setAiPrompt('Show revenue trend over time')" style="font-size: 10px; padding: 5px 8px;">📈 Trend Chart</button>
+          <button class="ai-response-action-btn" onclick="setAiPrompt('Generate executive summary')" style="font-size: 10px; padding: 5px 8px;">📄 Executive Summary</button>
         </div>
       </div>
     </div>
   `;
 }
 
+// Chat rendering loop
 window.renderAiChatHistory = function() {
   const feed = document.getElementById('ai-chat-feed');
   if (!feed) return;
@@ -13023,46 +14096,53 @@ window.renderAiChatHistory = function() {
   if (aiActiveChatHistory.length === 0) {
     html += `
       <div class="ai-drawer-suggestions-wrapper" style="margin-top: 12px;">
-        <div class="ai-drawer-suggestions-title">Suggested Prompts</div>
+        <div class="ai-drawer-suggestions-title">Conversational Starters</div>
         <div class="ai-drawer-suggestions-grid">
           <button class="ai-drawer-suggest-btn" onclick="setAiPrompt('What is total revenue?')">What is total revenue?</button>
-          <button class="ai-drawer-suggest-btn" onclick="setAiPrompt('Top 10 products')">Top 10 products</button>
-          <button class="ai-drawer-suggest-btn" onclick="setAiPrompt('Show revenue by category chart')">Revenue by category chart</button>
-          <button class="ai-drawer-suggest-btn" onclick="setAiPrompt('Show profit trend')">Show profit trend</button>
-          <button class="ai-drawer-suggest-btn" onclick="setAiPrompt('Why are sales declining?')">Why are sales declining?</button>
+          <button class="ai-drawer-suggest-btn" onclick="setAiPrompt('Show top customers')">Show top customers</button>
+          <button class="ai-drawer-suggest-btn" onclick="setAiPrompt('Show revenue trend over time')">Show revenue trend over time</button>
           <button class="ai-drawer-suggest-btn" onclick="setAiPrompt('Generate executive summary')">Generate executive summary</button>
-          <button class="ai-drawer-suggest-btn" onclick="setAiPrompt('Find anomalies')">Find anomalies</button>
-          <button class="ai-drawer-suggest-btn" onclick="setAiPrompt('Average order value')">Average order value</button>
+          <button class="ai-drawer-suggest-btn" onclick="setAiPrompt('Why did sales decline?')">Why did sales decline?</button>
         </div>
       </div>
     `;
   } else {
     aiActiveChatHistory.forEach((msg, msgIdx) => {
       const isUser = msg.sender === 'user';
-      const avatar = isUser ? '👤' : '🤖';
+      const avatar = isUser ? '👨‍💻' : '🤖';
       const msgClass = isUser ? 'user' : 'assistant';
 
       if (!isUser && msg.chartConfig) {
-        // ── In-chat chart bubble ──
         const chartId = msg.msgId || ('chart-' + msgIdx);
         const { chartjsType, indexAxis, label, xCol, yCol } = msg.chartConfig;
-        html += `
-          <div class="ai-message assistant" style="display:flex;gap:12px;max-width:95%;margin-top:10px;">
-            <div class="ai-msg-avatar" style="width:28px;height:28px;border-radius:50%;background:var(--primary);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;">🤖</div>
-            <div class="ai-chart-wrapper-card">
-              <div class="ai-chart-card-title">${label || 'Chart'}</div>
-              <div class="ai-chart-canvas-wrap">
-                <canvas id="${chartId}" class="ai-chat-canvas"></canvas>
+        
+        if (msg.contentHtml) {
+          html += `
+            <div class="ai-message assistant" style="display: flex; gap: 12px; max-width: 95%; margin-top: 10px;">
+              <div class="ai-msg-avatar" style="width: 28px; height: 28px; border-radius: 50%; background: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0;">🤖</div>
+              <div class="ai-msg-body" style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-color); padding: 12px 16px; border-radius: 0 12px 12px 12px; flex:1; min-width:0;">
+                ${msg.contentHtml}
               </div>
-              <div class="ai-chart-action-bar">
-                <button class="ai-chart-action-btn" onclick="downloadChatChartPng('${chartId}')">⬇ PNG</button>
-                <button class="ai-chart-action-btn" onclick="downloadChatChartSvg('${chartId}')">⬇ SVG</button>
-                <button class="ai-chart-action-btn" onclick="downloadChatChartPdf('${chartId}')">⬇ PDF</button>
-                <button class="ai-chart-action-btn" onclick="addChatChartToDashboard('${chartId}','${xCol||''}','${yCol||''}','${chartjsType}')">📌 Add to Dashboard</button>
-                <button class="ai-chart-action-btn" onclick="copyChatChartInsight('${chartId}')">📋 Copy Insight</button>
+            </div>`;
+        } else {
+          html += `
+            <div class="ai-message assistant" style="display:flex;gap:12px;max-width:95%;margin-top:10px;">
+              <div class="ai-msg-avatar" style="width:28px;height:28px;border-radius:50%;background:var(--primary);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;">🤖</div>
+              <div class="ai-chart-wrapper-card">
+                <div class="ai-chart-card-title">${label || 'Chart'}</div>
+                <div class="ai-chart-canvas-wrap">
+                  <canvas id="${chartId}" class="ai-chat-canvas"></canvas>
+                </div>
+                <div class="ai-chart-action-bar">
+                  <button class="ai-chart-action-btn" onclick="downloadChatChartPng('${chartId}')">📥 PNG</button>
+                  <button class="ai-chart-action-btn" onclick="downloadChatChartSvg('${chartId}')">📥 SVG</button>
+                  <button class="ai-chart-action-btn" onclick="downloadChatChartPdf('${chartId}')">📥 PDF</button>
+                  <button class="ai-chart-action-btn" onclick="addChatChartToDashboard('${chartId}','${xCol||''}','${yCol||''}','${chartjsType}')">📌 Add to Dashboard</button>
+                  <button class="ai-chart-action-btn" onclick="copyChatChartInsight('${chartId}')">📋 Copy Info</button>
+                </div>
               </div>
-            </div>
-          </div>`;
+            </div>`;
+        }
       } else {
         html += `
           <div class="ai-message ${msgClass}" style="display: flex; gap: 12px; max-width: 92%; margin-top: 10px;">
@@ -13074,12 +14154,12 @@ window.renderAiChatHistory = function() {
       }
     });
 
-    // Follow-up suggestions
+    // Follow-up suggestions rendering
     const lastMsg = aiActiveChatHistory[aiActiveChatHistory.length - 1];
     if (lastMsg && lastMsg.sender === 'assistant' && lastMsg.suggestions && lastMsg.suggestions.length > 0) {
       html += `
         <div class="ai-drawer-suggestions-wrapper" style="margin-top: 12px; padding: 0 12px 12px 12px; animation: slideUp 0.3s ease-out;">
-          <div class="ai-drawer-suggestions-title" style="font-size: 10px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 6px;">Follow-up Actions</div>
+          <div class="ai-drawer-suggestions-title" style="font-size: 10px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 6px;">Suggested Follow-ups</div>
           <div style="display: flex; flex-wrap: wrap; gap: 6px;">
             ${lastMsg.suggestions.map(s => `<button class="ai-response-action-btn" onclick="setAiPrompt('${s}')" style="font-size: 10.5px; padding: 5px 8px; border-radius: 16px;">${s}</button>`).join('')}
           </div>
@@ -13090,7 +14170,7 @@ window.renderAiChatHistory = function() {
   feed.innerHTML = html;
   feed.scrollTop = feed.scrollHeight;
 
-  // ── Task 5: Paint Chart.js instances for chart messages ──
+  // Build ChartJS canvas layers
   if (typeof Chart !== 'undefined') {
     aiActiveChatHistory.forEach((msg, msgIdx) => {
       if (msg.sender !== 'assistant' || !msg.chartConfig) return;
@@ -13098,7 +14178,6 @@ window.renderAiChatHistory = function() {
       const canvas = document.getElementById(chartId);
       if (!canvas) return;
 
-      // Destroy previous instance if exists
       if (window.chatChartInstances && window.chatChartInstances[chartId]) {
         try { window.chatChartInstances[chartId].destroy(); } catch(e) {}
       }
@@ -13123,154 +14202,325 @@ window.renderAiChatHistory = function() {
             }
           }
         });
-        if (!window.chatChartInstances) window.chatChartInstances = {};
         window.chatChartInstances[chartId] = instance;
-      } catch(e) { console.warn('Chart.js render error:', e); }
+      } catch(e) { console.warn('ChartJS paint error:', e); }
     });
   }
 };
 
-window.initFloatingCopilot = function() {
-  const fab = document.getElementById('ai-copilot-fab');
-  const closeBtn = document.getElementById('btn-ai-close-drawer');
-  const posToggleBtn = document.getElementById('btn-ai-toggle-position');
-  const promptInput = document.getElementById('ai-prompt-input');
-  const btnSend = document.getElementById('btn-ai-send');
-  const btnClear = document.getElementById('btn-ai-clear-chat');
-  const btnPdf = document.getElementById('btn-ai-quick-pdf');
-  const btnCsv = document.getElementById('btn-ai-quick-csv');
-  const btnAttach = document.getElementById('btn-ai-attach');
-  const btnRemoveAttach = document.getElementById('btn-remove-attachment');
-  const attachBar = document.getElementById('ai-attachment-bar');
-  const attachedFileName = document.getElementById('attached-file-name');
+function getCopilotPositionClass() {
+  const pos = localStorage.getItem('oneclick_copilot_position') || 'Right';
+  return pos.toLowerCase() === 'left' ? 'fab-bottom-left' : 'fab-bottom-right';
+}
 
-  // Initialize position class on load
-  const initialSide = localStorage.getItem('oneclick_copilot_position') || 'Right';
-  const posClass = initialSide.toLowerCase() === 'left' ? 'fab-bottom-left' : 'fab-bottom-right';
+window.toggleAiCopilot = function(forceOpen) {
+  const drawer = document.getElementById('oneclick-copilot-panel');
+  const fab = document.getElementById('oneclick-copilot-fab');
+  if (!drawer || !fab) return;
+
+  const isOpen = drawer.classList.contains('open');
+  const shouldOpen = typeof forceOpen === 'boolean' ? forceOpen : !isOpen;
+  const posClass = getCopilotPositionClass();
+
+  if (shouldOpen) {
+    drawer.className = `ai-copilot-panel ${posClass} open`;
+    setCopilotState('idle');
+    
+    // Auto focus textarea
+    const input = document.getElementById('ai-prompt-input');
+    if (input) {
+      setTimeout(() => {
+        input.focus();
+      }, 200);
+    }
+    
+    updateCopilotHeaderDetails();
+    
+    const badge = document.getElementById('ai-copilot-badge');
+    if (badge) badge.style.display = 'none';
+  } else {
+    drawer.className = `ai-copilot-panel ${posClass}`;
+    setCopilotState('idle');
+  }
+};
+
+window.toggleCopilotSide = function() {
+  const currentPos = localStorage.getItem('oneclick_copilot_position') || 'Right';
+  const newPos = currentPos.toLowerCase() === 'right' ? 'Left' : 'Right';
+  localStorage.setItem('oneclick_copilot_position', newPos);
+  
+  const posClass = newPos.toLowerCase() === 'left' ? 'fab-bottom-left' : 'fab-bottom-right';
+  const oldPosClass = newPos.toLowerCase() === 'left' ? 'fab-bottom-right' : 'fab-bottom-left';
+  
+  const fab = document.getElementById('oneclick-copilot-fab');
+  const drawer = document.getElementById('oneclick-copilot-panel');
   
   if (fab) {
-    fab.className = `ai-copilot-fab ${posClass} state-idle`;
-    fab.onclick = () => window.toggleAiCopilot();
+    fab.classList.remove(oldPosClass);
+    fab.classList.add(posClass);
+  }
+  if (drawer) {
+    drawer.classList.remove(oldPosClass);
+    drawer.classList.add(posClass);
   }
   
-  const drawer = document.getElementById('ai-copilot-drawer');
-  if (drawer) {
-    drawer.className = `ai-copilot-panel ${posClass}`;
-  }
+  showToast(`Copilot panel moved to the ${newPos.toLowerCase()} side!`, "success");
+};
 
-  if (closeBtn) {
-    closeBtn.onclick = () => window.toggleAiCopilot(false);
-  }
+window.chatChartInstances = window.chatChartInstances || {};
 
-  if (posToggleBtn) {
-    posToggleBtn.onclick = () => window.toggleCopilotSide();
-  }
-
-  // Textarea listeners
-  if (promptInput) {
-    promptInput.onkeydown = (e) => {
-      if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        handleAiPromptSubmit();
-      }
-    };
-    
-    // Auto-grow textarea height
-    promptInput.addEventListener('input', () => {
-      promptInput.style.height = 'auto';
-      promptInput.style.height = promptInput.scrollHeight + 'px';
-    });
-  }
-
-  if (btnSend) btnSend.onclick = handleAiPromptSubmit;
-
-  if (btnClear) {
-    btnClear.onclick = () => {
-      aiActiveChatHistory = [];
-      saveChatHistoryToWorkspace();
+window.resolveVisualizationClarification = function(xCol, yCol, chartType, prompt) {
+  setCopilotState('thinking');
+  setTimeout(() => {
+    if (!xCol || !yCol) {
+      aiActiveChatHistory.push({
+        sender: 'assistant',
+        text: "Error: A chart cannot be generated without a dimension and a metric.",
+        contentHtml: `<p style="font-size:12px; color:var(--text-secondary); margin:0;">⚠️ Error: A chart cannot be generated without a dimension and a metric.</p>`
+      });
       renderAiChatHistory();
-    };
+      setCopilotState('idle');
+      return;
+    }
+
+    const title = `${headerNames[yCol] || yCol} Breakdown by ${headerNames[xCol] || xCol}`;
+    
+    // Mandatory console logging before return
+    const intent = "Visualization";
+    const mappedColumns = { dimension: xCol, metric: yCol };
+    const queryPlan = { type: "chart_command", xCol, yCol, chartType };
+    console.log({
+      intent,
+      mappedColumns,
+      chartType,
+      queryPlan
+    });
+
+    const cfg = { type: chartType || 'bar', xCol, yCol, label: title };
+    window.renderChatChart(cfg);
+    setCopilotState('idle');
+  }, 300);
+};
+
+window.submitVisualizationFallback = function(msgId) {
+  const dimSelect = document.getElementById(`select-fallback-dim-${msgId}`);
+  const metSelect = document.getElementById(`select-fallback-met-${msgId}`);
+  if (!dimSelect || !metSelect) return;
+
+  const xCol = dimSelect.value;
+  const yCol = metSelect.value;
+  
+  if (!xCol || !yCol) {
+    showToast("Please select both a dimension and a metric.", "warning");
+    return;
   }
 
-  // Quick Action Buttons
-  if (btnPdf) {
-    btnPdf.onclick = () => executeExportCommand({ type: "export_command", format: "pdf" });
-  }
-  if (btnCsv) {
-    btnCsv.onclick = () => executeExportCommand({ type: "export_command", format: "csv" });
-  }
+  window.resolveVisualizationClarification(xCol, yCol, 'bar', '');
+};
 
-  // Attachment Button
-  if (btnAttach) {
-    btnAttach.onclick = () => {
-      if (attachBar) {
-        const datasetNameEl = document.getElementById('ws-dataset-name');
-        const filename = datasetNameEl ? datasetNameEl.innerText.trim() : "";
-        if (filename && gridData && gridData.length > 0) {
-          attachedFileName.innerText = filename;
-          attachBar.style.display = 'flex';
-          showToast("Dataset file attached as grounding context!", "success");
-        } else {
-          showToast("Please load a dataset workspace first.", "warning");
-        }
-      }
-    };
-  }
+window.renderChatChart = function(cfg) {
+  const chartConfig = buildChartConfigData(cfg.type, cfg.xCol, cfg.yCol, cfg.label);
+  if (!chartConfig) return;
 
-  if (btnRemoveAttach) {
-    btnRemoveAttach.onclick = () => {
-      if (attachBar) attachBar.style.display = 'none';
-    };
-  }
+  const msgId = 'chart-' + Date.now() + '-' + Math.floor(Math.random() * 1000);
+  
+  const calcPlan = {
+    type: "ranking",
+    colKey: cfg.yCol,
+    xCol: cfg.xCol,
+    yCol: cfg.yCol,
+    direction: "top",
+    count: 5
+  };
+  const analysisResult = executeAiCalculation(calcPlan);
+  
+  const findingsList = analysisResult.findings || [];
+  const recsList = analysisResult.recommendations || [];
+  const insightsList = [
+    `Analyzing ${headerNames[cfg.yCol] || cfg.yCol} by ${headerNames[cfg.xCol] || cfg.xCol} highlights key performance deviations.`,
+    `Comparing segment sizes assists in strategic allocation of resources.`
+  ];
 
-  // Settings dropdown preferences sync
-  const settingsSelect = document.getElementById('settings-copilot-position');
-  if (settingsSelect) {
-    settingsSelect.value = initialSide;
-    settingsSelect.onchange = (e) => {
-      const chosenSide = e.target.value;
-      localStorage.setItem('oneclick_copilot_position', chosenSide);
+  const responseHtml = `
+    <div class="ai-analyst-report-card">
+      <div class="ai-report-header">
+        <span class="ai-report-type-badge">📊 Chart Generated</span>
+        <div class="ai-report-title">${cfg.label || (headerNames[cfg.yCol] || cfg.yCol) + ' by ' + (headerNames[cfg.xCol] || cfg.xCol)}</div>
+      </div>
+      <div class="ai-chart-canvas-wrap" style="height: 220px; background: rgba(0,0,0,0.2); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; margin: 12px 0; position: relative;">
+        <canvas id="${msgId}" class="ai-chat-canvas"></canvas>
+      </div>
+      <div class="ai-chart-action-bar" style="display:flex; justify-content:center; gap:6px; margin-bottom:12px;">
+        <button class="ai-chart-action-btn" onclick="downloadChatChartPng('${msgId}')">📥 PNG</button>
+        <button class="ai-chart-action-btn" onclick="downloadChatChartSvg('${msgId}')">📥 SVG</button>
+        <button class="ai-chart-action-btn" onclick="addChatChartToDashboard('${msgId}','${cfg.xCol||''}','${cfg.yCol||''}','${chartConfig.chartjsType}')">📌 Add to Dashboard</button>
+      </div>
       
-      const newPosClass = chosenSide.toLowerCase() === 'left' ? 'fab-bottom-left' : 'fab-bottom-right';
-      const oldPosClass = chosenSide.toLowerCase() === 'left' ? 'fab-bottom-right' : 'fab-bottom-left';
-      
-      if (fab) {
-        fab.classList.remove(oldPosClass);
-        fab.classList.add(newPosClass);
-      }
-      if (drawer) {
-        drawer.classList.remove(oldPosClass);
-        drawer.classList.add(newPosClass);
-      }
-      
-      showToast(`AI Copilot position updated to the ${chosenSide.toLowerCase()}`, "success");
-    };
-  }
+      <div class="ai-report-section">
+        <div class="ai-report-section-title">💡 Key Findings</div>
+        <ul class="ai-report-list">
+          ${findingsList.map(f => `<li style="margin-bottom:4px;color:var(--text-secondary);line-height:1.55;">${f}</li>`).join('') || `<li>Analyzed ${headerNames[cfg.yCol]} by ${headerNames[cfg.xCol]}.</li>`}
+        </ul>
+      </div>
 
-  // Confirmation binds inside panel
-  const btnYes = document.getElementById('btn-ai-confirm-yes');
-  if (btnYes) btnYes.onclick = () => resolveAiSpreadsheetCommand(true);
+      <div class="ai-report-section">
+        <div class="ai-report-section-title">🧠 Strategic Insights</div>
+        <ul class="ai-report-list">
+          ${insightsList.map(i => `<li style="margin-bottom:4px;color:#a5b4fc;line-height:1.55;">${i}</li>`).join('')}
+        </ul>
+      </div>
 
-  const btnNo = document.getElementById('btn-ai-confirm-no');
-  if (btnNo) btnNo.onclick = () => resolveAiSpreadsheetCommand(false);
+      <div class="ai-report-section">
+        <div class="ai-report-section-title">🎯 Actionable Recommendations</div>
+        <ul class="ai-report-list">
+          ${recsList.map(r => `<li style="margin-bottom:4px;color:var(--text-primary);line-height:1.55;">${r}</li>`).join('') || `<li>Monitor this breakdown in your reports.</li>`}
+        </ul>
+      </div>
+    </div>
+  `;
 
-  // Initial render of chat history and context snapshot
-  updateCopilotHeaderDetails();
+  aiActiveChatHistory.push({
+    sender: 'assistant',
+    msgId,
+    text: `Rendered chart for ${cfg.label || (headerNames[cfg.yCol] || cfg.yCol)}`,
+    contentHtml: responseHtml,
+    chartConfig,
+    suggestions: ["Add to Dashboard", "Export CSV", "Generate report"]
+  });
+
+  saveChatHistoryToWorkspace();
   renderAiChatHistory();
 };
+
+window.injectTableChart = function(xCol, yCol) {
+  if (!xCol || !yCol) return;
+  const newId = 'widget-' + Date.now();
+  dashboardWidgets.push({
+    id: newId,
+    title: `${headerNames[yCol] || yCol} by ${headerNames[xCol] || xCol}`,
+    type: "bar",
+    w: 6,
+    xCol: xCol,
+    yCol: yCol,
+    agg: "sum"
+  });
+  if (typeof renderDashboardCanvas === 'function') renderDashboardCanvas();
+  if (typeof renderDashboardTab === 'function') renderDashboardTab();
+  showToast("Bar chart widget added to dashboard!", "success");
+};
+
+window.injectTrendChart = function(xCol, yCol) {
+  if (!xCol || !yCol) return;
+  const newId = 'widget-' + Date.now();
+  dashboardWidgets.push({
+    id: newId,
+    title: `${headerNames[yCol] || yCol} Trend by ${headerNames[xCol] || xCol}`,
+    type: "line",
+    w: 6,
+    xCol: xCol,
+    yCol: yCol,
+    agg: "sum"
+  });
+  if (typeof renderDashboardCanvas === 'function') renderDashboardCanvas();
+  if (typeof renderDashboardTab === 'function') renderDashboardTab();
+  showToast("Trend line chart widget added to dashboard!", "success");
+};
+
+window.injectKpiCard = function(colKey, op) {
+  if (!colKey) return;
+  const newId = 'widget-' + Date.now();
+  dashboardWidgets.push({
+    id: newId,
+    title: `${op.toUpperCase()} of ${headerNames[colKey] || colKey}`,
+    type: "kpi",
+    w: 4,
+    xCol: "",
+    yCol: colKey,
+    agg: op
+  });
+  if (typeof renderDashboardCanvas === 'function') renderDashboardCanvas();
+  if (typeof renderDashboardTab === 'function') renderDashboardTab();
+  showToast("KPI card added to dashboard!", "success");
+};
+
+window.addChatChartToDashboard = function(chartId, xCol, yCol, chartType) {
+  let x = xCol;
+  let y = yCol;
+  let type = chartType || 'bar';
+  
+  const newId = 'widget-' + Date.now();
+  dashboardWidgets.push({
+    id: newId,
+    title: `${headerNames[y] || y || 'Chart'} by ${headerNames[x] || x || 'Category'}`,
+    type: type === 'doughnut' ? 'donut' : type,
+    w: 6,
+    xCol: x,
+    yCol: y,
+    agg: "sum"
+  });
+  if (typeof renderDashboardCanvas === 'function') renderDashboardCanvas();
+  if (typeof renderDashboardTab === 'function') renderDashboardTab();
+  showToast("Chart widget added to dashboard!", "success");
+};
+
+window.downloadChatChartPng = function(chartId) {
+  const canvas = document.getElementById(chartId);
+  if (!canvas) {
+    showToast("Chart canvas not found.", "error");
+    return;
+  }
+  try {
+    const url = canvas.toDataURL("image/png");
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `oneclick_chart_${Date.now()}.png`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    showToast("PNG downloaded successfully!", "success");
+  } catch(e) {
+    showToast("Download failed: " + e.message, "error");
+  }
+};
+
+window.downloadChatChartSvg = function(chartId) {
+  showToast("SVG export is not supported for canvas elements. Downloading PNG instead.", "info");
+  window.downloadChatChartPng(chartId);
+};
+
+window.downloadChatChartPdf = function(chartId) {
+  showToast("PDF report triggered from export.", "info");
+  if (typeof generateExecutivePDFReport === 'function') {
+    generateExecutivePDFReport();
+  } else {
+    window.print();
+  }
+};
+
+window.copyChatChartInsight = function(chartId) {
+  const canvas = document.getElementById(chartId);
+  if (!canvas) return;
+  const title = canvas.closest('.ai-chart-wrapper-card')?.querySelector('.ai-chart-card-title')?.innerText || "Chart Insight";
+  navigator.clipboard.writeText(`OneClick Chart: ${title}`);
+  showToast("Chart info copied to clipboard!", "success");
+};
+
+function executeChartCommand(plan) {
+  const title = `${headerNames[plan.yCol] || plan.yCol} by ${headerNames[plan.xCol] || plan.xCol}`;
+  const cfg = { type: plan.chartType, xCol: plan.xCol, yCol: plan.yCol, label: title };
+  window.renderChatChart(cfg);
+  logActivity('Create Chart', `Rendered chart in chat for ${title}.`, 'Success');
+}
 
 window.setAiPrompt = function(promptText) {
   const input = document.getElementById('ai-prompt-input');
   if (input) {
     input.value = promptText;
     input.focus();
-    // Auto-grow textarea
     input.style.height = 'auto';
     input.style.height = input.scrollHeight + 'px';
-    // Submit
     handleAiPromptSubmit();
   }
 };
-
 
 

@@ -1,6 +1,6 @@
-﻿/* ══════════════════════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    OneClick Dashboard - Premium Design System (CSS Variables)
-   ══════════════════════════════════════════════════════════════ */
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 :root {
   /* Colors */
   --bg-primary: #0B0F19;
@@ -129,14 +129,14 @@ button {
   background: var(--text-muted);
 }
 
-/* ═══════════════════════════ APP SHELL ═══════════════════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• APP SHELL â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .app-shell {
   display: flex;
   min-height: 100vh;
   position: relative;
 }
 
-/* ═══════════════════════════ SIDEBAR ═══════════════════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• SIDEBAR â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .sidebar {
   width: var(--sidebar-width);
   background-color: var(--bg-secondary);
@@ -369,7 +369,7 @@ button {
   background-color: var(--border-color);
 }
 
-/* ═══════════════════════════ MAIN CONTENT ═══════════════════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• MAIN CONTENT â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .main-content {
   flex-grow: 1;
   min-width: 0;
@@ -520,7 +520,7 @@ button {
   color: var(--text-primary);
 }
 
-/* ═══════════════════════════ PAGE CONTENT ═══════════════════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• PAGE CONTENT â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .page-content {
   padding: 40px;
   display: flex;
@@ -528,7 +528,7 @@ button {
   gap: 40px;
 }
 
-/* ═══════════════════════════ HERO SECTION ═══════════════════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• HERO SECTION â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .hero-section {
   position: relative;
   background-color: var(--bg-secondary);
@@ -748,7 +748,7 @@ button {
   width: 100%;
 }
 
-/* ═══════════════════════════ SECTIONS COMMON ═══════════════════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• SECTIONS COMMON â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .section-header {
   display: flex;
   align-items: flex-end;
@@ -797,7 +797,7 @@ button {
   border: 1px solid var(--border-color);
 }
 
-/* ═══════════════════════════ METRIC CARDS ═══════════════════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• METRIC CARDS â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .metrics-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -949,7 +949,7 @@ button {
 .pd.green { background-color: var(--success); }
 .pd.amber { background-color: var(--warning); }
 
-/* ═══════════════════════════ DASHBOARD GRID LAYOUT ═══════════════════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• DASHBOARD GRID LAYOUT â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .dashboard-grid {
   display: grid;
   grid-template-columns: 1fr 300px;
@@ -963,7 +963,7 @@ button {
   gap: 32px;
 }
 
-/* ═══════════════════════════ ANALYTICS PANEL ═══════════════════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• ANALYTICS PANEL â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .analytics-panel {
   background-color: var(--bg-card);
   border: 1px solid var(--border-color);
@@ -1253,7 +1253,7 @@ button {
   color: var(--text-secondary);
 }
 
-/* ═══════════════════════════ PROJECTS SECTION ═══════════════════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• PROJECTS SECTION â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .projects-section {
   background-color: var(--bg-card);
   border: 1px solid var(--border-color);
@@ -1402,7 +1402,7 @@ button {
   color: var(--text-primary);
 }
 
-/* ═══════════════════════════ INSIGHTS SIDEBAR PANEL ═══════════════════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• INSIGHTS SIDEBAR PANEL â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .insights-panel {
   display: flex;
   flex-direction: column;
@@ -1602,7 +1602,7 @@ button {
 }
 
 .task-check:checked::after {
-  content: '✓';
+  content: 'âœ“';
   color: #fff;
   font-size: 9px;
   font-weight: bold;
@@ -1636,7 +1636,7 @@ button {
   background-color: var(--error-glow);
 }
 
-/* ═══════════════════════════ RESPONSIVE ═══════════════════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• RESPONSIVE â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 @media (max-width: 1200px) {
   .metrics-grid {
     grid-template-columns: repeat(2, 1fr);
@@ -1688,7 +1688,7 @@ button {
   }
 }
 
-/* ═══════════════════════════ UPLOAD MODAL ═══════════════════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• UPLOAD MODAL â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -1821,7 +1821,7 @@ button {
   margin: 16px 0;
 }
 
-/* ═══════════════════════════ SPREADSHEET WORKSPACE ═══════════════════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• SPREADSHEET WORKSPACE â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 #workspace-view-container {
   display: flex;
   flex-direction: column;
@@ -2283,13 +2283,13 @@ button {
   border-left-color: transparent;
 }
 
-/* Panel rail state — thin 48px icon strip */
+/* Panel rail state â€” thin 48px icon strip */
 .workspace-sidebar.panel-rail {
   width: 48px;
   overflow: hidden;
 }
 
-/* Panel closed state — fully hidden */
+/* Panel closed state â€” fully hidden */
 .workspace-sidebar.panel-closed {
   width: 0px;
   border-left-color: transparent;
@@ -2424,7 +2424,7 @@ button {
   font-size: 12.5px;
 }
 
-/* ═══════════════════════════ RESPONSIVE IMPROVEMENTS & OVERFLOW FIXES ═══════════════════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• RESPONSIVE IMPROVEMENTS & OVERFLOW FIXES â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 
 /* Global container constraints */
 html, body {
@@ -2631,7 +2631,7 @@ html, body {
   }
 }
 
-/* ═══════════════════════════ UPLOAD DEMO DATASETS & SPINNER OVERLAY ═══════════════════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• UPLOAD DEMO DATASETS & SPINNER OVERLAY â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 
 /* Demo Dataset Option selector block */
 .demo-datasets-section {
@@ -2788,11 +2788,11 @@ html, body {
   text-align: right;
 }
 
-/* ═══════════════════════════ COLUMN MENUS AND FILTERS ═══════════════════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• COLUMN MENUS AND FILTERS â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 
 .col-hdr {
   position: relative;
-  padding-right: 24px !important; /* Make room for menu trigger ⋮ */
+  padding-right: 24px !important; /* Make room for menu trigger â‹® */
 }
 
 .col-hdr-menu-btn {
@@ -3041,7 +3041,7 @@ html, body {
   background-color: rgba(79, 70, 229, 0.005) !important;
 }
 
-/* ═══════════════════════════ DATA QUALITY & PREPROCESSING SYSTEM ═══════════════════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• DATA QUALITY & PREPROCESSING SYSTEM â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 
 /* Sidebar Resizer Handle */
 .workspace-sidebar-resizer {
@@ -3474,7 +3474,7 @@ html, body {
   color: var(--warning);
 }
 
-/* ═══════════════════════════ ISSUE NAVIGATION & HIGHLIGHTS ═══════════════════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• ISSUE NAVIGATION & HIGHLIGHTS â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 
 /* Cell Highlights */
 .spreadsheet-table td.grid-cell.cell-missing-highlight {
@@ -3648,7 +3648,7 @@ html, body {
   border-color: var(--text-secondary);
 }
 
-/* ═══════════════════════════ ONECLICK VISUALIZATION SYSTEM ═══════════════════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• ONECLICK VISUALIZATION SYSTEM â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 
 /* Segmented switcher active/hover states */
 #ws-view-toggle-group .tb-action {
@@ -3734,7 +3734,7 @@ html, body {
   overflow: hidden;
 }
 
-/* KPI cards are compact — just enough for value + label + trend */
+/* KPI cards are compact â€” just enough for value + label + trend */
 .viz-widget-card.kpi-card {
   min-height: 120px;
   justify-content: center;
@@ -3746,7 +3746,7 @@ html, body {
   height: 380px;
 }
 
-/* Table card — taller to show more rows */
+/* Table card â€” taller to show more rows */
 .viz-widget-card.table-card {
   min-height: 320px;
   height: 380px;
@@ -3890,7 +3890,7 @@ html, body {
   background-color: var(--error-glow);
 }
 
-/* KPI cards — accent top border */
+/* KPI cards â€” accent top border */
 .viz-widget-card.kpi-card {
   min-height: 130px;
   justify-content: center;
@@ -4201,10 +4201,10 @@ html, body {
   color: var(--error);
 }
 
-/* ══════════════════════════════════════════════════
-   PANEL MANAGER — 3-STATE COLLAPSIBLE SYSTEM
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+   PANEL MANAGER â€” 3-STATE COLLAPSIBLE SYSTEM
    States: open | rail (48px icon strip) | closed
-══════════════════════════════════════════════════ */
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 
 /* Panel header control bar */
 .panel-header-bar {
@@ -4400,7 +4400,7 @@ html, body {
   transition: width 250ms ease !important;
 }
 
-/* ═══════════════════════════ WORKSPACE PERSISTENCE STYLES ═══════════════════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• WORKSPACE PERSISTENCE STYLES â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 #workspaces-view-container {
   display: flex;
   flex-direction: column;
@@ -4803,7 +4803,7 @@ html, body {
   border-left-color: var(--error);
 }
 
-/* ═══════════════════════════ REDESIGNED DASHBOARD & WORKSPACES ═══════════════════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• REDESIGNED DASHBOARD & WORKSPACES â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 
 .db-hero-cta-card {
   background: linear-gradient(135deg, rgba(99, 102, 241, 0.06), rgba(139, 92, 246, 0.06));
@@ -5113,7 +5113,7 @@ html, body {
   background: rgba(239, 68, 68, 0.01);
 }
 
-/* ═══════════════════════════ ACCORDIONS & WORKFLOW SIDEPANEL ═══════════════════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• ACCORDIONS & WORKFLOW SIDEPANEL â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .viz-accordion-item {
   border: 1px solid var(--border-color);
   border-radius: var(--radius-sm);
@@ -5656,18 +5656,18 @@ html, body {
   position: relative;
 }
 .exec-list-item::before {
-  content: "•";
+  content: "â€¢";
   color: var(--primary);
   position: absolute;
   left: 0;
   font-weight: bold;
 }
 .exec-list-item.warning::before {
-  content: "⚠";
+  content: "âš ";
   color: var(--warning);
 }
 .exec-list-item.action::before {
-  content: "→";
+  content: "â†’";
   color: var(--success);
 }
 .exec-kpi-pill-grid {
@@ -5693,101 +5693,8 @@ html, body {
   color: var(--text-secondary);
   margin-top: 1px;
 }
-/* ==================== AI ANALYST STYLES ==================== */
-.ai-chat-feed::-webkit-scrollbar,
-#ai-conversations-list::-webkit-scrollbar {
-  width: 6px;
-}
-.ai-chat-feed::-webkit-scrollbar-track,
-#ai-conversations-list::-webkit-scrollbar-track {
-  background: transparent;
-}
-.ai-chat-feed::-webkit-scrollbar-thumb,
-#ai-conversations-list::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.08);
-  border-radius: 3px;
-}
-.ai-chat-feed::-webkit-scrollbar-thumb:hover,
-#ai-conversations-list::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.15);
-}
 
-.ai-message {
-  display: flex;
-  gap: 12px;
-  max-width: 85%;
-  animation: fadeIn 0.25s ease-out;
-}
-.ai-message.user {
-  align-self: flex-end;
-  flex-direction: row-reverse;
-}
-.ai-message.user .ai-msg-avatar {
-  background: var(--secondary);
-}
-.ai-message.user .ai-msg-body {
-  background: var(--primary-glow);
-  border-color: rgba(99, 102, 241, 0.2);
-  border-radius: 12px 0 12px 12px;
-}
-.ai-msg-body {
-  line-height: 1.5;
-}
-.ai-suggest-item:hover {
-  background: var(--primary-glow) !important;
-  border-color: var(--primary) !important;
-  color: var(--text-primary) !important;
-  transform: translateY(-1px);
-}
-.ai-response-action-btn {
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid var(--border-color);
-  border-radius: 4px;
-  color: var(--text-primary);
-  font-size: 10.5px;
-  padding: 6px 10px;
-  cursor: pointer;
-  font-weight: 600;
-  transition: all 0.2s;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-.ai-response-action-btn:hover {
-  background: var(--primary);
-  border-color: var(--primary);
-  color: #fff;
-}
-.ai-response-table th, .ai-response-table td {
-  border-bottom: 1px solid rgba(255,255,255,0.05);
-  padding: 6px 8px;
-}
-.ai-response-table tr:last-child td {
-  border-bottom: none;
-}
-.ai-history-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 8px 12px;
-  background: rgba(255,255,255,0.02);
-  border: 1px solid var(--border-color);
-  border-radius: 6px;
-  font-size: 11px;
-  cursor: pointer;
-  transition: all 0.2s;
-  margin-bottom: 6px;
-}
-.ai-history-item:hover {
-  border-color: var(--primary);
-  background: rgba(99, 102, 241, 0.04);
-}
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-/* ═══════════════════════════ FIREBASE SYNCHRONIZATION AND GOOGLE AUTH ═══════════════════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• FIREBASE SYNCHRONIZATION AND GOOGLE AUTH â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .google-signin-btn {
   display: flex;
   align-items: center;
@@ -5859,7 +5766,7 @@ html, body {
   margin-bottom: 0;
 }
 
-/* ═══════════════════════════ CLOUD SYNC INDICATOR & MIGRATION MODAL ═══════════════════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• CLOUD SYNC INDICATOR & MIGRATION MODAL â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 /* Cloud Sync Status Indicator in Topbars */
 .topbar-sync-status {
   display: flex;
@@ -5995,7 +5902,7 @@ html, body {
   width: 100%;
 }
 
-/* ==================== AI COPILOT ASSISTANT V2 STYLES ==================== */
+/* ==================== AI COPILOT ASSISTANT V3 STYLES ==================== */
 .ai-copilot-fab {
   position: fixed;
   display: flex;
@@ -6055,22 +5962,20 @@ html, body {
 }
 
 /* FAB States */
-/* 1. Listening (Pulsing glowing state) */
-.ai-copilot-fab.state-listening {
-  background: linear-gradient(135deg, #06b6d4, #3b82f6);
-  animation: listeningPulse 1.5s infinite ease-in-out;
-}
-@keyframes listeningPulse {
-  0% { box-shadow: 0 0 0 0 rgba(6, 182, 212, 0.7); }
-  70% { box-shadow: 0 0 0 12px rgba(6, 182, 212, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(6, 182, 212, 0); }
+/* 1. Idle state */
+.ai-copilot-fab.state-idle {
+  background: linear-gradient(135deg, #4f46e5, #7c3aed);
 }
 
-/* 2. Processing (Rotating spinner inside icon) */
-.ai-copilot-fab.state-processing .fab-main-icon {
+/* 2. Thinking state (Rotating spinner & pulsing glow) */
+.ai-copilot-fab.state-thinking, .ai-copilot-fab.state-processing {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  animation: thinkingPulse 1.5s infinite ease-in-out;
+}
+.ai-copilot-fab.state-thinking .fab-main-icon, .ai-copilot-fab.state-processing .fab-main-icon {
   display: none;
 }
-.ai-copilot-fab.state-processing .fab-spinner {
+.ai-copilot-fab.state-thinking .fab-spinner, .ai-copilot-fab.state-processing .fab-spinner {
   display: inline-block !important;
   width: 18px;
   height: 18px;
@@ -6079,29 +5984,61 @@ html, body {
   border-top-color: #fff;
   animation: fabSpin 0.8s infinite linear;
 }
+@keyframes thinkingPulse {
+  0% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.7); }
+  70% { box-shadow: 0 0 0 12px rgba(245, 158, 11, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
+}
+
+/* 3. Generating Chart state */
+.ai-copilot-fab.state-generating-chart {
+  background: linear-gradient(135deg, #06b6d4, #3b82f6);
+  animation: chartPulse 1.2s infinite ease-in-out;
+}
+@keyframes chartPulse {
+  0% { box-shadow: 0 0 0 0 rgba(6, 182, 212, 0.7); }
+  70% { box-shadow: 0 0 0 12px rgba(6, 182, 212, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(6, 182, 212, 0); }
+}
+
+/* 4. Generating Report state */
+.ai-copilot-fab.state-generating-report {
+  background: linear-gradient(135deg, #10b981, #059669);
+  animation: reportPulse 1.2s infinite ease-in-out;
+}
+@keyframes reportPulse {
+  0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+  70% { box-shadow: 0 0 0 12px rgba(16, 185, 129, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
+
+/* 5. New Insight Available state */
+.ai-copilot-fab.state-insight-available {
+  background: linear-gradient(135deg, #ec4899, #f43f5e);
+  animation: insightPulse 1.5s infinite ease-in-out;
+}
+@keyframes insightPulse {
+  0% { box-shadow: 0 0 0 0 rgba(236, 72, 153, 0.7); }
+  70% { box-shadow: 0 0 0 12px rgba(236, 72, 153, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(236, 72, 153, 0); }
+}
+.ai-copilot-fab.state-insight-available::after {
+  content: '';
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 8px;
+  height: 8px;
+  background-color: #f97316;
+  border-radius: 50%;
+  border: 1px solid #ffffff;
+}
+
 @keyframes fabSpin {
   to { transform: rotate(360deg); }
 }
 
-/* 3. Responding (Activity dot) */
-.ai-copilot-fab.state-responding::after {
-  content: '';
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  width: 8px;
-  height: 8px;
-  background-color: #10b981;
-  border-radius: 50%;
-  border: 1px solid #fff;
-  animation: respondPulse 1.2s infinite ease-in-out;
-}
-@keyframes respondPulse {
-  0%, 100% { transform: scale(1); opacity: 1; }
-  50% { transform: scale(1.3); opacity: 0.6; }
-}
-
-/* 4. Notification badge */
+/* Notification badge */
 .fab-badge {
   position: absolute;
   top: -2px;
@@ -6119,14 +6056,14 @@ html, body {
   100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(249, 115, 22, 0); }
 }
 
-/* Chat Drawer Panel */
+/* Chat Drawer Panel - 550px wide for Desktop */
 .ai-copilot-panel {
   position: fixed;
-  width: 460px;
+  width: 550px;
   height: 85vh;
   min-height: 480px;
   max-height: 850px;
-  background: rgba(17, 19, 30, 0.95);
+  background: rgba(11, 15, 25, 0.95);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -6143,7 +6080,7 @@ html, body {
 /* Positions for open panel */
 .ai-copilot-panel.fab-bottom-right {
   bottom: 24px;
-  right: -520px;
+  right: -600px;
 }
 .ai-copilot-panel.fab-bottom-right.open {
   right: 24px;
@@ -6153,7 +6090,7 @@ html, body {
 
 .ai-copilot-panel.fab-bottom-left {
   bottom: 24px;
-  left: -520px;
+  left: -600px;
 }
 .ai-copilot-panel.fab-bottom-left.open {
   left: 24px;
@@ -6511,7 +6448,7 @@ html, body {
   to { transform: translateY(0); opacity: 1; }
 }
 
-/* Mobile Responsive Adjustments */
+/* Mobile Responsive Adjustments (Full screen under 576px) */
 @media (max-width: 576px) {
   .ai-copilot-panel {
     width: 100vw !important;
@@ -6550,6 +6487,27 @@ html, body {
 }
 
 /* ==================== AI COPILOT ASSISTANT CARD REFINEMENTS ==================== */
+.ai-message {
+  margin-top: 10px;
+}
+
+.ai-message.user {
+  align-self: flex-end;
+}
+
+.ai-message.assistant {
+  align-self: flex-start;
+}
+
+.ai-msg-avatar {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.ai-message.assistant .ai-msg-avatar {
+  background: var(--primary);
+}
+
 .ai-msg-response-card {
   margin-top: 8px;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
@@ -6782,6 +6740,23 @@ html, body {
   padding-top: 10px;
 }
 
+.ai-response-action-btn {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--text-secondary);
+  padding: 4px 9px;
+  font-size: 10.5px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.ai-response-action-btn:hover {
+  background: rgba(99, 102, 241, 0.15);
+  border-color: rgba(99, 102, 241, 0.3);
+  color: #ffffff;
+}
+
 /* Ranking table */
 .ai-report-rank-table {
   width: 100%;
@@ -6928,3 +6903,5 @@ html, body {
   color: var(--primary, #6366f1);
   transform: translateY(-1px);
 }
+
+
