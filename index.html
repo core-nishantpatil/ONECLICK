@@ -29,7 +29,7 @@
     <aside class="sidebar" id="sidebar">
       <div class="sidebar-inner">
         <div class="sidebar-header-action">
-          <button class="sidebar-collapse-btn" id="sidebar-collapse-btn" title="Collapse Sidebar">
+          <button class="sidebar-collapse-btn" id="sidebar-collapse-btn" title="Collapse Sidebar" aria-label="Collapse Sidebar">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="sidebar-toggle-icon">
               <polyline points="11 17 6 12 11 7"></polyline>
               <polyline points="18 17 13 12 18 7"></polyline>
@@ -909,11 +909,11 @@
 
             <!-- Rail strip (visible when panel-rail state) -->
             <div class="panel-rail-strip" id="ws-panel-rail-strip">
-              <button class="rail-icon-btn" id="rail-btn-preprocessing" data-active="false">
+              <button class="rail-icon-btn" id="rail-btn-preprocessing" data-active="false" aria-label="Open Preprocessing Panel">
                 🧹
                 <span class="rail-icon-tooltip">Data Preprocessing</span>
               </button>
-              <button class="rail-icon-btn" id="rail-btn-visualization" data-active="false">
+              <button class="rail-icon-btn" id="rail-btn-visualization" data-active="false" aria-label="Open Visualization Panel">
                 📊
                 <span class="rail-icon-tooltip">Dashboard Builder</span>
               </button>
@@ -1003,10 +1003,10 @@
               <div class="panel-header-bar">
                 <span class="panel-header-title">Data Preprocessing</span>
                 <div class="panel-header-controls">
-                  <button class="panel-ctrl-btn" id="btn-preprocessing-collapse" title="Collapse to rail">
+                  <button class="panel-ctrl-btn" id="btn-preprocessing-collapse" title="Collapse to rail" aria-label="Collapse preprocessing panel to rail">
                     <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
                   </button>
-                  <button class="panel-ctrl-btn close-btn" id="btn-preprocessing-close" title="Close panel">
+                  <button class="panel-ctrl-btn close-btn" id="btn-preprocessing-close" title="Close panel" aria-label="Close preprocessing panel">
                     <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                   </button>
                 </div>
@@ -1121,10 +1121,10 @@
               <div class="panel-header-bar">
                 <span class="panel-header-title">Analytics Panel</span>
                 <div class="panel-header-controls">
-                  <button class="panel-ctrl-btn" id="btn-dashbuilder-collapse" title="Collapse to rail">
+                  <button class="panel-ctrl-btn" id="btn-dashbuilder-collapse" title="Collapse to rail" aria-label="Collapse dashboard panel to rail">
                     <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
                   </button>
-                  <button class="panel-ctrl-btn close-btn" id="btn-dashbuilder-close" title="Close panel">
+                  <button class="panel-ctrl-btn close-btn" id="btn-dashbuilder-close" title="Close panel" aria-label="Close dashboard panel">
                     <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                   </button>
                 </div>
@@ -1507,27 +1507,27 @@
                   </div>
                   <div class="viz-accordion-content">
                     <div class="export-center-grid">
-                      <button class="export-btn-premium" id="btn-export-pdf">
+                      <button class="export-btn-premium" id="btn-export-pdf" aria-label="Export as PDF">
                         <span class="export-icon-p">📄</span>
                         <span>PDF Report</span>
                       </button>
-                      <button class="export-btn-premium" id="btn-export-pptx">
+                      <button class="export-btn-premium" id="btn-export-pptx" aria-label="Export as PowerPoint">
                         <span class="export-icon-p">📊</span>
                         <span>PowerPoint</span>
                       </button>
-                      <button class="export-btn-premium" id="btn-export-docx">
+                      <button class="export-btn-premium" id="btn-export-docx" aria-label="Export as Word Document">
                         <span class="export-icon-p">📝</span>
                         <span>Word Report</span>
                       </button>
-                      <button class="export-btn-premium" id="btn-export-png">
+                      <button class="export-btn-premium" id="btn-export-png" aria-label="Export as PNG image">
                         <span class="export-icon-p">🖼️</span>
                         <span>PNG Snapshot</span>
                       </button>
-                      <button class="export-btn-premium" id="btn-export-json">
+                      <button class="export-btn-premium" id="btn-export-json" aria-label="Export as JSON">
                         <span class="export-icon-p">⚙️</span>
                         <span>JSON Layout</span>
                       </button>
-                      <button class="export-btn-premium" id="btn-export-csv">
+                      <button class="export-btn-premium" id="btn-export-csv" aria-label="Export as CSV">
                         <span class="export-icon-p">📅</span>
                         <span>CSV Snapshot</span>
                       </button>
@@ -1613,11 +1613,11 @@
   </div><!-- end app-shell -->
 
   <!-- ═══════════════════════════ UPLOAD MODAL ═══════════════════════════ -->
-  <div class="modal-overlay" id="upload-modal">
+  <div class="modal-overlay" id="upload-modal" role="dialog" aria-modal="true" aria-labelledby="upload-modal-title">
     <div class="modal-card">
-      <button class="modal-close-btn" id="modal-close" title="Close modal">&times;</button>
+      <button class="modal-close-btn" id="modal-close" title="Close modal" aria-label="Close upload dialog">&times;</button>
       <div class="modal-content">
-        <h2 class="modal-title">Upload Dataset</h2>
+        <h2 class="modal-title" id="upload-modal-title">Upload Dataset</h2>
         <p class="modal-subtitle">Upload your CSV, XLS, or XLSX file to begin analysis.</p>
         
         <div class="upload-drag-zone" id="upload-zone">
@@ -1802,12 +1802,12 @@
         </div>
       </div>
       <div class="ai-header-actions">
-        <button id="btn-ai-toggle-position" class="ai-header-icon-btn" title="Toggle Position (Left/Right)">
+        <button id="btn-ai-toggle-position" class="ai-header-icon-btn" title="Toggle Position (Left/Right)" aria-label="Toggle AI panel position">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M19 12H5M12 19l-7-7 7-7"/>
           </svg>
         </button>
-        <button id="btn-ai-close-drawer" class="ai-header-icon-btn" title="Close Panel">
+        <button id="btn-ai-close-drawer" class="ai-header-icon-btn" title="Close Panel" aria-label="Close AI analyst panel">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <line x1="18" y1="6" x2="6" y2="18"></line>
             <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -1841,7 +1841,7 @@
       <span class="attachment-chip">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
         <span id="attached-file-name">Attached context</span>
-        <button class="btn-remove-attachment" id="btn-remove-attachment">&times;</button>
+        <button class="btn-remove-attachment" id="btn-remove-attachment" aria-label="Remove attachment">&times;</button>
       </span>
     </div>
 
@@ -1878,6 +1878,18 @@
   </div>
 
   <script src="firebase-config.js"></script>
+  <script src="globals.js"></script>
+  <script src="utils.js"></script>
+  <script src="performance.js"></script>
+  <script src="firebase.js"></script>
+  <script src="history.js"></script>
+  <script src="workspace.js"></script>
+  <script src="spreadsheet.js"></script>
+  <script src="charts.js"></script>
+  <script src="dashboard.js"></script>
+  <script src="reports.js"></script>
+  <script src="search.js"></script>
+  <script src="ai.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

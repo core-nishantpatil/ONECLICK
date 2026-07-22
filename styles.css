@@ -6905,3 +6905,51 @@ html, body {
 }
 
 
+
+/* ─── Production Readiness Sprint: Accessibility, Focus & Transitions ─────── */
+
+/* Keyboard focus outline — visible only for keyboard users, not mouse clicks */
+*:focus-visible {
+  outline: 2px solid var(--primary, #6366f1);
+  outline-offset: 2px;
+  border-radius: 3px;
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.12);
+}
+*:focus:not(:focus-visible) {
+  outline: none;
+  box-shadow: none;
+}
+
+/* Sidebar width transition (was a jarring instant jump) */
+.sidebar {
+  transition: width 220ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* View container fade-in for smoother section switching */
+#dashboard-view-container,
+#workspace-view-container,
+#reports-view-container,
+#history-view-container,
+#settings-view-container {
+  animation: ocViewFadeIn 140ms ease-out;
+}
+@keyframes ocViewFadeIn {
+  from { opacity: 0; transform: translateY(3px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Thin, elegant scrollbars */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-color, rgba(255,255,255,0.1)) transparent;
+}
+*::-webkit-scrollbar { width: 6px; height: 6px; }
+*::-webkit-scrollbar-track { background: transparent; }
+*::-webkit-scrollbar-thumb {
+  background: var(--border-color, rgba(255,255,255,0.15));
+  border-radius: 3px;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted, rgba(255,255,255,0.3));
+}
+/* ─────────────────────────────────────────────────────────────────────────── */
